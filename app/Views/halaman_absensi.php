@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title><?= $sett_apps->nama_aplikasi ?></title>
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport" />
+
+    <link href="<?= base_url('assets/css/vendor.min.css') ?>" rel="stylesheet" />
+    <link href="<?= base_url('assets/css/transparent/app.min.css') ?>" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+    <link href="<?= base_url('assets/plugins/datatables.net-bs4/css/dataTables.bootstrap4.min.css') ?>" rel="stylesheet" />
+    <link href="<?= base_url('assets/plugins/datatables.net-responsive-bs4/css/responsive.bootstrap4.min.css') ?>" rel="stylesheet" />
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        /* Optimasi SweetAlert2 khusus untuk layar Mobile */
+        .swal2-popup {
+            font-size: 0.85rem !important;
+            width: 85% !important;
+            max-width: 320px !important;
+            padding: 1.2em !important;
+            border-radius: 15px !important;
+        }
+
+        .swal2-title {
+            font-size: 1.25rem !important;
+            margin-bottom: 0.5em !important;
+        }
+
+        .swal2-html-container {
+            margin: 0.5em 1em 0 !important;
+        }
+
+        .swal2-icon {
+            width: 3.5em !important;
+            height: 3.5em !important;
+            margin: 1em auto .5em !important;
+        }
+
+        .swal2-icon .swal2-icon-content {
+            font-size: 2.5em !important;
+        }
+
+        .swal2-actions {
+            margin-top: 1em !important;
+        }
+
+        .swal2-styled.swal2-confirm {
+            padding: 0.5em 1.5em !important;
+            font-size: 0.9rem !important;
+        }
+    </style>
+</head>
+
+<body onload="tampilkanwaktu();setInterval('tampilkanwaktu()', 1000);">
+    <div class="app-cover"></div>
+
+    <div id="app" class="app app-header-fixed app-sidebar-fixed app-without-sidebar app-with-top-menu">
+        <div id="header" class="app-header">
+            <div class="navbar-header">
+                <a href="#" class="navbar-brand">
+                    <span class="navbar-logo"></span>
+                    <span><b>ABSENSI</b></span>&nbsp<span style="color: orange;"> <b>DIGITAL</b></span>&nbsp
+                    <span style="color: orange;"><b><?= $sett_apps->nama_sekolah ?></b> </span>
+                </a>
+            </div>
+            <div class="navbar-nav">
+                <div class="navbar-item dropdown">
+                    <a href="<?= base_url('auth/lock') ?>" class="navbar-link dropdown-toggle icon">
+                        <i class="fas fa-lock"></i> Lock Halaman
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div id="content" class="app-content">
+            <?php if ($status_pengumuman == 'Aktif') : ?>
+                <div class="alert alert-info" role="alert">
+                    <marquee>
+                        <h2><?= $text ?></h2>
+                    </marquee>
+                </div>
+            <?php endif; ?>
+
+            <div class="row mb-4">
+                <!-- PANEL WAKTU & INFO -->
+                <div class="col-md-3">
+                    <div class="panel panel-inverse">
+                        <div class="panel-heading">
+                            <h1 class="panel-title"><span><b>WAKTU</b></span>&nbsp<span style="color: orange;">SERVER</span></h1>
+                        </div>
+                        <div class="panel-body text-center">
+                            <?php
+                            $hari_indo = ['Sunday' => 'Minggu', 'Monday' => 'Senin', 'Tuesday' => 'Selasa', 'Wednesday' => 'Rabu', 'Thursday' => 'Kamis', 'Friday' => 'Jumat', 'Saturday' => 'Sabtu'];
+                            $bulan_indo = ['January' => 'Januari', 'February' => 'Februari', 'March' => 'Maret', 'April' => 'April', 'May' => 'Mei', 'June' => 'Juni', 'July' => 'Juli', 'August' => 'Agustus', 'September' => 'September', 'October' => 'Oktober', 'November' => 'November', 'December' => 'Desember'];
+                            echo $hari_indo[date('l')] . ", " . date('d') . " " . $bulan_indo[date('F')] . " " . date('Y');
+                            ?>
+                            <h1><span id="clock"></span></h1>
+
+                            <form id="form_input_nisnnip" class="mt-3">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="hasil_scanan" placeholder="KETIK NISN / NIP" autocomplete="off">
+                                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i></button>
+                                </div>
+                            </form>
+
+                            <hr>
+                            <div class="info-overview-absen">
+                                <!-- Area render foto & nama live -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PANEL PEMINDAI QR -->
+                <div class="col-xl-4">
+                    <div class="panel panel-inverse">
+                        <div class="panel-heading">
+                            <h1 class="panel-title"><span><b>SCAN UNTUK</b></span><span style="color: orange;"> MASUK / PULANG</span></h1>
+                        </div>
+                        <div class="panel-body text-center">
+                            <div id="reader" style="width: 100%; max-width: 500px; margin: 0 auto; border-radius:10px; overflow:hidden;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PANEL RIWAYAT ABSENSI -->
+                <div class="col-xl-5">
+                    <div class="panel panel-inverse">
+                        <div class="panel-heading">
+                            <h1 class="panel-title"><span><b>DATA ABSEN</b></span><span style="color: orange;"> HARI INI</span></h1>
+                        </div>
+                        <div class="panel-body">
+                            <div class="note note-primary">
+                                <div class="note-icon"><i class="fa fa-info"></i></div>
+                                <div class="note-content">
+                                    <h4><b>Selamat Datang!</b></h4>
+                                    <h5>Hari <?= $nama_hari ?>, </h5>
+                                    <table style="font-size: 13px;">
+                                        <tr>
+                                            <td><b>Guru/Pegawai</b></td>
+                                            <td>:</td>
+                                            <td>Jam Masuk : <b><?= $jam_masuk_p_g ?></b> | Jam Pulang : <b><?= $jam_keluar_p_g ?></b></td>
+                                        </tr>
+                                        <tr>
+                                            <td><b>Murid</b></td>
+                                            <td>:</td>
+                                            <td>Jam Masuk : <b><?= $jam_masuk_m ?></b> | Jam Pulang : <b><?= $jam_keluar_m ?></b></td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-sm table-hover text-white align-middle">
+                                    <thead>
+                                        <tr>
+                                            <th>Nama</th>
+                                            <th>Level</th>
+                                            <th>Waktu</th>
+                                            <th>Ket</th>
+                                            <th>Masuk</th>
+                                            <th>Pulang</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="list_data_absen">
+                                        <?php
+                                        // Render awal data absen saat halaman dimuat
+                                        $db = \Config\Database::connect(); // <--- TAMBAHKAN BARIS INI
+                                        $str = '';
+                                        foreach ($dataabsen as $absen) {
+                                            $getdatauser = $db->table('user')->where('user_id', $absen->user_id)->get()->getRow();
+                                            if (!$getdatauser) continue;
+
+                                            $name = 'Unknown';
+                                            $level = 'Unknown';
+                                            if ($getdatauser->level_id == 1) {
+                                                $name = 'Admin Aplikasi';
+                                                $level = 'Admin';
+                                            }
+                                            if ($getdatauser->level_id == 2) {
+                                                $guru = $db->table('guru')->where('nip', $getdatauser->username)->get()->getRow();
+                                                $name = $guru ? $guru->nama_guru : '-';
+                                                $level = 'Guru';
+                                            }
+                                            if ($getdatauser->level_id == 3) {
+                                                $pegawai = $db->table('pegawai')->where('nip', $getdatauser->username)->get()->getRow();
+                                                $name = $pegawai ? $pegawai->nama_pegawai : '-';
+                                                $level = 'Pegawai';
+                                            }
+                                            if ($getdatauser->level_id == 4) {
+                                                $siswa = $db->table('siswa')->where('nisn', $getdatauser->username)->get()->getRow();
+                                                $name = $siswa ? $siswa->nama_siswa : '-';
+                                                $level = 'Murid';
+                                            }
+
+                                            $sts_m = ($absen->status_masuk == 'Terlambat') ? '<i class="fas fa-exclamation-circle text-danger"></i>' : '<i class="fas fa-check-circle text-success"></i>';
+                                            $sts_k = ($absen->status_pulang == 'Terlambat') ? '<i class="fas fa-exclamation-circle text-danger"></i>' : (($absen->status_pulang == 'Tepat Waktu') ? '<i class="fas fa-check-circle text-success"></i>' : '');
+
+                                            $str .= "<tr><td>{$name}</td><td>{$level}</td><td>{$absen->tanggal}</td><td>{$absen->keterangan}</td><td>{$absen->jam_masuk} {$sts_m}</td><td>{$absen->jam_pulang} {$sts_k}</td></tr>";
+                                        }
+                                        echo $str;
+                                        ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Core Scripts -->
+    <script src="<?= base_url('assets/js/vendor.min.js') ?>"></script>
+    <script src="<?= base_url('assets/js/app.min.js') ?>"></script>
+    <script src="<?= base_url('assets/js/theme/transparent.min.js') ?>"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/timeago.js/2.0.2/timeago.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
+    <script>
+        var baseURL = '<?= base_url() ?>';
+        var html5QrcodeScanner;
+
+        // Fungsi Jam Server
+        function tampilkanwaktu() {
+            var waktu = new Date();
+            var sh = waktu.getHours().toString().padStart(2, '0');
+            var sm = waktu.getMinutes().toString().padStart(2, '0');
+            var ss = waktu.getSeconds().toString().padStart(2, '0');
+            document.getElementById("clock").innerHTML = sh + ":" + sm + ":" + ss;
+        }
+
+        // Format waktu untuk timeago
+        function iso8601(date) {
+            return date.getUTCFullYear() + "-" + (date.getUTCMonth() + 1) + "-" + date.getUTCDate() + "T" + date.getUTCHours() + ":" + date.getUTCMinutes() + ":" + date.getUTCSeconds() + "Z";
+        }
+
+        // FUNGSI INTI: Proses Absensi (Digunakan oleh Kamera & Input Manual)
+        function processAbsensi(kode) {
+            if (html5QrcodeScanner) html5QrcodeScanner.pause();
+
+            Swal.fire({
+                title: 'Memproses...',
+                html: `<i class="fas fa-spinner fa-spin fa-2x text-primary"></i><br><br><small>Membaca: ${kode}</small>`,
+                allowOutsideClick: false,
+                showConfirmButton: false,
+                customClass: {
+                    popup: 'swal2-popup'
+                }
+            });
+
+            $.ajax({
+                url: baseURL + '/absensi/get_info_absen',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    codeny: kode
+                },
+                success: function(dt) {
+                    if (dt.response === 'ok') {
+                        // Render Foto & Nama
+                        $('.info-overview-absen').html(`
+                            <img src="${baseURL}/assets/img/${dt.type}/${dt.photo}" style="width: 130px;height: 130px;border-radius: 10%;display: block;margin: 0 auto;object-fit: cover;" border="2">
+                            <input style="margin-top: 10px;text-align: center; font-weight: bold;" type="text" class="form-control" value="${dt.nama}" readonly>
+                            <p style="font-size: 11px; color: gray; text-align: center; margin-top: 5px;">Diproses: <time class="need_to_be_rendered load_time strong">sekarang</time></p>
+                        `);
+
+                        $('#list_data_absen').html(dt.list_absensi);
+                        document.querySelector('.load_time').setAttribute('datetime', iso8601(new Date()));
+                        timeago().render(document.querySelectorAll('.need_to_be_rendered'), 'id');
+
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Berhasil!',
+                            html: `<b>${dt.nama}</b><br>Tercatat sebagai ${dt.type}<br><small>${dt.message}</small>`,
+                            timer: 2000,
+                            showConfirmButton: false,
+                            customClass: {
+                                popup: 'swal2-popup'
+                            }
+                        });
+
+                        // Mainkan Suara
+                        let audioSrc = (dt.telatkah === 'ya') ? 'audio_Umhxc2ZDeHlpc1JpYWNIUVdzNG1sZz09.wav' : 'audio_UUdXKzNPRzE2THZweGRTOWMvMnVFdz09.wav';
+                        new Audio(baseURL + '/assets/audio/' + audioSrc).play();
+
+                    } else if (dt.response === 'holiday') {
+                        Swal.fire({
+                            icon: 'info',
+                            title: 'Hari Libur',
+                            text: dt.message,
+                            customClass: {
+                                popup: 'swal2-popup'
+                            }
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Gagal',
+                            text: dt.message,
+                            customClass: {
+                                popup: 'swal2-popup'
+                            }
+                        });
+                        if (dt.list_absensi) $('#list_data_absen').html(dt.list_absensi);
+                    }
+
+                    // Reset input & nyalakan kamera setelah popup hilang
+                    $('#hasil_scanan').val('');
+                    setTimeout(() => {
+                        $('#hasil_scanan').focus();
+                        if (html5QrcodeScanner) html5QrcodeScanner.resume();
+                    }, 2500);
+                },
+                error: function() {
+                    $('#hasil_scanan').val('').focus();
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Koneksi Terputus',
+                        text: 'Gagal menghubungi server.',
+                        customClass: {
+                            popup: 'swal2-popup'
+                        }
+                    });
+                    setTimeout(() => {
+                        if (html5QrcodeScanner) html5QrcodeScanner.resume();
+                    }, 2500);
+                }
+            });
+        }
+
+        // --- BACKGROUND PROCESS WA BLAST FONNTE ---
+        function jalankanAntreanWA() {
+            $.ajax({
+                url: baseURL + '/absensi/proses_wa_fonnte',
+                type: 'GET',
+                dataType: 'json',
+                success: function(res) {
+                    if (res.status === 'sent') {
+                        console.log('Mencoba kirim WA ke: ' + res.target);
+                        console.log('Jawaban Server Fonnte: ', res.fonnte_response);
+
+                        if (res.fonnte_response && res.fonnte_response.status === false) {
+                            console.error('ALASAN GAGAL: ' + res.fonnte_response.reason);
+                        }
+                    }
+                },
+                complete: function() {
+                    setTimeout(jalankanAntreanWA, 3000);
+                }
+            });
+        }
+
+        $(document).ready(function() {
+            // Inisialisasi Scanner HTML5-QRCode
+            html5QrcodeScanner = new Html5QrcodeScanner(
+                "reader", {
+                    fps: 10,
+                    qrbox: {
+                        width: 250,
+                        height: 250
+                    },
+                    rememberLastUsedCamera: true
+                }, false
+            );
+
+            // Render Kamera & Tautkan ke fungsi processAbsensi
+            html5QrcodeScanner.render(function(decodedText) {
+                processAbsensi(decodedText);
+            });
+
+            // Trigger saat input manual via form NISN
+            $('#form_input_nisnnip').on('submit', function(e) {
+                e.preventDefault();
+                var kdnya = $('#hasil_scanan').val().trim();
+                if (kdnya !== '') {
+                    processAbsensi(kdnya);
+                }
+            });
+
+            jalankanAntreanWA();
+
+        });
+    </script>
+</body>
+
+</html>

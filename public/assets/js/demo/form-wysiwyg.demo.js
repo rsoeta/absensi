@@ -1,0 +1,1 @@
+var handleBootstrapWysihtml5=function(){"use strict";$('#wysihtml5').wysihtml5();};var FormWysihtml=function(){"use strict";return{init:function(){handleBootstrapWysihtml5();}};}();$(document).ready(function(){FormWysihtml.init();});
