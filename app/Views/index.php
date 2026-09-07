@@ -5,6 +5,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>DAARU ASY-SYIFA SMP/SMA MUHAMMADIYAH PAKENJENG</title>
+  <!-- Sisipkan kode favicon dinamis di sini -->
+  <?php if (isset($sett_apps) && !empty($sett_apps->logo_sekolah)) : ?>
+    <link rel="icon" type="image/png" href="<?= base_url('assets/img/logo/' . $sett_apps->logo_sekolah) ?>">
+  <?php else : ?>
+    <link rel="icon" type="image/png" href="<?= base_url('assets/img/logo/default.png') ?>">
+  <?php endif; ?>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
