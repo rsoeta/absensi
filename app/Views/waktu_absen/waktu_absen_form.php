@@ -11,7 +11,11 @@
                     <table class="table table-bordered table-hover">
                         <tr>
                             <td width='200'>Nama Hari</td>
-                            <td><input type="text" class="form-control" name="nama_hari" value="<?= $nama_hari ?>" required /></td>
+                            <td>
+                                <input type="text" class="form-control" name="nama_hari"
+                                    value="<?= empty($nama_hari) ? ['Sunday' => 'Minggu', 'Monday' => 'Senin', 'Tuesday' => 'Selasa', 'Wednesday' => 'Rabu', 'Thursday' => 'Kamis', 'Friday' => 'Jumat', 'Saturday' => 'Sabtu'][date('l')] : $nama_hari ?>"
+                                    required />
+                            </td>
                         </tr>
                         <tr>
                             <td>Jam Masuk Guru</td>
