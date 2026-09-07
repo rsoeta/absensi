@@ -4,6 +4,14 @@
 <head>
     <meta charset="utf-8" />
     <title><?= $sett_apps->nama_aplikasi ?? 'e-Absensi' ?></title>
+
+    <!-- Sisipkan kode favicon dinamis di sini -->
+    <?php if (isset($sett_apps) && !empty($sett_apps->logo_sekolah)) : ?>
+        <link rel="icon" type="image/png" href="<?= base_url('assets/img/logo/' . $sett_apps->logo_sekolah) ?>">
+    <?php else : ?>
+        <link rel="icon" type="image/png" href="<?= base_url('assets/img/logo/default.png') ?>">
+    <?php endif; ?>
+
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport" />
     <meta content="" name="description" />
     <meta content="" name="author" />
