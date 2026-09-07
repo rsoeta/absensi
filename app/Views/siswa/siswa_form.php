@@ -24,10 +24,17 @@
 								</tr>
 								<tr>
 									<td>Jenis Kelamin</td>
-									<td><select name="jk_kelamin" class="form-control theSelect" required>
+									<td>
+										<!-- <select name="jk_kelamin" class="form-control theSelect" required>
 											<option value="">- Pilih -</option>
 											<option value="Laki Laki" <?= $jk_kelamin == 'Laki Laki' ? 'selected' : '' ?>>Laki Laki</option>
 											<option value="Perempuan" <?= $jk_kelamin == 'Perempuan' ? 'selected' : '' ?>>Perempuan</option>
+										</select> -->
+										<select name="jk_kelamin" class="form-control">
+											<option value="">- Pilih -</option>
+											<!-- Sesuaikan value "L" dan "P" dengan yang biasa Anda gunakan (misal: "Laki-laki" atau "Perempuan") -->
+											<option value="L" <?= ($jk_kelamin == 'L') ? 'selected' : '' ?>>Laki-laki</option>
+											<option value="P" <?= ($jk_kelamin == 'P') ? 'selected' : '' ?>>Perempuan</option>
 										</select>
 									</td>
 								</tr>

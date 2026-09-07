@@ -30,16 +30,35 @@ class Siswa extends BaseController
         return view('siswa/siswa_list', $data);
     }
 
+    // public function daftar_siswa()
+    // {
+    //     $this->checkAuth();
+    //     $kelas_id = $this->request->getGet('kelas_id');
+    //     $data = [
+    //         'siswa_data' => $this->db->table('siswa')->where('kelas_id', $kelas_id)->get()->getResult(),
+    //         'kelas_id'   => $kelas_id,
+    //         'kelas'      => $this->db->table('kelas')->get()->getResult(),
+    //         'sett_apps'  => $this->db->table('app_setting')->where('id', 1)->get()->getRow(),
+    //     ];
+    //     return view('siswa/daftar_siswa', $data);
+    // }
     public function daftar_siswa()
     {
         $this->checkAuth();
         $kelas_id = $this->request->getGet('kelas_id');
+
         $data = [
-            'siswa_data' => $this->db->table('siswa')->where('kelas_id', $kelas_id)->get()->getResult(),
+            // Tambahkan perintah select() dan join() ke tabel kelas
+            'siswa_data' => $this->db->table('siswa')
+                ->select('siswa.*, kelas.nama_kelas')
+                ->join('kelas', 'kelas.kelas_id = siswa.kelas_id', 'left')
+                ->where('siswa.kelas_id', $kelas_id)
+                ->get()->getResult(),
             'kelas_id'   => $kelas_id,
             'kelas'      => $this->db->table('kelas')->get()->getResult(),
             'sett_apps'  => $this->db->table('app_setting')->where('id', 1)->get()->getRow(),
         ];
+
         return view('siswa/daftar_siswa', $data);
     }
 
