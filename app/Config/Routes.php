@@ -46,6 +46,9 @@ $routes->get('pengumuman/update/(:any)', 'Pengumuman::update/$1');
 $routes->post('pengumuman/update_action', 'Pengumuman::update_action');
 
 $routes->get('waktu_absen', 'Waktu_absen::index');
+$routes->get('waktu_absen/create', 'Waktu_absen::create');
+$routes->post('waktu_absen/create_action', 'Waktu_absen::create_action');
+$routes->get('waktu_absen/delete/(:any)', 'Waktu_absen::delete/$1');
 $routes->get('waktu_absen/update/(:any)', 'Waktu_absen::update/$1');
 $routes->post('waktu_absen/update_action', 'Waktu_absen::update_action');
 

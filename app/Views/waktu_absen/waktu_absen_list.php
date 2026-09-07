@@ -7,6 +7,13 @@
             <h4 class="panel-title">List Data waktu_absen </h4>
         </div>
         <div class="panel-body">
+            <!-- Tambahkan blok tombol ini -->
+            <div style="padding-bottom: 15px;">
+                <a href="<?= base_url('waktu_absen/create') ?>" class="btn btn-danger btn-sm">
+                    <i class="fas fa-plus-square"></i> Tambah Data
+                </a>
+            </div>
+
             <div class="table-responsive">
                 <table id="data-table-default" class="table table-bordered table-hover text-white align-middle">
                     <thead>
