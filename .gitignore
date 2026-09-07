@@ -124,3 +124,12 @@ _modules/*
 
 /results/
 /phpunit.xml
+
+# Abaikan file hasil upload dan generate aplikasi
+public/assets/img/siswa/*
+!public/assets/img/siswa/default.png
+public/assets/img/qr/siswa/*
+temp_doc/*
+writable/cache/*
+writable/logs/*
+writable/session/*
