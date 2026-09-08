@@ -103,8 +103,7 @@
 
                             <form id="form_input_nisnnip" class="mt-3">
                                 <div class="input-group">
-                                    <input type="text" class="form-control" id="hasil_scanan" placeholder="KETIK NISN / NIP" autocomplete="off">
-                                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i></button>
+                                    <input type="text" class="form-control" id="hasil_scanan" placeholder="KETIK NISN / NIP LALU TEKAN ENTER" autocomplete="off" autofocus>
                                 </div>
                             </form>
 
@@ -242,19 +241,10 @@
             return date.getUTCFullYear() + "-" + (date.getUTCMonth() + 1) + "-" + date.getUTCDate() + "T" + date.getUTCHours() + ":" + date.getUTCMinutes() + ":" + date.getUTCSeconds() + "Z";
         }
 
-        // FUNGSI INTI: Proses Absensi (Digunakan oleh Kamera & Input Manual)
+        // FUNGSI INTI: Proses Absensi (Cepat & Tanpa Jeda Layar)
         function processAbsensi(kode) {
+            // Jeda kamera sejenak agar tidak double-scan QR yang sama
             if (html5QrcodeScanner) html5QrcodeScanner.pause();
-
-            Swal.fire({
-                title: 'Memproses...',
-                html: `<i class="fas fa-spinner fa-spin fa-2x text-primary"></i><br><br><small>Membaca: ${kode}</small>`,
-                allowOutsideClick: false,
-                showConfirmButton: false,
-                customClass: {
-                    popup: 'swal2-popup'
-                }
-            });
 
             $.ajax({
                 url: baseURL + '/absensi/get_info_absen',
@@ -265,73 +255,76 @@
                 },
                 success: function(dt) {
                     if (dt.response === 'ok') {
-                        // Render Foto & Nama
+                        // 1. Langsung Render Foto & Nama di Sidebar
                         $('.info-overview-absen').html(`
-                            <img src="${baseURL}/assets/img/${dt.type}/${dt.photo}" style="width: 130px;height: 130px;border-radius: 10%;display: block;margin: 0 auto;object-fit: cover;" border="2">
-                            <input style="margin-top: 10px;text-align: center; font-weight: bold;" type="text" class="form-control" value="${dt.nama}" readonly>
-                            <p style="font-size: 11px; color: gray; text-align: center; margin-top: 5px;">Diproses: <time class="need_to_be_rendered load_time strong">sekarang</time></p>
-                        `);
+                    <img src="${baseURL}/assets/img/${dt.type}/${dt.photo}" style="width: 130px;height: 130px;border-radius: 10%;display: block;margin: 0 auto;object-fit: cover;" border="2">
+                    <input style="margin-top: 10px;text-align: center; font-weight: bold;" type="text" class="form-control" value="${dt.nama}" readonly>
+                    <p style="font-size: 11px; color: gray; text-align: center; margin-top: 5px;">Diproses: <time class="need_to_be_rendered load_time strong">sekarang</time></p>
+                `);
 
                         $('#list_data_absen').html(dt.list_absensi);
                         document.querySelector('.load_time').setAttribute('datetime', iso8601(new Date()));
                         timeago().render(document.querySelectorAll('.need_to_be_rendered'), 'id');
 
+                        // 2. Gunakan Toast yang tidak memblokir layar (Nyaman untuk Mobile/Desktop)
                         Swal.fire({
+                            toast: true,
+                            position: 'top-end',
                             icon: 'success',
-                            title: 'Berhasil!',
-                            html: `<b>${dt.nama}</b><br>Tercatat sebagai ${dt.type}<br><small>${dt.message}</small>`,
+                            title: dt.nama,
+                            text: dt.message,
                             timer: 2000,
                             showConfirmButton: false,
-                            customClass: {
-                                popup: 'swal2-popup'
-                            }
+                            timerProgressBar: true
                         });
 
-                        // Mainkan Suara
+                        // 3. Mainkan Suara sebagai indikator utama keberhasilan
                         let audioSrc = (dt.telatkah === 'ya') ? 'audio_Umhxc2ZDeHlpc1JpYWNIUVdzNG1sZz09.wav' : 'audio_UUdXKzNPRzE2THZweGRTOWMvMnVFdz09.wav';
                         new Audio(baseURL + '/assets/audio/' + audioSrc).play();
 
                     } else if (dt.response === 'holiday') {
                         Swal.fire({
+                            toast: true,
+                            position: 'top-end',
                             icon: 'info',
                             title: 'Hari Libur',
                             text: dt.message,
-                            customClass: {
-                                popup: 'swal2-popup'
-                            }
+                            timer: 3000,
+                            showConfirmButton: false
                         });
                     } else {
                         Swal.fire({
+                            toast: true,
+                            position: 'top-end',
                             icon: 'error',
                             title: 'Gagal',
                             text: dt.message,
-                            customClass: {
-                                popup: 'swal2-popup'
-                            }
+                            timer: 3000,
+                            showConfirmButton: false
                         });
                         if (dt.list_absensi) $('#list_data_absen').html(dt.list_absensi);
                     }
 
-                    // Reset input & nyalakan kamera setelah popup hilang
-                    $('#hasil_scanan').val('');
+                    // 4. Reset Input & Kamera SUPER CEPAT (Hanya jeda 0.8 detik)
+                    $('#hasil_scanan').val('').focus();
                     setTimeout(() => {
-                        $('#hasil_scanan').focus();
                         if (html5QrcodeScanner) html5QrcodeScanner.resume();
-                    }, 2500);
+                    }, 800);
                 },
                 error: function() {
                     $('#hasil_scanan').val('').focus();
                     Swal.fire({
+                        toast: true,
+                        position: 'top-end',
                         icon: 'error',
                         title: 'Koneksi Terputus',
                         text: 'Gagal menghubungi server.',
-                        customClass: {
-                            popup: 'swal2-popup'
-                        }
+                        timer: 3000,
+                        showConfirmButton: false
                     });
                     setTimeout(() => {
                         if (html5QrcodeScanner) html5QrcodeScanner.resume();
-                    }, 2500);
+                    }, 1000);
                 }
             });
         }
@@ -376,12 +369,17 @@
                 processAbsensi(decodedText);
             });
 
-            // Trigger saat input manual via form NISN
-            $('#form_input_nisnnip').on('submit', function(e) {
-                e.preventDefault();
-                var kdnya = $('#hasil_scanan').val().trim();
-                if (kdnya !== '') {
-                    processAbsensi(kdnya);
+            // Trigger saat menekan tombol Enter pada kolom input
+            $('#hasil_scanan').on('keypress', function(e) {
+                // 13 adalah kode spesifik untuk tombol Enter di keyboard
+                if (e.which === 13) {
+                    e.preventDefault(); // Mencegah form reload bawaan browser
+                    var kdnya = $(this).val().trim();
+
+                    if (kdnya !== '') {
+                        processAbsensi(kdnya);
+                        $(this).val(''); // Otomatis mengosongkan input setelah di-enter
+                    }
                 }
             });
 

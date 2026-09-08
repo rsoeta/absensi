@@ -122,14 +122,9 @@ class Absensi extends BaseController
     private function cek_telat($id_user)
     {
         $hari_ini = $this->getHariIni();
-
-        // --- BYPASS HARI LIBUR UNTUK TESTING ---
         $dtabsentime = $this->db->table('waktu_absen')->where('nama_hari', $hari_ini)->get()->getRow();
-        if (!$dtabsentime) {
-            $dtabsentime = $this->db->table('waktu_absen')->where('nama_hari', 'Senin')->get()->getRow();
-        }
-        // ---------------------------------------
 
+        // Sama, hapus bagian hardcode bypass libur di sini
         if ($dtabsentime) {
             $user = $this->db->table('user')->where('user_id', $id_user)->get()->getRow();
 
@@ -140,13 +135,14 @@ class Absensi extends BaseController
                 $late_waktu_absen = $dtabsentime->jam_masuk_siswa;
                 $minutes_to_add = $dtabsentime->absen_terlambat_siswa;
             } else {
-                return 'tidak'; // Admin tidak kenal telat
+                return 'tidak';
             }
 
+            // Gunakan format yang ekuivalen (H:i:s)
             $time = new \DateTime($late_waktu_absen);
             $time->add(new \DateInterval('PT' . $minutes_to_add . 'M'));
-            $stamp = $time->format('H:i');
-            $now = date('H:i');
+            $stamp = $time->format('H:i:s');
+            $now = date('H:i:s');
 
             if ($now > $stamp) {
                 return 'ya';
@@ -183,22 +179,11 @@ class Absensi extends BaseController
     {
         $cekdataabsenmasuk = $this->db->table('absen')->where('user_id', $id_user)->where('tanggal', date('Y-m-d'))->get()->getRow();
 
-        // --- HARDCODE EKSTREM SEMENTARA ---
-        $hari_ini = 'Senin';
+        // 1. Ganti hardcode 'Senin' dengan deteksi hari dinamis
+        $hari_ini = $this->getHariIni();
         $dtabsentime = $this->db->table('waktu_absen')->where('nama_hari', $hari_ini)->get()->getRow();
 
-        // Jika di database masih tidak ada, kita paksa inject jadwal dummy agar tembus
-        if (!$dtabsentime) {
-            $dtabsentime = (object)[
-                'jam_masuk_guru'        => '07:00:00',
-                'absen_terlambat_guru'  => 15,
-                'jam_pulang_guru'       => '15:00:00',
-                'jam_masuk_siswa'       => '07:00:00',
-                'absen_terlambat_siswa' => 15,
-                'jam_pulang_siswa'      => '14:00:00'
-            ];
-        }
-        // ----------------------------------
+        // 2. Blok // --- HARDCODE EKSTREM SEMENTARA --- SEPENUHNYA DIHAPUS
 
         if ($dtabsentime) {
             $user = $this->db->table('user')->where('user_id', $id_user)->get()->getRow();
@@ -211,10 +196,11 @@ class Absensi extends BaseController
                 $minutes_to_add = $dtabsentime->absen_terlambat_siswa;
             }
 
+            // 3. Sertakan elemen Detik ('H:i:s') dalam komparasi agar PHP tidak bingung
             $time = new \DateTime($late_waktu_absen);
             $time->add(new \DateInterval('PT' . $minutes_to_add . 'M'));
-            $stamp = $time->format('H:i');
-            $now = date('H:i');
+            $stamp = $time->format('H:i:s'); // Diubah jadi H:i:s
+            $now = date('H:i:s');            // Diubah jadi H:i:s
 
             $status = ($now > $stamp) ? 'Terlambat' : 'Tepat Waktu';
             $point = ($now > $stamp) ? 3 : 5;
