@@ -70,9 +70,22 @@
 
 			<img class="card-img-top" src="<?= base_url('assets/img/kartu/birunom.png') ?>">
 
-			<?php $foto_tampil = empty($s->photo) ? base_url('assets/img/icon/default.png') : base_url('assets/img/siswa/' . $s->photo); ?>
+			<?php
+			// Fallback Foto Profil
+			$foto_tampil = empty($s->photo) ? base_url('assets/img/icon/default.png') : base_url('assets/img/siswa/' . $s->photo);
+
+			// Fallback QR Code
+			$qr_path = FCPATH . 'assets/img/qr/siswa/' . $s->qr_code;
+			if (empty($s->qr_code) || !file_exists($qr_path)) {
+				// Jika file fisik tidak ada, generate langsung via API menggunakan NISN
+				$qr_tampil = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . urlencode($s->nisn);
+			} else {
+				$qr_tampil = base_url('assets/img/qr/siswa/' . $s->qr_code);
+			}
+			?>
+
 			<img style="border: 1px solid #ffffff;position: absolute;right: 30px;margin-top: 130px; object-fit:cover;" src="<?= $foto_tampil ?>" width="85px" height="100px">
-			<img style="position: absolute;margin-left: 35px;margin-top: 130px;" src="<?= base_url('assets/img/qr/siswa/' . $s->qr_code) ?>" width="120px" height="120px">
+			<img style="position: absolute;margin-left: 35px;margin-top: 130px;" src="<?= $qr_tampil ?>" width="120px" height="120px">
 			<img style="position: absolute;margin-left: 30px;margin-top: 10px;" src="<?= base_url('assets/img/logo/' . $sett_apps->logo_sekolah) ?>" width="65px" height="65px">
 		</div>
 	<?php endforeach; ?>

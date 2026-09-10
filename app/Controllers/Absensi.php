@@ -12,6 +12,43 @@ class Absensi extends BaseController
         date_default_timezone_set('Asia/Jakarta');
     }
 
+    // public function index()
+    // {
+    //     $tanggal_hari_ini = date('Y-m-d');
+    //     $row = $this->db->table('halaman_absensi')->where('halaman_absensi_id', 1)->get()->getRow();
+    //     $cekharilibur = $this->db->table('hari_libur')->where('DATE(tanggal)', $tanggal_hari_ini)->get()->getRow();
+
+    //     // Otomatis tembus jika aplikasi berjalan di mode development
+    //     if (($cekharilibur || date('D') == 'Sun') && getenv('CI_ENVIRONMENT') !== 'development') {
+    //         return view('halaman_absensi_mt');
+    //     } else {
+    //         if (!session()->get('un_lock')) {
+    //             $data['sett_apps'] = $this->db->table('app_setting')->where('id', 1)->get()->getRow();
+    //             return view('lock_screen', $data);
+    //         } else {
+    //             $peng = $this->db->table('pengumuman')->where('running_text_id', 1)->get()->getRow();
+
+    //             // Ambil jadwal absensi berdasarkan hari ini
+    //             $nama_hari = $this->getHariIni();
+    //             $jadwal = $this->db->table('waktu_absen')->where('nama_hari', $nama_hari)->get()->getRow();
+
+    //             $data = [
+    //                 'sett_apps'         => $this->db->table('app_setting')->where('id', 1)->get()->getRow(),
+    //                 'status_pengumuman' => $peng ? $peng->status : 'Tidak',
+    //                 'text'              => $peng ? $peng->text : '',
+    //                 'dataabsen'         => $this->db->table('absen')->where('tanggal', $tanggal_hari_ini)->orderBy('absen_id', 'DESC')->get()->getResult(),
+
+    //                 // Variabel disesuaikan dengan kebutuhan View (_m untuk Murid)
+    //                 'nama_hari'         => $nama_hari,
+    //                 'jam_masuk_p_g'     => $jadwal ? $jadwal->jam_masuk_guru : '00:00',
+    //                 'jam_keluar_p_g'    => $jadwal ? $jadwal->jam_pulang_guru : '00:00',
+    //                 'jam_masuk_m'       => $jadwal ? $jadwal->jam_masuk_siswa : '00:00',
+    //                 'jam_keluar_m'      => $jadwal ? $jadwal->jam_pulang_siswa : '00:00',
+    //             ];
+    //             return view('halaman_absensi', $data);
+    //         }
+    //     }
+    // }
     public function index()
     {
         $tanggal_hari_ini = date('Y-m-d');
@@ -32,11 +69,26 @@ class Absensi extends BaseController
                 $nama_hari = $this->getHariIni();
                 $jadwal = $this->db->table('waktu_absen')->where('nama_hari', $nama_hari)->get()->getRow();
 
+                // QUERY BARU: Ambil data siswa yang BELUM absen hari ini
+                $sql_belum_absen = "
+                    SELECT s.nisn, s.nama_siswa, k.nama_kelas 
+                    FROM siswa s
+                    JOIN user u ON s.nisn = u.username
+                    LEFT JOIN kelas k ON s.kelas_id = k.kelas_id
+                    WHERE u.level_id = 4 
+                    AND u.user_id NOT IN (
+                        SELECT user_id FROM absen WHERE tanggal = ?
+                    )
+                    ORDER BY k.nama_kelas ASC, s.nama_siswa ASC
+                ";
+                $siswa_belum_absen = $this->db->query($sql_belum_absen, [$tanggal_hari_ini])->getResult();
+
                 $data = [
                     'sett_apps'         => $this->db->table('app_setting')->where('id', 1)->get()->getRow(),
                     'status_pengumuman' => $peng ? $peng->status : 'Tidak',
                     'text'              => $peng ? $peng->text : '',
                     'dataabsen'         => $this->db->table('absen')->where('tanggal', $tanggal_hari_ini)->orderBy('absen_id', 'DESC')->get()->getResult(),
+                    'belum_absen'       => $siswa_belum_absen, // Variabel baru untuk dikirim ke view
 
                     // Variabel disesuaikan dengan kebutuhan View (_m untuk Murid)
                     'nama_hari'         => $nama_hari,
@@ -292,9 +344,11 @@ class Absensi extends BaseController
                         $pesan_wa = str_replace('[jam_absen]', date('H:i'), $pesan_wa);
                         $pesan_wa = str_replace('[status_absen]', $status, $pesan_wa);
 
-                        $this->db->table('notif')->insert([
+                        $this->db->table('tabel_antrean_wa')->insert([
                             'no_hp' => $siswa->no_hp_wali_siswa,
-                            'pesan' => $pesan_wa
+                            'pesan' => $pesan_wa,
+                            'status' => 'pending',
+                            'created_at' => date('Y-m-d H:i:s')
                         ]);
                     }
                 }

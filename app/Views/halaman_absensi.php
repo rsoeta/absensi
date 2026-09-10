@@ -86,50 +86,151 @@
                 </div>
             <?php endif; ?>
 
+            <!-- BARIS UTAMA -->
             <div class="row mb-4">
-                <!-- PANEL WAKTU & INFO -->
-                <div class="col-md-3">
-                    <div class="panel panel-inverse">
-                        <div class="panel-heading">
-                            <h1 class="panel-title"><span><b>WAKTU</b></span>&nbsp<span style="color: orange;">SERVER</span></h1>
-                        </div>
-                        <div class="panel-body text-center">
-                            <?php
-                            $hari_indo = ['Sunday' => 'Minggu', 'Monday' => 'Senin', 'Tuesday' => 'Selasa', 'Wednesday' => 'Rabu', 'Thursday' => 'Kamis', 'Friday' => 'Jumat', 'Saturday' => 'Sabtu'];
-                            $bulan_indo = ['January' => 'Januari', 'February' => 'Februari', 'March' => 'Maret', 'April' => 'April', 'May' => 'Mei', 'June' => 'Juni', 'July' => 'Juli', 'August' => 'Agustus', 'September' => 'September', 'October' => 'Oktober', 'November' => 'November', 'December' => 'Desember'];
-                            echo $hari_indo[date('l')] . ", " . date('d') . " " . $bulan_indo[date('F')] . " " . date('Y');
-                            ?>
-                            <h1><span id="clock"></span></h1>
 
-                            <form id="form_input_nisnnip" class="mt-3">
-                                <div class="input-group">
-                                    <input type="text" class="form-control" id="hasil_scanan" placeholder="KETIK NISN / NIP LALU TEKAN ENTER" autocomplete="off" autofocus>
+                <!-- ============================================== -->
+                <!-- SISI KIRI (WAKTU, SCANNER, & TABEL BELUM ABSEN)-->
+                <!-- ============================================== -->
+                <div class="col-xl-7">
+
+                    <!-- Sub-Baris Atas (Waktu & Scanner) -->
+                    <div class="row">
+                        <!-- PANEL 1: WAKTU & INFO -->
+                        <div class="col-md-5 mb-3">
+                            <div class="panel panel-inverse h-100">
+                                <div class="panel-heading">
+                                    <h1 class="panel-title"><span><b>WAKTU</b></span>&nbsp<span style="color: orange;">SERVER</span></h1>
                                 </div>
-                            </form>
+                                <div class="panel-body text-center">
+                                    <?php
+                                    $hari_indo = ['Sunday' => 'Minggu', 'Monday' => 'Senin', 'Tuesday' => 'Selasa', 'Wednesday' => 'Rabu', 'Thursday' => 'Kamis', 'Friday' => 'Jumat', 'Saturday' => 'Sabtu'];
+                                    $bulan_indo = ['January' => 'Januari', 'February' => 'Februari', 'March' => 'Maret', 'April' => 'April', 'May' => 'Mei', 'June' => 'Juni', 'July' => 'Juli', 'August' => 'Agustus', 'September' => 'September', 'October' => 'Oktober', 'November' => 'November', 'December' => 'Desember'];
+                                    echo $hari_indo[date('l')] . ", " . date('d') . " " . $bulan_indo[date('F')] . " " . date('Y');
+                                    ?>
+                                    <h1><span id="clock"></span></h1>
 
-                            <hr>
-                            <div class="info-overview-absen">
-                                <!-- Area render foto & nama live -->
+                                    <form id="form_input_nisnnip" class="mt-3">
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="hasil_scanan" placeholder="KETIK NISN LALU ENTER" autocomplete="off" autofocus>
+                                        </div>
+                                    </form>
+
+                                    <hr>
+                                    <div class="info-overview-absen">
+                                        <!-- Area render foto & nama live -->
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </div>
 
-                <!-- PANEL PEMINDAI QR -->
-                <div class="col-xl-4">
-                    <div class="panel panel-inverse">
-                        <div class="panel-heading">
-                            <h1 class="panel-title"><span><b>SCAN UNTUK</b></span><span style="color: orange;"> MASUK / PULANG</span></h1>
+                        <!-- PANEL 2: PEMINDAI QR -->
+                        <div class="col-md-7 mb-3">
+                            <div class="panel panel-inverse h-100">
+                                <div class="panel-heading">
+                                    <h1 class="panel-title"><span><b>SCAN UNTUK</b></span><span style="color: orange;"> MASUK / PULANG</span></h1>
+                                </div>
+                                <div class="panel-body text-center">
+                                    <div id="reader" style="width: 100%; max-width: 500px; margin: 0 auto; border-radius:10px; overflow:hidden;"></div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="panel-body text-center">
-                            <div id="reader" style="width: 100%; max-width: 500px; margin: 0 auto; border-radius:10px; overflow:hidden;"></div>
-                        </div>
-                    </div>
-                </div>
+                    </div> <!-- Akhir Sub-Baris Atas -->
 
-                <!-- PANEL RIWAYAT ABSENSI -->
+                    <!-- Sub-Baris Bawah (Tabel Belum Absen) -->
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="card border-danger">
+                                <div class="card-header bg-danger text-white">
+                                    <h5 class="mb-0"><i class="fas fa-user-times"></i> Data Siswa Belum Absen Hari Ini</h5>
+                                </div>
+                                <div class="card-body">
+                                    <?php
+                                    // Ekstrak daftar kelas unik dari data siswa yang belum absen
+                                    $kelas_unik = [];
+                                    if (!empty($belum_absen)) {
+                                        foreach ($belum_absen as $s) {
+                                            $nama_k = $s->nama_kelas ?? '-';
+                                            if (!in_array($nama_k, $kelas_unik)) {
+                                                $kelas_unik[] = $nama_k;
+                                            }
+                                        }
+                                        sort($kelas_unik);
+                                    }
+                                    ?>
+
+                                    <!-- Area Kolom Pencarian & Filter Kelas -->
+                                    <div class="row mb-3">
+                                        <div class="col-md-7 mb-2">
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-light"><i class="fas fa-search"></i></span>
+                                                <input type="text" id="cari_siswa_belum_absen" class="form-control" placeholder="Cari Nama atau NISN...">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-5 mb-2">
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-light"><i class="fas fa-filter"></i></span>
+                                                <select id="filter_kelas_belum_absen" class="form-control">
+                                                    <option value="">-- Semua Kelas --</option>
+                                                    <?php foreach ($kelas_unik as $kls) : ?>
+                                                        <option value="<?= $kls ?>"><?= $kls ?></option>
+                                                    <?php endforeach; ?>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div style="overflow-x: auto; max-height: 350px; overflow-y: scroll;">
+                                        <table class="table table-bordered table-hover table-striped text-center align-middle" id="tabel_belum_absen">
+                                            <thead class="table-light" style="position: sticky; top: 0; z-index: 1;">
+                                                <tr>
+                                                    <th width="5%">No</th>
+                                                    <th width="20%">NISN</th>
+                                                    <th>Nama Siswa</th>
+                                                    <th width="20%">Kelas</th>
+                                                    <th width="15%">Aksi</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <?php if (!empty($belum_absen)) : ?>
+                                                    <?php $no = 1;
+                                                    foreach ($belum_absen as $siswa) : ?>
+                                                        <!-- Tambahkan class baris-siswa untuk target filter js -->
+                                                        <tr class="baris-siswa">
+                                                            <td><?= $no++ ?></td>
+                                                            <td class="nisn-siswa"><?= $siswa->nisn ?></td>
+                                                            <td class="text-start nama-siswa"><?= $siswa->nama_siswa ?></td>
+                                                            <td class="kelas-siswa"><?= $siswa->nama_kelas ?? '-' ?></td>
+                                                            <td>
+                                                                <button type="button" class="btn btn-sm btn-primary btn-pilih-nisn" data-nisn="<?= $siswa->nisn ?>">
+                                                                    <i class="fas fa-hand-pointer"></i> Pilih
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    <?php endforeach; ?>
+                                                <?php else : ?>
+                                                    <tr>
+                                                        <td colspan="5" class="text-center text-success fw-bold">
+                                                            Alhamdulillah, semua siswa sudah absen hari ini!
+                                                        </td>
+                                                    </tr>
+                                                <?php endif; ?>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div> <!-- Akhir Sub-Baris Bawah -->
+
+                </div> <!-- AKHIR SISI KIRI -->
+
+
+                <!-- ============================================== -->
+                <!-- SISI KANAN (RIWAYAT DATA ABSEN HARI INI)     -->
+                <!-- ============================================== -->
                 <div class="col-xl-5">
-                    <div class="panel panel-inverse">
+                    <div class="panel panel-inverse h-100">
                         <div class="panel-heading">
                             <h1 class="panel-title"><span><b>DATA ABSEN</b></span><span style="color: orange;"> HARI INI</span></h1>
                         </div>
@@ -168,8 +269,7 @@
                                     </thead>
                                     <tbody id="list_data_absen">
                                         <?php
-                                        // Render awal data absen saat halaman dimuat
-                                        $db = \Config\Database::connect(); // <--- TAMBAHKAN BARIS INI
+                                        $db = \Config\Database::connect();
                                         $str = '';
                                         foreach ($dataabsen as $absen) {
                                             $getdatauser = $db->table('user')->where('user_id', $absen->user_id)->get()->getRow();
@@ -209,9 +309,9 @@
                             </div>
                         </div>
                     </div>
-                </div>
+                </div> <!-- AKHIR SISI KANAN -->
 
-            </div>
+            </div> <!-- Akhir Baris Utama -->
         </div>
     </div>
 
@@ -384,6 +484,47 @@
             });
 
             // jalankanAntreanWA();
+
+            // Trigger ketika tombol Pilih di tabel Belum Absen diklik
+            $('.btn-pilih-nisn').on('click', function() {
+                var nisn = $(this).data('nisn'); // Ambil NISN dari tombol
+
+                // Isi inputan dan langsung eksekusi absen
+                $('#hasil_scanan').val(nisn);
+                processAbsensi(nisn);
+
+                // Hilangkan baris siswa ini dari tabel secara halus (visual saja)
+                $(this).closest('tr').fadeOut('fast');
+
+                // RESET INPUT PENCARIAN & FILTER KELAS
+                $('#cari_siswa_belum_absen').val('');
+                $('#filter_kelas_belum_absen').val('');
+
+                // Picu ulang event untuk mengembalikan tabel ke kondisi awal (tampil semua)
+                $('#cari_siswa_belum_absen').trigger('keyup');
+            });
+
+            // Filter Pencarian & Kelas secara Real-Time (Client-Side)
+            $('#cari_siswa_belum_absen, #filter_kelas_belum_absen').on('keyup change', function() {
+                var keyword = $('#cari_siswa_belum_absen').val().toLowerCase();
+                var kelasFilter = $('#filter_kelas_belum_absen').val().toLowerCase();
+
+                $('#tabel_belum_absen tbody tr.baris-siswa').each(function() {
+                    var nisn = $(this).find('.nisn-siswa').text().toLowerCase();
+                    var nama = $(this).find('.nama-siswa').text().toLowerCase();
+                    var kelas = $(this).find('.kelas-siswa').text().toLowerCase();
+
+                    // Cek apakah data cocok dengan teks pencarian DAN filter kelas
+                    var matchKeyword = (nisn.indexOf(keyword) > -1 || nama.indexOf(keyword) > -1);
+                    var matchKelas = (kelasFilter === "" || kelas === kelasFilter);
+
+                    if (matchKeyword && matchKelas) {
+                        $(this).show();
+                    } else {
+                        $(this).hide();
+                    }
+                });
+            });
 
         });
     </script>
