@@ -216,3 +216,9 @@ $routes->get('user/update/(:segment)', 'User::update/$1');
 $routes->post('user/update_action', 'User::update_action');
 $routes->get('user/delete/(:segment)', 'User::delete/$1');
 $routes->get('user/read/(:segment)', 'User::read/$1');
+
+// Rute untuk pengujian manual via Browser (Laragon)
+$routes->get('cron_wa/process', 'Cron_wa::process');
+
+// Rute untuk eksekusi via Terminal / Cronjob (cPanel produksi)
+$routes->cli('cron_wa/process', 'Cron_wa::process');

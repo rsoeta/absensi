@@ -8,8 +8,14 @@ class Cron_wa extends BaseController
     {
         $db = \Config\Database::connect();
 
-        // Ganti dengan token Fonnte Anda yang sebenarnya
-        $token_fonnte = "TOKEN_FONNTE_KANG_RIAN_DISINI";
+        // Mengambil token Fonnte dinamis dari database app_setting
+        $setting = $db->table('app_setting')->where('id', 1)->get()->getRow();
+        $token_fonnte = $setting ? $setting->token_fonnte : '';
+
+        // Cegah eksekusi jika token kosong
+        if (empty($token_fonnte)) {
+            return "Gagal: Token Fonnte belum dikonfigurasi di pengaturan aplikasi.";
+        }
 
         // Ambil maksimal 10 pesan yang masih mengantre
         $antrean = $db->table('tabel_antrean_wa')->where('status', 'pending')->limit(10)->get()->getResult();
