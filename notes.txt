@@ -1,0 +1,10 @@
+Cron_wa
+
+CREATE TABLE `tabel_antrean_wa` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `no_hp` varchar(20) NOT NULL,
+  `pesan` text NOT NULL,
+  `status` enum('pending','terkirim','gagal') DEFAULT 'pending',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+);

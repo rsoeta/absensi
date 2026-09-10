@@ -249,9 +249,11 @@ class Absensi extends BaseController
                                 $pesan_wa = str_replace('[jam_absen]', date('H:i'), $pesan_wa);
                                 $pesan_wa = str_replace('[status_absen]', 'Tepat Waktu', $pesan_wa);
 
-                                $this->db->table('notif')->insert([
+                                $this->db->table('tabel_antrean_wa')->insert([
                                     'no_hp' => $siswa->no_hp_wali_siswa,
-                                    'pesan' => $pesan_wa
+                                    'pesan' => $pesan_wa,
+                                    'status' => 'pending',
+                                    'created_at' => date('Y-m-d H:i:s')
                                 ]);
                             }
                         }

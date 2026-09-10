@@ -383,7 +383,7 @@
                 }
             });
 
-            jalankanAntreanWA();
+            // jalankanAntreanWA();
 
         });
     </script>
