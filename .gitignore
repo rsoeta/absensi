@@ -133,3 +133,9 @@ temp_doc/*
 writable/cache/*
 writable/logs/*
 writable/session/*
+
+# Abaikan file upload dinamis di server
+public/assets/audio/*
+public/assets/img/izin/*
+public/temp_doc/*
+error_log
