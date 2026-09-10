@@ -126,6 +126,50 @@ class Absensi extends BaseController
         }
     }
 
+    // public function show_latest_absen()
+    // {
+    //     $data = $this->db->table('absen')->where('tanggal', date('Y-m-d'))->orderBy('absen_id', 'DESC')->get()->getResult();
+    //     $str = '';
+
+    //     foreach ($data as $absen) {
+    //         $user = $this->db->table('user')->where('user_id', $absen->user_id)->get()->getRow();
+    //         $name = 'null';
+    //         $level = 'null';
+
+    //         if ($user) {
+    //             if ($user->level_id == 1) {
+    //                 $name = 'Admin Aplikasi';
+    //                 $level = 'Admin Aplikasi';
+    //             } elseif ($user->level_id == 2) {
+    //                 $guru = $this->db->table('guru')->where('nip', $user->username)->get()->getRow();
+    //                 $name = $guru ? $guru->nama_guru : 'Unknown';
+    //                 $level = 'Guru';
+    //             } elseif ($user->level_id == 3) {
+    //                 $pegawai = $this->db->table('pegawai')->where('nip', $user->username)->get()->getRow();
+    //                 $name = $pegawai ? $pegawai->nama_pegawai : 'Unknown';
+    //                 $level = 'Pegawai';
+    //             } elseif ($user->level_id == 4) {
+    //                 $siswa = $this->db->table('siswa')->where('nisn', $user->username)->get()->getRow();
+    //                 $name = $siswa ? $siswa->nama_siswa : 'Unknown';
+    //                 $level = 'Murid';
+    //             }
+    //         }
+
+    //         $sts_m = ($absen->status_masuk == 'Terlambat') ? '<i class="fas fa-exclamation-circle" style="color: #ff3502;"></i>' : '<i class="fas fa-check-circle" style="color: #04c142;"></i>';
+    //         $sts_k = ($absen->status_pulang == 'Terlambat') ? '<i class="fas fa-exclamation-circle" style="color: #ff3502;"></i>' : (($absen->status_pulang == 'Tepat Waktu') ? '<i class="fas fa-check-circle" style="color: #04c142;"></i>' : '');
+
+    //         $str .= '<tr>
+    //                     <td>' . $name . '</td>
+    //                     <td>' . $level . '</td>
+    //                     <td>' . $absen->tanggal . '</td>
+    //                     <td>' . $absen->keterangan . '</td>
+    //                     <td>' . $absen->jam_masuk . ' <span>' . $sts_m . '</span></td>
+    //                     <td>' . $absen->jam_pulang . ' <span>' . $sts_k . '</span></td>
+    //                 </tr>';
+    //     }
+    //     return $str;
+    // }
+
     public function show_latest_absen()
     {
         $data = $this->db->table('absen')->where('tanggal', date('Y-m-d'))->orderBy('absen_id', 'DESC')->get()->getResult();
@@ -133,10 +177,13 @@ class Absensi extends BaseController
 
         foreach ($data as $absen) {
             $user = $this->db->table('user')->where('user_id', $absen->user_id)->get()->getRow();
+            $nisn_nip = '-';
             $name = 'null';
             $level = 'null';
 
             if ($user) {
+                $nisn_nip = $user->username; // Ekstrak NISN/NIP
+
                 if ($user->level_id == 1) {
                     $name = 'Admin Aplikasi';
                     $level = 'Admin Aplikasi';
@@ -158,7 +205,9 @@ class Absensi extends BaseController
             $sts_m = ($absen->status_masuk == 'Terlambat') ? '<i class="fas fa-exclamation-circle" style="color: #ff3502;"></i>' : '<i class="fas fa-check-circle" style="color: #04c142;"></i>';
             $sts_k = ($absen->status_pulang == 'Terlambat') ? '<i class="fas fa-exclamation-circle" style="color: #ff3502;"></i>' : (($absen->status_pulang == 'Tepat Waktu') ? '<i class="fas fa-check-circle" style="color: #04c142;"></i>' : '');
 
+            // Sisipkan kolom NISN/NIP di urutan pertama
             $str .= '<tr>
+                        <td>' . $nisn_nip . '</td>
                         <td>' . $name . '</td>
                         <td>' . $level . '</td>
                         <td>' . $absen->tanggal . '</td>
