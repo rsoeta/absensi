@@ -1,4 +1,4 @@
 ---
 deployment:
   tasks:
-    - echo "Auto-deploy cPanel berhasil dieksekusi"
+    - /bin/echo "Auto-deploy Webhook berhasil dieksekusi!"
