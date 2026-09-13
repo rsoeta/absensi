@@ -8,3 +8,6 @@ CREATE TABLE `tabel_antrean_wa` (
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 );
+
+ALTER TABLE `app_setting` 
+ADD COLUMN `tema_aplikasi` VARCHAR(50) NOT NULL DEFAULT 'default' AFTER `wa_blast`;

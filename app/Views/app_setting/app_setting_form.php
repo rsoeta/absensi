@@ -66,14 +66,24 @@
                                 </td>
                             </tr>
                             <tr>
+                                <td width='200'>Tema Tampilan Aplikasi</td>
+                                <td>
+                                    <!-- Kita gunakan operator ?? sebagai fallback jika variabel belum terkirim -->
+                                    <?php $tema_aktif = $tema_aplikasi ?? 'default'; ?>
+                                    <select name="tema_aplikasi" id="tema_aplikasi" class="form-control">
+                                        <option value="default" <?= ($tema_aktif == 'default') ? 'selected' : '' ?>>Dark (Bawaan)</option>
+                                        <option value="muhammadiyah" <?= ($tema_aktif == 'muhammadiyah') ? 'selected' : '' ?>>Tema Muhammadiyah (Biru & Kuning)</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
                                 <td></td>
                                 <td>
                                     <input type="hidden" name="id" value="<?= $id; ?>" />
                                     <button type="submit" class="btn btn-danger"><i class="fas fa-save"></i> <?= $button ?></button>
                                 </td>
                             </tr>
-                        </thead>
-                    </table>
+                    </table> <!-- Pastikan kode di atas berada SEBELUM tag </table> dan </form> ini -->
                 </form>
             </div>
         </div>

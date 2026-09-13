@@ -1,128 +1,112 @@
+<?= $this->extend('layout/template') ?>
+<?= $this->section('content') ?>
+
+<?php $db = \Config\Database::connect(); ?>
 <div id="content" class="app-content">
-	<div class="col-xl-12 ui-sortable">
-		<div class="panel panel-inverse" data-sortable-id="form-stuff-1" style="" data-init="true">
+	<div class="panel panel-inverse">
+		<div class="panel-heading">
+			<h4 class="panel-title">REKAP ABSEN SISWA PEMINATAN</h4>
+		</div>
+		<div class="panel-body bg-white text-dark">
+			<form action="<?= base_url('absen_mapel_peminatan/laporan_mapel/' . $mapel_peminatan_id) ?>" method="GET" target="_blank" class="mb-4">
+				<button type="submit" class="btn btn-danger"><i class="fa fa-print"></i> Cetak PDF</button>
+			</form>
 
-			<div class="panel-heading ui-sortable-handle">
-				<h4 class="panel-title">REKAP ABSEN SISWA</h4>
-				<div class="panel-heading-btn">
-					<a href="javascript:;" class="btn btn-xs btn-icon btn-default" data-toggle="panel-expand" data-bs-original-title="" title="" data-tooltip-init="true"><i class="fa fa-expand"></i></a>
-					<a href="javascript:;" class="btn btn-xs btn-icon btn-success" data-toggle="panel-reload"><i class="fa fa-redo"></i></a>
-					<a href="javascript:;" class="btn btn-xs btn-icon btn-warning" data-toggle="panel-collapse"><i class="fa fa-minus"></i></a>
-					<a href="javascript:;" class="btn btn-xs btn-icon btn-danger" data-toggle="panel-remove"><i class="fa fa-times"></i></a>
+			<div class="text-center">
+				<img style="width: 100px;" src="<?= base_url('assets/img/logo/' . $sett_apps->logo_sekolah) ?>">
+				<div style="padding: 0 150px;">
+					<h3 class="mb-1"><?= $sett_apps->nama_sekolah ?></h3>
+					<p class="mt-0"><?= $sett_apps->alamat_sekolah ?></p>
 				</div>
-			</div>
-			<div class="panel-body">
+				<hr style="border-top: 2px solid #000;">
 
-				<form action="<?= base_url() ?>absen_mapel_peminatan/laporan_mapel/<?= $mapel_peminatan_id ?>" method="GET" target="_blank">
-					<button type="submit" class="btn btn-danger"><i class="fa fa-print"></i> Cetak</button>
-				</form>
+				<?php
+				$mapelPeminatan = $db->query("SELECT * FROM mapel_peminatan
+                    JOIN guru ON guru.guru_id = mapel_peminatan.guru_id
+                    WHERE id = ?", [$mapel_peminatan_id])->getRow();
+				?>
 
-				<body style="min-height: 1100px;">
-					<div class="text-center">
+				<h4 class="my-4">Laporan Absen Mapel Peminatan <?= $mapelPeminatan->nama_mapel_peminatan ?>, Pengajar <?= $mapelPeminatan->nama_guru ?></h4>
 
-						<img style="width: 100px;" src="<?= base_url('assets/img/logo/' . $sett_apps->logo_sekolah) ?>"></img>
-						<div style="padding-left:150px;padding-right:150px">
-							<h3><?= $sett_apps->nama_sekolah  ?></h3>
-							<p><?= $sett_apps->alamat_sekolah ?></p>
-						</div>
-						<hr style="border-top: 2px solid #000">
-						<?php $mapelPeminatan = $this->db->query("SELECT * from 
-						mapel_peminatan
-						join guru on guru.guru_id=mapel_peminatan.guru_id
-						where id=$mapel_peminatan_id")->row();
-						?>
-
-						<h3>Laporan Absen Mapel Peminatan <?= $mapelPeminatan->nama_mapel_peminatan ?>, Pengajar <?= $mapelPeminatan->nama_guru ?></h3>
-						<div style="padding-left: 50px; padding-top:30px; padding-bottom:30px;">
-							<table class="table table-bordered table-sm">
-								<thead>
-									<?php $tanggal =  $this->db->query("SELECT * from absen_mapel_peminatan where mapel_peminatan_id=$mapel_peminatan_id GROUP BY tanggal");
-									$tanggalData = $tanggal->result();
-									$jml = $tanggal->num_rows();
-
-									?>
-									<tr>
-										<th rowspan="2" style="vertical-align: middle;">NO</th>
-										<th rowspan="2" style="vertical-align: middle;">Nama siswa</th>
-										<th colspan="<?= $jml ?>" style="vertical-align: middle;">Tanggal Pertemuan</th>
-										<th colspan="5" style="vertical-align: middle;">Keterangan</th>
-									</tr>
-									<tr>
-
-										<?php $tgl = array(); ?>
-										<?php foreach ($tanggalData as $value) { ?>
-											<?php array_push($tgl, $value->tanggal); ?>
-											<td style="width: 2%;"><?= date('Y-m-d', strtotime($value->tanggal)) ?></td>
-										<?php }  ?>
-										<td style="width: 2%;">H</td>
-										<td style="width: 2%;">A</td>
-										<td style="width: 2%;">I</td>
-										<td style="width: 2%;">S</td>
-										<td style="width: 2%;">B</td>
-									</tr>
-								</thead>
-								<tbody>
-									<?php $no = 1;
-									foreach ($siswa as $value) { ?>
-										<tr>
-											<td><?= $no++ ?></td>
-											<td><?= $value->nama_siswa ?></td>
-											<?php
-											for ($x = 0; $x < $jml; $x++) { ?>
-												<?= cek_absen_mapel_peminatan($mapel_peminatan_id, $value->siswa_id, $tgl[$x]) ?>
-											<?php } ?>
-											<td><?= cek_hadir_mapel_peminatan($mapel_peminatan_id, $value->siswa_id) ?></td>
-											<td><?= cek_alpha_mapel_peminatan($mapel_peminatan_id, $value->siswa_id) ?></td>
-											<td><?= cek_ijin_mapel_peminatan($mapel_peminatan_id, $value->siswa_id) ?></td>
-											<td><?= cek_sakit_mapel_peminatan($mapel_peminatan_id, $value->siswa_id) ?></td>
-											<td><?= cek_bolos_mapel_peminatan($mapel_peminatan_id, $value->siswa_id) ?></td>
-
-										</tr>
-									<?php } ?>
-
-								</tbody>
-							</table>
-							<table class="table table-bordered table-sm" style="width: 30%;">
+				<div class="table-responsive px-4">
+					<table class="table table-bordered table-sm text-dark align-middle border-dark">
+						<thead class="bg-light">
+							<?php
+							$tanggalData = $db->query("SELECT * FROM absen_mapel_peminatan WHERE mapel_peminatan_id = ? GROUP BY tanggal ORDER BY tanggal ASC", [$mapel_peminatan_id])->getResult();
+							$jml = count($tanggalData);
+							?>
+							<tr>
+								<th rowspan="2" class="text-center align-middle" style="width: 3%;">NO</th>
+								<th rowspan="2" class="text-center align-middle" style="width: 20%;">Nama Siswa</th>
+								<?php if ($jml > 0): ?>
+									<th colspan="<?= $jml ?>" class="text-center align-middle">Tanggal Pertemuan</th>
+								<?php endif; ?>
+								<th colspan="5" class="text-center align-middle">Total Keterangan</th>
+							</tr>
+							<tr>
+								<?php $tgl = []; ?>
+								<?php foreach ($tanggalData as $value) : ?>
+									<?php $tgl[] = $value->tanggal; ?>
+									<td class="text-center fw-bold" style="width: 3%;"><?= date('d/m', strtotime($value->tanggal)) ?></td>
+								<?php endforeach; ?>
+								<td class="text-center fw-bold" style="width: 3%;">H</td>
+								<td class="text-center fw-bold" style="width: 3%;">A</td>
+								<td class="text-center fw-bold" style="width: 3%;">I</td>
+								<td class="text-center fw-bold" style="width: 3%;">S</td>
+								<td class="text-center fw-bold" style="width: 3%;">B</td>
+							</tr>
+						</thead>
+						<tbody>
+							<?php $no = 1;
+							foreach ($siswa as $value) : ?>
 								<tr>
-									<th class="table-warning">Kode</th>
-									<th class="table-warning">Keterangan</th>
-								</tr>
-								<tr>
-									<td>H</td>
-									<td>Hadir</td>
-								</tr>
+									<td class="text-center"><?= $no++ ?></td>
+									<td><?= $value->nama_siswa ?></td>
 
-								<tr>
-									<td>A</td>
-									<td>Alpha</td>
-								</tr>
-								<tr>
-									<td>I</td>
-									<td>Izin</td>
-								</tr>
-								<tr>
-									<td>S</td>
-									<td>Sakit</td>
-								</tr>
-								<tr>
-									<td>B</td>
-									<td>Bolos</td>
-								</tr>
+									<?php for ($x = 0; $x < $jml; $x++) : ?>
+										<?= cek_absen_mapel_peminatan($mapel_peminatan_id, $value->siswa_id, $tgl[$x]) ?>
+									<?php endfor; ?>
 
-							</table>
-						</div>
+									<td class="text-center"><?= cek_hadir_mapel_peminatan($mapel_peminatan_id, $value->siswa_id) ?></td>
+									<td class="text-center"><?= cek_alpha_mapel_peminatan($mapel_peminatan_id, $value->siswa_id) ?></td>
+									<td class="text-center"><?= cek_ijin_mapel_peminatan($mapel_peminatan_id, $value->siswa_id) ?></td>
+									<td class="text-center"><?= cek_sakit_mapel_peminatan($mapel_peminatan_id, $value->siswa_id) ?></td>
+									<td class="text-center"><?= cek_bolos_mapel_peminatan($mapel_peminatan_id, $value->siswa_id) ?></td>
+								</tr>
+							<?php endforeach; ?>
+						</tbody>
+					</table>
 
-					</div>
-				</body>
-
+					<table class="table table-bordered table-sm mt-4 text-dark border-dark" style="width: 250px;">
+						<tr class="table-warning">
+							<th class="text-center">Kode</th>
+							<th>Keterangan</th>
+						</tr>
+						<tr>
+							<td class="text-center fw-bold">H</td>
+							<td>Hadir</td>
+						</tr>
+						<tr>
+							<td class="text-center fw-bold">A</td>
+							<td>Alpha</td>
+						</tr>
+						<tr>
+							<td class="text-center fw-bold">I</td>
+							<td>Izin</td>
+						</tr>
+						<tr>
+							<td class="text-center fw-bold">S</td>
+							<td>Sakit</td>
+						</tr>
+						<tr>
+							<td class="text-center fw-bold">B</td>
+							<td>Bolos</td>
+						</tr>
+					</table>
+				</div>
 			</div>
 		</div>
 	</div>
 </div>
 
-<script>
-	$(document).on('click', '.plsholder', function() {
-		var dtl = $(this).data('detail')
-		alert(dtl)
-	})
-</script>
+<?= $this->endSection() ?>

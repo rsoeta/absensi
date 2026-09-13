@@ -38,7 +38,7 @@ abstract class BaseController extends Controller
         $this->session = \Config\Services::session();
 
         // Tambahkan 'custom' di dalam array helper ini
-        helper(['url', 'form', 'text', 'custom']);
+        helper(['url', 'form', 'text', 'custom', 'fungsi']);
     }
 
     /**

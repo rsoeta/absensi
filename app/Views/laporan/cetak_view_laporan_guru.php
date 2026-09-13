@@ -22,7 +22,7 @@
     </style>
 </head>
 
-<body style="min-height: 1100px; margin: none; padding: none; width: 100%;">
+<body style="min-height: 1100px;padding: none; margin: none;">
     <div class="text-center" style="text-align: center;">
 
         <img style="width: 100px;" src="<?= base_url('assets/img/logo/' . $sett_apps->logo_sekolah) ?>"></img>
@@ -45,7 +45,6 @@
             <?php
             $kalender = CAL_GREGORIAN;
             $hari = cal_days_in_month($kalender, $bulan, $tahun);
-
             $url = 'https://api-harilibur.vercel.app/api?month=' . $bulan . '&year=' . $tahun;
             $content = file_get_contents($url);
             $result_holdaydate  = json_decode($content);
@@ -53,7 +52,7 @@
             <table class="table table-bordered table-sm">
                 <thead>
                     <tr>
-                        <th rowspan="2" style="vertical-align: middle;">Nama Guru</th>
+                        <th rowspan="2" style="vertical-align: middle;">Nama guru</th>
                         <th colspan="<?= $hari ?>">Tanggal</th>
                         <th colspan="6">Keterangan</th>
                     </tr>
@@ -72,7 +71,8 @@
                 </thead>
                 <tbody>
                     <?php if ($user_id == 'semua_data') {
-                        $query = $this->db->query("SELECT * from user where level_id='2'");
+                        $kelas_id = $this->uri->segment(3);
+                        $query = $this->db->query("SELECT user.*,siswa.kelas_id from user join siswa on siswa.nisn=user.username where level_id='4' and kelas_id='$kelas_id'");
                         foreach ($query->result() as $data) { ?>
                             <tr>
                                 <td><?php echo nama_guru($data->user_id)  ?></td>
@@ -100,7 +100,7 @@
                             <td><?= cek_izin($user_id, $hari, $bulan, $tahun) ?></td>
                             <td><?= cek_hadir_tepat($user_id, $hari, $bulan, $tahun) ?></td>
                             <td><?= cek_terlambat($user_id, $hari, $bulan, $tahun) ?></td>
-                            <td><?= cek_bolos($user_id, $hari, $bulan, $tahun) ?></td>
+                            <td><?= cek_bolos($data->user_id, $hari, $bulan, $tahun) ?></td>
                         </tr>
                     <?php } ?>
                 </tbody>

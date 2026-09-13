@@ -31,6 +31,7 @@ class App_setting extends BaseController
                 'nama_aplikasi'     => $row->nama_aplikasi ?? '',
                 'kepala_sekolah'    => $row->kepala_sekolah ?? '',
                 'nama_sekolah'      => $row->nama_sekolah ?? '',
+                'tema_aplikasi'     => $row->tema_aplikasi ?? 'default',
                 'alamat_sekolah'    => $row->alamat_sekolah ?? '',
                 'logo_sekolah'      => $row->logo_sekolah ?? '',
                 'wa_blast'          => $row->wa_blast ?? '',
@@ -98,6 +99,7 @@ class App_setting extends BaseController
             'wa_blast'          => $this->request->getPost('wa_blast'),
             'token_fonnte'      => $this->request->getPost('token_fonnte'),
             'template_notif_wa' => $this->request->getPost('template_notif_wa'),
+            'tema_aplikasi'     => $this->request->getPost('tema_aplikasi')
         ];
 
         $this->db->table('app_setting')->where('id', $id)->update($data);

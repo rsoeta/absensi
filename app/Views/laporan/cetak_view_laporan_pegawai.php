@@ -22,7 +22,7 @@
     </style>
 </head>
 
-<body style="min-height: 1100px; padding: none; margin: none;">
+<body style="min-height: 1100px;padding: none; margin: none;">
     <div class="text-center" style="text-align: center;">
 
         <img style="width: 100px;" src="<?= base_url('assets/img/logo/' . $sett_apps->logo_sekolah) ?>"></img>
@@ -45,7 +45,6 @@
             <?php
             $kalender = CAL_GREGORIAN;
             $hari = cal_days_in_month($kalender, $bulan, $tahun);
-
             $url = 'https://api-harilibur.vercel.app/api?month=' . $bulan . '&year=' . $tahun;
             $content = file_get_contents($url);
             $result_holdaydate  = json_decode($content);
@@ -53,9 +52,9 @@
             <table class="table table-bordered table-sm">
                 <thead>
                     <tr>
-                        <th rowspan="2" style="vertical-align: middle;">Nama pegawai</th>
+                        <th rowspan="2" style="vertical-align: middle;">Nama Pegawai</th>
                         <th colspan="<?= $hari ?>">Tanggal</th>
-                        <th colspan="5">Keterangan</th>
+                        <th colspan="6">Keterangan</th>
                     </tr>
                     <tr>
                         <?php
@@ -67,11 +66,13 @@
                         <td style="width: 2%;">I</td>
                         <td style="width: 2%;">✓</td>
                         <td style="background-color: grey;width: 2%;">✓</td>
+                        <td style="background-color: #5353ec;width: 2%;">B</td>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if ($user_id == 'semua_data') {
-                        $query = $this->db->query("SELECT * from user where level_id='3'");
+                        $kelas_id = $this->uri->segment(3);
+                        $query = $this->db->query("SELECT user.*,siswa.kelas_id from user join siswa on siswa.nisn=user.username where level_id='4' and kelas_id='$kelas_id'");
                         foreach ($query->result() as $data) { ?>
                             <tr>
                                 <td><?php echo nama_pegawai($data->user_id)  ?></td>
@@ -84,6 +85,7 @@
                                 <td><?= cek_izin($data->user_id, $hari, $bulan, $tahun) ?></td>
                                 <td><?= cek_hadir_tepat($data->user_id, $hari, $bulan, $tahun) ?></td>
                                 <td><?= cek_terlambat($data->user_id, $hari, $bulan, $tahun) ?></td>
+                                <td><?= cek_bolos($data->user_id, $hari, $bulan, $tahun) ?></td>
                             </tr>
                         <?php } ?>
                     <?php } else { ?>
@@ -98,11 +100,12 @@
                             <td><?= cek_izin($user_id, $hari, $bulan, $tahun) ?></td>
                             <td><?= cek_hadir_tepat($user_id, $hari, $bulan, $tahun) ?></td>
                             <td><?= cek_terlambat($user_id, $hari, $bulan, $tahun) ?></td>
+                            <td><?= cek_bolos($data->user_id, $hari, $bulan, $tahun) ?></td>
                         </tr>
                     <?php } ?>
                 </tbody>
             </table>
-            <table class="table table-bordered table-sm" style="width: 30%;font-size: 12px; margin-top: 1rem;">
+            <table class="table table-bordered table-sm" style="width: 30%; font-size: 12px; margin-top: 1rem;">
                 <tr>
                     <th class="table-warning">Kode</th>
                     <th class="table-warning">Keterangan</th>
@@ -127,6 +130,10 @@
                 <tr>
                     <td style="background-color: grey;">✓</td>
                     <td>Hadir Terlambat</td>
+                </tr>
+                <tr>
+                    <td style="background-color: #5353ec;">B</td>
+                    <td>Bolos/Masuk Tidak Absen Pulang</td>
                 </tr>
                 <tr>
                     <td style="background-color: yellow;"></td>

@@ -12,6 +12,138 @@
         <link rel="icon" type="image/png" href="<?= base_url('assets/img/logo/default.png') ?>">
     <?php endif; ?>
 
+    <!-- CUSTOM THEME OVERRIDES -->
+    <style>
+        <?php if (isset($sett_apps) && $sett_apps->tema_aplikasi == 'muhammadiyah') : ?>
+        /* TEMA MUHAMMADIYAH (CERAH DENGAN BACKGROUND SIRKUIT) */
+
+        /* 1. Aktifkan Cover dan Panggil Gambar Background Baru */
+        .app-cover {
+            display: block !important;
+            background-image: url('<?= base_url('assets/css/transparent/images/circuit-network-abstract-shape-diagonal-shinny-background_1409-1847.avif') ?>') !important;
+            background-size: cover !important;
+            background-position: center !important;
+            background-attachment: fixed !important;
+        }
+
+        /* 2. Beri Overlay Putih Transparan (85%) agar teks tetap terbaca */
+        .app-cover:before {
+            display: block !important;
+            background: rgba(255, 255, 255, 0.85) !important;
+        }
+
+        /* 3. Body harus transparan agar .app-cover di bawahnya terlihat */
+        body {
+            background-color: transparent !important;
+        }
+
+        /* 4. Sidebar Menu & Header Atas (Biru Gelap Muhammadiyah) */
+        .app-sidebar,
+        .app-sidebar-bg {
+            background-color: rgba(11, 40, 90, 0.95) !important;
+        }
+
+        .app-header {
+            background-color: rgba(18, 62, 135, 0.95) !important;
+        }
+
+        .app-header .navbar-brand,
+        .app-header .navbar-nav>.nav-item>.nav-link {
+            color: #ffffff !important;
+        }
+
+        /* 5. Teks Menu Sidebar yang Aktif (Kuning) */
+        .app-sidebar .menu .menu-item.active>.menu-link {
+            color: #ffd500 !important;
+            font-weight: bold;
+            border-left: 4px solid #ffd500;
+            background: rgba(255, 255, 255, 0.1) !important;
+        }
+
+        /* 6. Panel Bawaan (Mengubah Header Panel Inverse jadi Biru & Kuning) */
+        .panel-inverse>.panel-heading {
+            background: #123e87 !important;
+            color: #ffffff !important;
+            border-bottom: 3px solid #ffd500 !important;
+        }
+
+        /* 7. Ubah Background Panel agar putih semi-transparan (tidak hitam) */
+        .panel {
+            background: rgba(255, 255, 255, 0.95) !important;
+            border: 1px solid #ddd;
+        }
+
+        /* 8. Warna Tombol Utama (Biru) dan Tombol Warning (Kuning) */
+        .btn-primary {
+            background-color: #123e87 !important;
+            border-color: #123e87 !important;
+            color: #ffffff !important;
+        }
+
+        .btn-primary:hover {
+            background-color: #0b285a !important;
+        }
+
+        .btn-warning {
+            background-color: #ffd500 !important;
+            border-color: #ffd500 !important;
+            color: #000 !important;
+        }
+
+        /* 9. Teks Judul Halaman (Biru) */
+        .page-header {
+            color: #123e87 !important;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        /* ========================================================
+           10. MEMPERBAIKI TEKS TABEL & DATATABLES YANG MENGHILANG 
+           ======================================================== */
+        .app-content,
+        .panel-body,
+        .widget-chart-info,
+        .text-white,
+        .table,
+        .table th,
+        .table td,
+        .dataTables_wrapper label,
+        .dataTables_info,
+        .dataTables_length,
+        .dataTables_filter,
+        .dataTables_paginate .paginate_button {
+            color: #333333 !important;
+            /* Paksa semua teks putih jadi gelap */
+        }
+
+        /* 11. Mempertegas Header Tabel (Biru Muhammadiyah) */
+        .table thead th {
+            background-color: #e9ecef !important;
+            color: #123e87 !important;
+            font-weight: 700 !important;
+            border-bottom: 2px solid #ccc !important;
+        }
+
+        /* 12. Memperbaiki Form Kotak Pencarian & Dropdown di DataTables */
+        .dataTables_wrapper select,
+        .dataTables_wrapper input {
+            color: #333 !important;
+            background-color: #fff !important;
+            border: 1px solid #ccc !important;
+            border-radius: 4px;
+            padding: 4px 8px;
+        }
+
+        .table-hover>tbody>tr:hover>* {
+            color: #000 !important;
+            background-color: rgba(0, 0, 0, 0.05) !important;
+        }
+
+        <?php else: ?>
+        /* TEMA DEFAULT (DARK MODE BAWAAN) */
+        <?php endif; ?>
+    </style>
+
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport" />
     <meta content="" name="description" />
     <meta content="" name="author" />

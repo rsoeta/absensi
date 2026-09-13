@@ -196,10 +196,43 @@ $routes->post('izin_sakit/update_action', 'Izin_sakit::update_action');
 
 $routes->get('rangking_absen', 'Rangking_absen::index');
 $routes->get('surat_panggilan', 'Surat_panggilan::index');
+$routes->post('surat_panggilan/cetak/(:any)', 'Surat_panggilan::cetak/$1');
+// --- ROUTING UNTUK ABSEN MAPEL ---
 $routes->get('absen_mapel', 'Absen_mapel::index');
+$routes->get('absen_mapel/create', 'Absen_mapel::create');
+$routes->get('absen_mapel/laporan', 'Absen_mapel::laporan');
+$routes->get('absen_mapel/laporan_siswa', 'Absen_mapel::laporan_siswa');
+$routes->get('absen_mapel/laporan_mapel/(:any)', 'Absen_mapel::laporan_mapel/$1');
+$routes->get('absen_mapel/delete/(:any)/(:any)', 'Absen_mapel::delete/$1/$2');
+
+$routes->post('absen_mapel/doInput', 'Absen_mapel::doInput');
+$routes->post('absen_mapel/view_laporan', 'Absen_mapel::view_laporan');
+
+// --- ROUTING UNTUK ABSEN MAPEL PEMINATAN ---
 $routes->get('absen_mapel_peminatan', 'Absen_mapel_peminatan::index');
-$routes->get('kedisiplinan/(:any)', 'Kedisiplinan::index/$1');
-$routes->get('laporan/(:any)', 'Laporan::index/$1');
+$routes->get('absen_mapel_peminatan/create', 'Absen_mapel_peminatan::create');
+$routes->get('absen_mapel_peminatan/laporan', 'Absen_mapel_peminatan::laporan');
+$routes->get('absen_mapel_peminatan/laporan_mapel/(:any)', 'Absen_mapel_peminatan::laporan_mapel/$1');
+$routes->get('absen_mapel_peminatan/delete/(:any)/(:any)', 'Absen_mapel_peminatan::delete/$1/$2');
+
+$routes->post('absen_mapel_peminatan/create_action', 'Absen_mapel_peminatan::create_action');
+$routes->post('absen_mapel_peminatan/view_laporan', 'Absen_mapel_peminatan::view_laporan');
+
+// --- ROUTING UNTUK KEDISIPLINAN ---
+$routes->get('kedisiplinan/mapel_umum', 'Kedisiplinan::mapel_umum');
+$routes->get('kedisiplinan/mapel_peminatan', 'Kedisiplinan::mapel_peminatan');
+
+// --- ROUTING UNTUK LAPORAN ABSEN UMUM ---
+$routes->get('laporan/laporan_guru', 'Laporan::laporan_guru');
+$routes->get('laporan/laporan_pegawai', 'Laporan::laporan_pegawai');
+$routes->get('laporan/laporan_siswa', 'Laporan::laporan_siswa');
+
+$routes->post('laporan/view_laporan_guru', 'Laporan::view_laporan_guru');
+$routes->post('laporan/view_laporan_pegawai', 'Laporan::view_laporan_pegawai');
+$routes->post('laporan/view_laporan_siswa', 'Laporan::view_laporan_siswa');
+$routes->post('laporan/get_data_siswa', 'Laporan::get_data_siswa');
+
+// --- ROUTING REKAPITULASI ABSEN KELAS ---
 $routes->get('rekap_absen_kelas', 'Rekap_absen_kelas::index');
 
 // Rute CRUD Absen Entitas (Contoh dasar, bisa disesuaikan nanti dengan parameter)
