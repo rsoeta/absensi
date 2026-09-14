@@ -250,6 +250,117 @@
 		</div>
 	</div>
 </div>
-<script src="<?= base_url('assets/js/demo/dashboard-v2.js') ?>"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+	$(document).ready(function() {
+		// Memanggil API Grafik Admin
+		$.ajax({
+			url: '<?= base_url('dashboard/get_chart_admin') ?>',
+			type: 'GET',
+			dataType: 'json',
+			success: function(res) {
+
+				// 1. Render Grafik Proporsi Hari Ini (Doughnut)
+				var ctxDonut = document.getElementById('visitors-donut-chart').getContext('2d');
+				new Chart(ctxDonut, {
+					type: 'doughnut',
+					data: {
+						labels: ['Hadir', 'Sakit', 'Izin', 'Alpha'],
+						datasets: [{
+							data: res.proporsi,
+							backgroundColor: ['#00acac', '#f59c1a', '#348fe2', '#ff5b57'],
+							borderWidth: 0,
+							hoverOffset: 4
+						}]
+					},
+					options: {
+						responsive: true,
+						maintainAspectRatio: false,
+						plugins: {
+							legend: {
+								position: 'bottom',
+								labels: {
+									color: '#ffffff',
+									font: {
+										size: 11
+									}
+								}
+							}
+						},
+						cutout: '70%'
+					}
+				});
+
+				// 2. Render Grafik Trend 7 Hari (Bar Chart)
+				var ctxLine = document.getElementById('visitors-line-chart').getContext('2d');
+				new Chart(ctxLine, {
+					type: 'bar',
+					data: {
+						labels: res.trend.labels,
+						datasets: [{
+								label: 'Hadir',
+								data: res.trend.hadir,
+								backgroundColor: '#00acac',
+								borderRadius: 4
+							},
+							{
+								label: 'Sakit',
+								data: res.trend.sakit,
+								backgroundColor: '#f59c1a',
+								borderRadius: 4
+							},
+							{
+								label: 'Izin',
+								data: res.trend.izin,
+								backgroundColor: '#348fe2',
+								borderRadius: 4
+							},
+							{
+								label: 'Alpha',
+								data: res.trend.alpha,
+								backgroundColor: '#ff5b57',
+								borderRadius: 4
+							}
+						]
+					},
+					options: {
+						responsive: true,
+						maintainAspectRatio: false,
+						scales: {
+							x: {
+								ticks: {
+									color: '#ffffff'
+								},
+								grid: {
+									display: false
+								}
+							},
+							y: {
+								ticks: {
+									color: '#ffffff',
+									precision: 0
+								},
+								grid: {
+									color: 'rgba(255,255,255,0.1)'
+								}
+							}
+						},
+						plugins: {
+							legend: {
+								position: 'top',
+								labels: {
+									color: '#ffffff'
+								}
+							}
+						}
+					}
+				});
+			},
+			error: function(err) {
+				console.log("Gagal memuat data grafik admin.");
+			}
+		});
+	});
+</script>
 
 <?= $this->endSection() ?>

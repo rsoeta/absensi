@@ -165,4 +165,54 @@ class Dashboard extends BaseController
 
         return $this->response->setJSON($arr);
     }
+
+    // =======================================================
+    // API UNTUK GRAFIK DASHBOARD ADMIN (CHART.JS)
+    // =======================================================
+    public function get_chart_admin()
+    {
+        $hari_ini = date('Y-m-d');
+
+        // 1. Hitung Proporsi Hari Ini
+        $hadir_hari_ini = $this->db->table('absen')->where('tanggal', $hari_ini)->whereIn('status_masuk', ['Tepat Waktu', 'Terlambat'])->countAllResults();
+        $sakit_hari_ini = $this->db->table('absen')->where('tanggal', $hari_ini)->where('keterangan', 'Sakit')->countAllResults();
+        $izin_hari_ini  = $this->db->table('absen')->where('tanggal', $hari_ini)->where('keterangan', 'Izin')->countAllResults();
+
+        $total_siswa    = $this->db->table('siswa')->countAllResults();
+        $alpha_hari_ini = $total_siswa - ($hadir_hari_ini + $sakit_hari_ini + $izin_hari_ini);
+        $alpha_hari_ini = $alpha_hari_ini < 0 ? 0 : $alpha_hari_ini;
+
+        // 2. Hitung Trend 7 Hari Terakhir
+        $label_7_hari = [];
+        $data_hadir = [];
+        $data_sakit = [];
+        $data_izin = [];
+        $data_alpha = [];
+
+        for ($i = 6; $i >= 0; $i--) {
+            $tgl = date('Y-m-d', strtotime("-$i days"));
+            $label_7_hari[] = date('d M', strtotime($tgl)); // Contoh output: 15 Sep
+
+            $h = $this->db->table('absen')->where('tanggal', $tgl)->whereIn('status_masuk', ['Tepat Waktu', 'Terlambat'])->countAllResults();
+            $s = $this->db->table('absen')->where('tanggal', $tgl)->where('keterangan', 'Sakit')->countAllResults();
+            $iz = $this->db->table('absen')->where('tanggal', $tgl)->where('keterangan', 'Izin')->countAllResults();
+            $a = $total_siswa - ($h + $s + $iz);
+
+            $data_hadir[] = $h;
+            $data_sakit[] = $s;
+            $data_izin[] = $iz;
+            $data_alpha[] = $a < 0 ? 0 : $a;
+        }
+
+        return $this->response->setJSON([
+            'proporsi' => [$hadir_hari_ini, $sakit_hari_ini, $izin_hari_ini, $alpha_hari_ini],
+            'trend' => [
+                'labels' => $label_7_hari,
+                'hadir'  => $data_hadir,
+                'sakit'  => $data_sakit,
+                'izin'   => $data_izin,
+                'alpha'  => $data_alpha,
+            ]
+        ]);
+    }
 }

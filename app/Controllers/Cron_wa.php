@@ -17,8 +17,10 @@ class Cron_wa extends BaseController
             return "Gagal: Token Fonnte belum dikonfigurasi di pengaturan aplikasi.";
         }
 
-        // Ambil maksimal 10 pesan yang masih mengantre
-        $antrean = $db->table('tabel_antrean_wa')->where('status', 'pending')->limit(10)->get()->getResult();
+        // ========================================================
+        // AMBIL MAKSIMAL 5 PESAN (Ideal untuk Cronjob 1 Menit)
+        // ========================================================
+        $antrean = $db->table('tabel_antrean_wa')->where('status', 'pending')->limit(5)->get()->getResult();
 
         if (empty($antrean)) {
             return "Tidak ada antrean pesan WhatsApp.";
@@ -52,8 +54,10 @@ class Cron_wa extends BaseController
             $status_update = ($httpcode == 200) ? 'terkirim' : 'gagal';
             $db->table('tabel_antrean_wa')->where('id', $data->id)->update(['status' => $status_update]);
 
-            // JEDA ANTI-BLOKIR (Sangat Penting)
-            sleep(5);
+            // ========================================================
+            // JEDA ACAK 5 - 10 DETIK (Human Mimicry / Anti-Blokir)
+            // ========================================================
+            sleep(rand(5, 10));
         }
 
         return "Selesai memproses " . count($antrean) . " pesan.";

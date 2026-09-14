@@ -194,6 +194,130 @@
             </div>
         </div>
     </div>
+    <!-- TAMBAHKAN BLOK HTML GRAFIK INI DI BAWAH PENUTUP DIV ROW SEBELUMNYA -->
+    <div class="row mt-3">
+        <!-- Rapor Bulan Ini -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm border-0" style="border-radius: 12px;">
+                <div class="card-header bg-white" style="border-top-left-radius: 12px; border-top-right-radius: 12px;">
+                    <h5 class="mb-0 text-center" style="font-size: 1rem; font-weight: bold;"><i class="fa fa-pie-chart text-primary"></i> Rapor Kehadiran Bulan Ini</h5>
+                </div>
+                <div class="card-body" style="height: 250px; position: relative;">
+                    <canvas id="chartRaporBulan"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tren Semester -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm border-0" style="border-radius: 12px;">
+                <div class="card-header bg-white" style="border-top-left-radius: 12px; border-top-right-radius: 12px;">
+                    <h5 class="mb-0 text-center" style="font-size: 1rem; font-weight: bold;"><i class="fa fa-bar-chart text-success"></i> Tren Ketidakhadiran (6 Bulan)</h5>
+                </div>
+                <div class="card-body" style="height: 250px; position: relative;">
+                    <canvas id="chartTrenSemester"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> <!-- Ini adalah penutup dari <div id="content" class="app-content"> -->
+
+
+<!-- TAMBAHKAN SCRIPT CHART.JS INI DI BAGIAN PALING BAWAH FILE (Tepat di atas penutup </body> atau di bawah script AJAX absen Anda) -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    $(document).ready(function() {
+        // Memanggil API Grafik User
+        $.ajax({
+            url: '<?= base_url('dashboard_user/get_chart_user') ?>',
+            type: 'GET',
+            dataType: 'json',
+            success: function(res) {
+
+                // 1. Chart Rapor Bulan Ini (Doughnut)
+                var ctxRapor = document.getElementById('chartRaporBulan').getContext('2d');
+                new Chart(ctxRapor, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Hadir', 'Sakit', 'Izin', 'Alpha'],
+                        datasets: [{
+                            data: res.rapor_bulan,
+                            backgroundColor: ['#198754', '#ffc107', '#0dcaf0', '#dc3545'],
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'right',
+                                labels: {
+                                    font: {
+                                        size: 11
+                                    }
+                                }
+                            }
+                        },
+                        cutout: '65%'
+                    }
+                });
+
+                // 2. Chart Tren Semester (Bar Chart)
+                var ctxTren = document.getElementById('chartTrenSemester').getContext('2d');
+                new Chart(ctxTren, {
+                    type: 'bar',
+                    data: {
+                        labels: res.trend_semester.labels,
+                        datasets: [{
+                                label: 'Tidak Hadir (S/I/A)',
+                                data: res.trend_semester.tidak_hadir,
+                                backgroundColor: '#dc3545',
+                                borderRadius: 4
+                            },
+                            {
+                                label: 'Hadir',
+                                data: res.trend_semester.hadir,
+                                backgroundColor: '#198754',
+                                borderRadius: 4
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    precision: 0
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    font: {
+                                        size: 11
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            },
+            error: function(err) {
+                console.log("Gagal memuat data grafik user.");
+            }
+        });
+    });
+</script>
 </div>
 
 <script src="<?= base_url('assets/js/camera-capture.js') ?>"></script>
