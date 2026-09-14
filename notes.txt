@@ -9,5 +9,19 @@ CREATE TABLE `tabel_antrean_wa` (
   PRIMARY KEY (`id`)
 );
 
+--
+-- Struktur dari tabel `surat_panggilan`
+--
+
+CREATE TABLE `surat_panggilan` (
+  `id_surat_panggilan` int(11) NOT NULL,
+  `nisn` text NOT NULL,
+  `siswa_id` int(11) NOT NULL,
+  `terakhir_dipanggil` date NOT NULL,
+  `keterangan` text NOT NULL,
+  `status_sp` int(1) NOT NULL,
+  `last_updated` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 ALTER TABLE `app_setting` 
 ADD COLUMN `tema_aplikasi` VARCHAR(50) NOT NULL DEFAULT 'default' AFTER `wa_blast`;

@@ -51,6 +51,8 @@
 							</div>
 							<button type="submit" name="hapus" value="Y" class="btn btn-danger me-2" onclick="return confirm('Yakin hapus data siswa terpilih?');"><i class="fa fa-trash"></i> Hapus Terpilih</button>
 							<button type="submit" name="cetak" value="Y" class="btn btn-white" formtarget="_blank"><i class="fa fa-print"></i> Cetak Kartu</button>
+							<!-- Tombol Download Massal (Baru) -->
+							<button type="submit" name="download" value="Y" class="btn btn-success me-2" formtarget="_blank"><i class="fa fa-download"></i> Download Kartu</button>
 						</div>
 					</div>
 				</div>
@@ -81,8 +83,20 @@
 									<td><?= $no++ ?></td>
 									<td><input type="checkbox" name="update[]" value="<?= $siswa->siswa_id ?>"></td>
 									<td class="text-center">
-										<a href="<?= base_url('siswa/cetak/' . encrypt_url($siswa->siswa_id)) ?>" target="_blank" class="btn btn-white btn-sm"><i class="fas fa-print"></i></a>
-										<a href="<?= base_url('siswa/update/' . encrypt_url($siswa->siswa_id)) ?>" class="btn btn-primary btn-sm"><i class="fas fa-pencil-alt"></i></a>
+										<!-- Tombol Cetak -->
+										<a href="<?= base_url('siswa/cetak/' . encrypt_url($siswa->siswa_id)) ?>" target="_blank" class="btn btn-white btn-sm mb-1" title="Cetak Kartu">
+											<i class="fas fa-print"></i>
+										</a>
+
+										<!-- Tombol Download (Baru) -->
+										<a href="<?= base_url('siswa/download_kartu/' . encrypt_url($siswa->siswa_id)) ?>" target="_blank" class="btn btn-success btn-sm mb-1" title="Download Kartu">
+											<i class="fas fa-download"></i>
+										</a>
+
+										<!-- Tombol Edit -->
+										<a href="<?= base_url('siswa/update/' . encrypt_url($siswa->siswa_id)) ?>" class="btn btn-primary btn-sm mb-1" title="Edit Siswa">
+											<i class="fas fa-pencil-alt"></i>
+										</a>
 									</td>
 									<td>
 										<?php

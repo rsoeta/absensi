@@ -6,6 +6,13 @@
     <title><?= $sett_apps->nama_aplikasi ?></title>
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport" />
 
+    <!-- Sisipkan kode favicon dinamis di sini -->
+    <?php if (isset($sett_apps) && !empty($sett_apps->logo_sekolah)) : ?>
+        <link rel="icon" type="image/png" href="<?= base_url('assets/img/logo/' . $sett_apps->logo_sekolah) ?>">
+    <?php else : ?>
+        <link rel="icon" type="image/png" href="<?= base_url('assets/img/logo/default.png') ?>">
+    <?php endif; ?>
+
     <link href="<?= base_url('assets/css/vendor.min.css') ?>" rel="stylesheet" />
     <link href="<?= base_url('assets/css/transparent/app.min.css') ?>" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
@@ -15,6 +22,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- CUSTOM THEME OVERRIDES (EKSTERNAL) -->
+    <?php if (isset($sett_apps) && $sett_apps->tema_aplikasi == 'muhammadiyah') : ?>
+        <link rel="stylesheet" href="<?= base_url('assets/css/tema_muhammadiyah.css') ?>">
+    <?php endif; ?>
 
     <style>
         /* Optimasi SweetAlert2 khusus untuk layar Mobile */
@@ -346,8 +358,31 @@
 
         // FUNGSI INTI: Proses Absensi (Cepat & Tanpa Jeda Layar)
         function processAbsensi(kode) {
-            // Jeda kamera sejenak agar tidak double-scan QR yang sama
-            if (html5QrcodeScanner) html5QrcodeScanner.pause();
+            // Penanda apakah kamera sedang aktif dan berhasil di-pause
+            let isScannerActive = false;
+
+            // 1. Coba jeda kamera dan tampilkan efek Spinner Overlay HANYA jika kamera aktif
+            if (typeof html5QrcodeScanner !== 'undefined' && html5QrcodeScanner) {
+                try {
+                    html5QrcodeScanner.pause();
+                    isScannerActive = true; // Berhasil di-pause, berarti kamera sedang aktif
+
+                    // Tampilkan spinner di kotak kamera
+                    if ($('#scanner-spinner').length === 0) {
+                        $('#reader').css('position', 'relative').append(`
+                            <div id="scanner-spinner" style="display: flex; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.65); z-index: 999; justify-content: center; align-items: center; flex-direction: column; color: white; border-radius: inherit; backdrop-filter: blur(2px);">
+                                <div class="spinner-border text-warning" role="status" style="width: 3.5rem; height: 3.5rem; border-width: 0.3em; margin-bottom: 15px;"></div>
+                                <span style="font-weight: 600; letter-spacing: 1px;">Memproses...</span>
+                            </div>
+                        `);
+                    } else {
+                        $('#scanner-spinner').fadeIn(150);
+                    }
+                } catch (error) {
+                    // Jika error (kamera sedang mati/di-stop), abaikan saja.
+                    // Proses absensi manual via input teks akan tetap berjalan.
+                }
+            }
 
             $.ajax({
                 url: baseURL + '/absensi/get_info_absen',
@@ -360,16 +395,16 @@
                     if (dt.response === 'ok') {
                         // 1. Langsung Render Foto & Nama di Sidebar
                         $('.info-overview-absen').html(`
-                    <img src="${baseURL}/assets/img/${dt.type}/${dt.photo}" style="width: 130px;height: 130px;border-radius: 10%;display: block;margin: 0 auto;object-fit: cover;" border="2">
-                    <input style="margin-top: 10px;text-align: center; font-weight: bold;" type="text" class="form-control" value="${dt.nama}" readonly>
-                    <p style="font-size: 11px; color: gray; text-align: center; margin-top: 5px;">Diproses: <time class="need_to_be_rendered load_time strong">sekarang</time></p>
-                `);
+                            <img src="${baseURL}/assets/img/${dt.type}/${dt.photo}" style="width: 130px;height: 130px;border-radius: 10%;display: block;margin: 0 auto;object-fit: cover;" border="2">
+                            <input style="margin-top: 10px;text-align: center; font-weight: bold;" type="text" class="form-control" value="${dt.nama}" readonly>
+                            <p style="font-size: 11px; color: gray; text-align: center; margin-top: 5px;">Diproses: <time class="need_to_be_rendered load_time strong">sekarang</time></p>
+                        `);
 
                         $('#list_data_absen').html(dt.list_absensi);
                         document.querySelector('.load_time').setAttribute('datetime', iso8601(new Date()));
                         timeago().render(document.querySelectorAll('.need_to_be_rendered'), 'id');
 
-                        // 2. Gunakan Toast yang tidak memblokir layar (Nyaman untuk Mobile/Desktop)
+                        // 2. Gunakan Toast untuk Notifikasi
                         Swal.fire({
                             toast: true,
                             position: 'top-end',
@@ -381,7 +416,7 @@
                             timerProgressBar: true
                         });
 
-                        // 3. Mainkan Suara sebagai indikator utama keberhasilan
+                        // 3. Mainkan Suara
                         let audioSrc = (dt.telatkah === 'ya') ? 'audio_Umhxc2ZDeHlpc1JpYWNIUVdzNG1sZz09.wav' : 'audio_UUdXKzNPRzE2THZweGRTOWMvMnVFdz09.wav';
                         new Audio(baseURL + '/assets/audio/' + audioSrc).play();
 
@@ -408,10 +443,16 @@
                         if (dt.list_absensi) $('#list_data_absen').html(dt.list_absensi);
                     }
 
-                    // 4. Reset Input & Kamera SUPER CEPAT (Hanya jeda 0.8 detik)
+                    // 4. Reset Input, Hilangkan Spinner & Lanjut Kamera
                     $('#hasil_scanan').val('').focus();
                     setTimeout(() => {
-                        if (html5QrcodeScanner) html5QrcodeScanner.resume();
+                        // Hanya hilangkan spinner dan resume kamera jika sebelumnya berhasil di-pause
+                        if (isScannerActive) {
+                            $('#scanner-spinner').fadeOut(150);
+                            try {
+                                html5QrcodeScanner.resume();
+                            } catch (e) {}
+                        }
                     }, 800);
                 },
                 error: function() {
@@ -426,7 +467,12 @@
                         showConfirmButton: false
                     });
                     setTimeout(() => {
-                        if (html5QrcodeScanner) html5QrcodeScanner.resume();
+                        if (isScannerActive) {
+                            $('#scanner-spinner').fadeOut(150);
+                            try {
+                                html5QrcodeScanner.resume();
+                            } catch (e) {}
+                        }
                     }, 1000);
                 }
             });
@@ -489,23 +535,31 @@
 
             // jalankanAntreanWA();
 
+            // // Trigger ketika tombol Pilih di tabel Belum Absen diklik
+            // $('.btn-pilih-nisn').on('click', function() {
+            //     var nisn = $(this).data('nisn'); // Ambil NISN dari tombol
+
+            //     // Isi inputan dan langsung eksekusi absen
+            //     $('#hasil_scanan').val(nisn);
+            //     processAbsensi(nisn);
+
+            //     // Hilangkan baris siswa ini dari tabel secara halus (visual saja)
+            //     $(this).closest('tr').fadeOut('fast');
+
+            //     // RESET INPUT PENCARIAN & FILTER KELAS
+            //     $('#cari_siswa_belum_absen').val('');
+            //     $('#filter_kelas_belum_absen').val('');
+
+            //     // Picu ulang event untuk mengembalikan tabel ke kondisi awal (tampil semua)
+            //     $('#cari_siswa_belum_absen').trigger('keyup');
+            // });
+
             // Trigger ketika tombol Pilih di tabel Belum Absen diklik
             $('.btn-pilih-nisn').on('click', function() {
                 var nisn = $(this).data('nisn'); // Ambil NISN dari tombol
 
-                // Isi inputan dan langsung eksekusi absen
-                $('#hasil_scanan').val(nisn);
-                processAbsensi(nisn);
-
-                // Hilangkan baris siswa ini dari tabel secara halus (visual saja)
-                $(this).closest('tr').fadeOut('fast');
-
-                // RESET INPUT PENCARIAN & FILTER KELAS
-                $('#cari_siswa_belum_absen').val('');
-                $('#filter_kelas_belum_absen').val('');
-
-                // Picu ulang event untuk mengembalikan tabel ke kondisi awal (tampil semua)
-                $('#cari_siswa_belum_absen').trigger('keyup');
+                // HANYA salin ke inputan dan pindahkan fokus kursor tanpa menekan enter
+                $('#hasil_scanan').val(nisn).focus();
             });
 
             // Filter Pencarian & Kelas secara Real-Time (Client-Side)

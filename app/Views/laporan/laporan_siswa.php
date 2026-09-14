@@ -23,40 +23,91 @@
 								<div id="result_tunggu"></div>
 							</td>
 						</tr>
+
+						<!-- Pemilih Jenis Laporan -->
 						<tr>
-							<td>Bulan</td>
+							<td>Filter Laporan</td>
 							<td>
-								<select name="bulan" class="form-control theSelect" required>
-									<option value="">-- Pilih --</option>
-									<?php
-									$bulans = [1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April', 5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus', 9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'];
-									foreach ($bulans as $num => $nama) : ?>
-										<option value="<?= $num ?>"><?= $nama ?></option>
-									<?php endforeach; ?>
-								</select>
+								<div class="form-check form-check-inline">
+									<input class="form-check-input" type="radio" name="tipe_filter" id="filter_bulan" value="bulan" checked onchange="toggleFilter()">
+									<label class="form-check-label text-dark fw-bold" for="filter_bulan">Per Bulan</label>
+								</div>
+								<div class="form-check form-check-inline">
+									<input class="form-check-input" type="radio" name="tipe_filter" id="filter_rentang" value="rentang" onchange="toggleFilter()">
+									<label class="form-check-label text-dark fw-bold" for="filter_rentang">Rentang Tanggal</label>
+								</div>
 							</td>
 						</tr>
-						<tr>
-							<td>Tahun</td>
+
+						<!-- Input Mode: Bulan (Default) -->
+						<tr id="row_bulan">
+							<td>Bulan & Tahun</td>
 							<td>
-								<select name="tahun" class="form-control theSelect" required>
-									<option value="">-- Pilih --</option>
-									<?php foreach ($tahun_data as $data) : ?>
-										<option value="<?= $data->tahun ?>"><?= $data->tahun ?></option>
-									<?php endforeach; ?>
-								</select>
+								<div class="input-group">
+									<select name="bulan" id="input_bulan" class="form-control theSelect">
+										<option value="">-- Pilih Bulan --</option>
+										<?php
+										$bulans = [1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April', 5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus', 9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'];
+										foreach ($bulans as $num => $nama) : ?>
+											<option value="<?= $num ?>"><?= $nama ?></option>
+										<?php endforeach; ?>
+									</select>
+									<select name="tahun" id="input_tahun" class="form-control theSelect">
+										<option value="">-- Pilih Tahun --</option>
+										<?php foreach ($tahun_data as $data) : ?>
+											<option value="<?= $data->tahun ?>"><?= $data->tahun ?></option>
+										<?php endforeach; ?>
+									</select>
+								</div>
 							</td>
 						</tr>
+
+						<!-- Input Mode: Rentang Tanggal (Tersembunyi Awalnya) -->
+						<tr id="row_rentang" style="display: none;">
+							<td>Rentang Tanggal</td>
+							<td>
+								<div class="input-group">
+									<input type="date" name="tanggal_mulai" id="input_mulai" class="form-control">
+									<span class="input-group-text bg-secondary text-white">s/d</span>
+									<input type="date" name="tanggal_akhir" id="input_akhir" class="form-control">
+								</div>
+							</td>
+						</tr>
+
 						<tr>
 							<td></td>
 							<td><button type="submit" class="btn btn-danger"><i class="fas fa-eye"></i> <?= $button ?></button></td>
 						</tr>
 					</table>
 				</form>
+
 			</div>
 		</div>
 	</div>
 </div>
+<!-- Script untuk mengatur logika Toggle Form -->
+<script>
+	function toggleFilter() {
+		var tipe = $('input[name="tipe_filter"]:checked').val();
+		if (tipe === 'bulan') {
+			$('#row_bulan').show();
+			$('#input_bulan, #input_tahun').prop('required', true);
+
+			$('#row_rentang').hide();
+			$('#input_mulai, #input_akhir').prop('required', false).val('');
+		} else {
+			$('#row_bulan').hide();
+			$('#input_bulan, #input_tahun').prop('required', false).val('');
+
+			$('#row_rentang').show();
+			$('#input_mulai, #input_akhir').prop('required', true);
+		}
+	}
+
+	$(document).ready(function() {
+		toggleFilter(); // Eksekusi saat halaman pertama dimuat
+	});
+</script>
 <script>
 	$(document).ready(function() {
 		$(".theSelect").select2();

@@ -348,37 +348,48 @@ function cek_absen($user_id, $tgl, $result_holidaydate)
     $tglparsed = date('Y-m-d', strtotime($tgl));
     $is_minggu = date('l', strtotime($tgl));
 
+    // 1. Cek Hari Minggu
     if ($is_minggu == 'Sunday') {
-        echo "<td style='background-color: red'></td>";
-    } else {
-        $cek_hari_libur = hari_libur($tglparsed);
-        if ($cek_hari_libur) {
-            echo "<td class='plsholder' data-detail='" . $cek_hari_libur->keterangan . "' style='background-color: yellow'></td>";
-        } else {
-            $holidayname = '';
-            foreach ($result_holidaydate as $value) {
-                if ($value->holiday_date == $tglparsed && $value->is_national_holiday == true) {
-                    $cek_hari_libur = true;
-                    $holidayname = $value->holiday_name;
-                }
-            }
+        return "<td style='background-color: red'></td>";
+    }
 
-            if ($cek_hari_libur) {
-                echo "<td class='plsholder' data-detail='" . $holidayname . "' style='background-color: yellow'></td>";
-            } else {
-                $cek_status = absensi_user($user_id, $tglparsed);
-                if ($cek_status == 'Tepat') echo "<td>✓</td>";
-                if ($cek_status == 'Alpha') echo "<td>A</td>";
-                if ($cek_status == 'Kosong') echo "<td>-</td>";
-                if ($cek_status == 'Sakit') echo "<td>S</td>";
-                if ($cek_status == 'Izin') echo "<td>I</td>";
-                if ($cek_status == 'Terlambat') echo "<td style='background-color: grey'>✓</td>";
-                if ($cek_status == 'Bolos') echo "<td style='background-color: #5353ec'>B</td>";
+    // 2. Cek Hari Libur dari Database Lokal
+    $cek_hari_libur_db = hari_libur($tglparsed);
+    if ($cek_hari_libur_db) {
+        return "<td class='plsholder' data-detail='" . $cek_hari_libur_db->keterangan . "' style='background-color: yellow'></td>";
+    }
+
+    // 3. Cek Hari Libur Nasional dari API (Reset variabel penanda per tanggal)
+    $is_api_holiday = false;
+    $holidayname = '';
+
+    if (!empty($result_holidaydate) && is_array($result_holidaydate)) {
+        foreach ($result_holidaydate as $value) {
+            if ($value->holiday_date == $tglparsed && isset($value->is_national_holiday) && $value->is_national_holiday == true) {
+                $is_api_holiday = true;
+                $holidayname = $value->holiday_name ?? 'Hari Libur Nasional';
+                break;
             }
         }
     }
-}
 
+    if ($is_api_holiday) {
+        return "<td class='plsholder' data-detail='" . $holidayname . "' style='background-color: yellow'></td>";
+    }
+
+    // 4. Cek Status Kehadiran Siswa
+    $cek_status = absensi_user($user_id, $tglparsed);
+
+    if ($cek_status == 'Tepat')      return "<td>✓</td>";
+    if ($cek_status == 'Alpha')      return "<td>A</td>";
+    if ($cek_status == 'Kosong')     return "<td>-</td>";
+    if ($cek_status == 'Sakit')      return "<td>S</td>";
+    if ($cek_status == 'Izin')       return "<td>I</td>";
+    if ($cek_status == 'Terlambat')  return "<td style='background-color: grey'>✓</td>";
+    if ($cek_status == 'Bolos')      return "<td style='background-color: #5353ec'>B</td>";
+
+    return "<td>-</td>"; // Fallback aman jika status tidak dikenali
+}
 function hari_libur($tgl)
 {
     $db = \Config\Database::connect();
@@ -415,156 +426,177 @@ function absensi_user($user_id, $tgl)
     }
 }
 
-function cek_alpha($user_id, $hari, $bulan, $tahun, $result_holidaydate)
+function cek_alpha($user_id, $param1, $param2, $param3 = [])
 {
     $db = \Config\Database::connect();
-    $date_now = date('Y/m/d');
-    $tgl_awal = $tahun . '/' . $bulan . '/1';
-    $tgl_akhir = $tahun . '/' . $bulan . '/' . $hari;
 
-    $data_sakit = $db->query("SELECT * FROM absen where user_id='" . $user_id . "' and keterangan='Sakit' and tanggal >= '" . $tgl_awal . "' and tanggal <= '" . $tgl_akhir . "'")->getResult();
-    $data_sakit = count($data_sakit);
-
-    $data_ijin = $db->query("SELECT * FROM absen where user_id='" . $user_id . "' and keterangan='Izin' and tanggal >= '" . $tgl_awal . "' and tanggal <= '" . $tgl_akhir . "'")->getResult();
-    $data_ijin = count($data_ijin);
-
-    $dt1 = new DateTime($tgl_awal);
-    $d = DateTime::createFromFormat('Y/m/d', date($tgl_awal));
-    $today = new DateTime();
-    $sisahari = 0;
-
-    if ($d->format('n') === $today->format('n') && $d->format('Y') === $today->format('Y')) {
-        $dt1 = new Datetime($date_now);
-        $dt2 = new DateTime($tgl_akhir);
-        $sisahari = $dt1->diff($dt2)->days < 0 ? 0 : $dt1->diff($dt2)->days;
-    }
-
-    $minggu_antara = 0;
-    $start = strtotime($date_now);
-    $end = strtotime($tgl_akhir);
-    for ($i = $start; $i <= $end; $i += (60 * 60 * 24)) {
-        $day = date('l', $i);
-        if ($day == 'Sunday') {
-            $minggu_antara++;
-        }
-    }
-
-    $minggu = 0;
-    $start = strtotime($tgl_awal);
-    $end = strtotime($tgl_akhir);
-
-    if ($d->format('n') === $today->format('n') && $d->format('Y') === $today->format('Y')) {
-        for ($i = $start; $i <= $end; $i += (60 * 60 * 24)) {
-            $day = date('l', $i);
-            $d_val = date('Y/m/d', $i);
-            if ($day == 'Sunday' & $d_val <= $date_now) {
-                $minggu++;
-            }
-        }
+    if (strpos($param1, '-') !== false) {
+        $tgl_awal = $param1;
+        $tgl_akhir = $param2;
+        $result_holidaydate = $param3;
     } else {
-        for ($i = $start; $i <= $end; $i += (60 * 60 * 24)) {
-            $day = date('l', $i);
-            if ($day == 'Sunday') {
-                $minggu++;
-            }
-        }
+        $tgl_awal = $param3 . '-' . str_pad($param2, 2, '0', STR_PAD_LEFT) . '-01';
+        $tgl_akhir = $param3 . '-' . str_pad($param2, 2, '0', STR_PAD_LEFT) . '-' . str_pad($param1, 2, '0', STR_PAD_LEFT);
+        $result_holidaydate = $param4 ?? [];
     }
 
+    $date_now = date('Y-m-d');
+    if ($tgl_akhir > $date_now) {
+        $tgl_akhir = $date_now;
+    }
+    if ($tgl_awal > $date_now) {
+        return 0;
+    }
+
+    // Ambil hari libur database sekaligus untuk efisiensi query (mencegah query berulang di dalam loop)
     $queryLibur = $db->query("SELECT tanggal FROM hari_libur WHERE tanggal >= '$tgl_awal' AND tanggal <= '$tgl_akhir'")->getResult();
-    $tanggalLiburDb = [];
-    foreach ($queryLibur as $row) {
-        $tanggalLiburDb[] = $row->tanggal;
-    }
-    $libur = count($tanggalLiburDb);
+    $tanggalLiburDb = array_column($queryLibur, 'tanggal');
 
-    $start = strtotime($tgl_awal);
-    $end = strtotime($tgl_akhir);
+    $begin = new DateTime($tgl_awal);
+    $end = new DateTime($tgl_akhir);
+    $end->modify('+1 day');
+    $daterange = new DatePeriod($begin, new DateInterval('P1D'), $end);
 
-    for ($i = $start; $i <= $end; $i += (60 * 60 * 24)) {
-        $tglnow = date('Y-m-d', $i);
-        foreach ($result_holidaydate as $value) {
-            if ($value->holiday_date == $tglnow && $value->is_national_holiday && !in_array($value->holiday_date, $tanggalLiburDb)) {
-                $libur++;
+    $valid_working_days = 0;
+
+    foreach ($daterange as $date) {
+        $d = $date->format("Y-m-d");
+        $dayOfWeek = $date->format("w"); // 0 = Minggu
+
+        if ($dayOfWeek == 0) continue;
+        if (in_array($d, $tanggalLiburDb)) continue;
+
+        $is_api_holiday = false;
+        if (!empty($result_holidaydate) && is_array($result_holidaydate)) {
+            foreach ($result_holidaydate as $value) {
+                if (isset($value->holiday_date) && $value->holiday_date == $d && !empty($value->is_national_holiday)) {
+                    $is_api_holiday = true;
+                    break;
+                }
             }
         }
+        if ($is_api_holiday) continue;
+
+        $valid_working_days++;
     }
 
-    $data_masuk = $db->query("SELECT * FROM absen where user_id='" . $user_id . "' and keterangan='Masuk' and tanggal like '" . date('Y', $start) . "-" . date('m', $start) . "-%'")->getResult();
-    $masuk = count($data_masuk);
+    $total_recorded = $db->table('absen')
+        ->where('user_id', $user_id)
+        ->where('tanggal >=', $tgl_awal)
+        ->where('tanggal <=', $tgl_akhir)
+        ->countAllResults();
 
-    $abcdfu = $hari - $sisahari - $minggu - $libur - $data_sakit - $data_ijin - $masuk;
-    return $abcdfu < 0 ? 0 : $abcdfu;
+    $alpha = $valid_working_days - $total_recorded;
+    return $alpha < 0 ? 0 : $alpha;
 }
 
-function cek_sakit($user_id, $hari, $bulan, $tahun)
+function cek_sakit($user_id, $param1, $param2, $param3 = null)
 {
     $db = \Config\Database::connect();
-    $tgl_awal = $tahun . '/' . $bulan . '/1';
-    $tgl_akhir = $tahun . '/' . $bulan . '/' . $hari;
-    $data = $db->query("SELECT * FROM absen where user_id='" . $user_id . "' and keterangan='Sakit' and tanggal >= '" . $tgl_awal . "' and tanggal <= '" . $tgl_akhir . "'")->getResult();
-    return count($data);
+
+    if (strpos($param1, '-') !== false) {
+        $tgl_awal = $param1;
+        $tgl_akhir = $param2;
+    } else {
+        $tgl_awal = $param3 . '-' . str_pad($param2, 2, '0', STR_PAD_LEFT) . '-01';
+        $tgl_akhir = $param3 . '-' . str_pad($param2, 2, '0', STR_PAD_LEFT) . '-' . str_pad($param1, 2, '0', STR_PAD_LEFT);
+    }
+
+    return $db->table('absen')
+        ->where('user_id', $user_id)
+        ->where('keterangan', 'Sakit')
+        ->where('tanggal >=', $tgl_awal)
+        ->where('tanggal <=', $tgl_akhir)
+        ->countAllResults();
 }
 
-function cek_izin($user_id, $hari, $bulan, $tahun)
+function cek_izin($user_id, $param1, $param2, $param3 = null)
 {
     $db = \Config\Database::connect();
-    $tgl_awal = $tahun . '/' . $bulan . '/1';
-    $tgl_akhir = $tahun . '/' . $bulan . '/' . $hari;
-    $data = $db->query("SELECT * FROM absen where user_id='" . $user_id . "' and keterangan='Izin' and tanggal >= '" . $tgl_awal . "' and tanggal <= '" . $tgl_akhir . "'")->getResult();
-    return count($data);
+
+    if (strpos($param1, '-') !== false) {
+        $tgl_awal = $param1;
+        $tgl_akhir = $param2;
+    } else {
+        $tgl_awal = $param3 . '-' . str_pad($param2, 2, '0', STR_PAD_LEFT) . '-01';
+        $tgl_akhir = $param3 . '-' . str_pad($param2, 2, '0', STR_PAD_LEFT) . '-' . str_pad($param1, 2, '0', STR_PAD_LEFT);
+    }
+
+    return $db->table('absen')
+        ->where('user_id', $user_id)
+        ->where('keterangan', 'Izin')
+        ->where('tanggal >=', $tgl_awal)
+        ->where('tanggal <=', $tgl_akhir)
+        ->countAllResults();
 }
 
-function cek_hadir_tepat($user_id, $hari, $bulan, $tahun)
+// Catatan: Terapkan format "if (strpos($param1, '-') !== false)" yang sama persis 
+// ke fungsi cek_hadir_tepat, cek_terlambat, dan cek_bolos di file helper Anda.
+function cek_hadir_tepat($user_id, $param1, $param2, $param3 = null)
 {
     $db = \Config\Database::connect();
-    $tgl_awal = $tahun . '/' . $bulan . '/1';
-    $tgl_akhir = $tahun . '/' . $bulan . '/' . $hari;
-    $data = $db->query("
-        SELECT * 
-        FROM absen 
-        WHERE user_id = '" . $user_id . "' 
-        AND keterangan = 'Masuk' 
-        AND status_masuk = 'Tepat Waktu' 
-        AND jam_pulang IS NOT NULL
-        AND tanggal >= '" . $tgl_awal . "' 
-        AND tanggal <= '" . $tgl_akhir . "'
-    ")->getResult();
-    return count($data);
+
+    // Deteksi Cerdas: Jika param1 mengandung '-' berarti format rentang tanggal
+    if (strpos($param1, '-') !== false) {
+        $tgl_awal = $param1;
+        $tgl_akhir = $param2;
+    } else {
+        // Format Lama (hari, bulan, tahun)
+        $tgl_awal = $param3 . '-' . str_pad($param2, 2, '0', STR_PAD_LEFT) . '-01';
+        $tgl_akhir = $param3 . '-' . str_pad($param2, 2, '0', STR_PAD_LEFT) . '-' . str_pad($param1, 2, '0', STR_PAD_LEFT);
+    }
+
+    return $db->table('absen')
+        ->where('user_id', $user_id)
+        ->where('keterangan', 'Masuk')
+        ->where('status_masuk', 'Tepat Waktu')
+        ->where('jam_pulang IS NOT NULL', null, false)
+        ->where('DATE(tanggal) >=', $tgl_awal)
+        ->where('DATE(tanggal) <=', $tgl_akhir)
+        ->countAllResults();
 }
 
-function cek_terlambat($user_id, $hari, $bulan, $tahun)
+function cek_terlambat($user_id, $param1, $param2, $param3 = null)
 {
     $db = \Config\Database::connect();
-    $tgl_awal = $tahun . '/' . $bulan . '/1';
-    $tgl_akhir = $tahun . '/' . $bulan . '/' . $hari;
-    $data = $db->query("
-        SELECT *
-        FROM absen
-        WHERE user_id = '" . $user_id . "'
-        AND keterangan = 'Masuk'
-        AND status_masuk = 'Terlambat'
-        AND jam_pulang IS NOT NULL
-        AND DATE(tanggal) >= '" . $tgl_awal . "'
-        AND DATE(tanggal) <= '" . $tgl_akhir . "'
-    ")->getResult();
-    return count($data);
+
+    if (strpos($param1, '-') !== false) {
+        $tgl_awal = $param1;
+        $tgl_akhir = $param2;
+    } else {
+        $tgl_awal = $param3 . '-' . str_pad($param2, 2, '0', STR_PAD_LEFT) . '-01';
+        $tgl_akhir = $param3 . '-' . str_pad($param2, 2, '0', STR_PAD_LEFT) . '-' . str_pad($param1, 2, '0', STR_PAD_LEFT);
+    }
+
+    return $db->table('absen')
+        ->where('user_id', $user_id)
+        ->where('keterangan', 'Masuk')
+        ->where('status_masuk', 'Terlambat')
+        ->where('jam_pulang IS NOT NULL', null, false)
+        ->where('DATE(tanggal) >=', $tgl_awal)
+        ->where('DATE(tanggal) <=', $tgl_akhir)
+        ->countAllResults();
 }
 
-function cek_bolos($user_id, $hari, $bulan, $tahun)
+function cek_bolos($user_id, $param1, $param2, $param3 = null)
 {
     $db = \Config\Database::connect();
-    $tgl_awal = $tahun . '/' . $bulan . '/1';
-    $tgl_akhir = $tahun . '/' . $bulan . '/' . $hari;
-    $data = $db->query("
-        SELECT *
-        FROM absen
-        WHERE user_id = '" . $user_id . "'
-        AND keterangan = 'Masuk'
-        AND jam_pulang IS NULL
-        AND DATE(tanggal) >= '" . $tgl_awal . "' 
-        AND DATE(tanggal) <= '" . $tgl_akhir . "'
-    ")->getResult();
-    return count($data);
+
+    if (strpos($param1, '-') !== false) {
+        $tgl_awal = $param1;
+        $tgl_akhir = $param2;
+    } else {
+        $tgl_awal = $param3 . '-' . str_pad($param2, 2, '0', STR_PAD_LEFT) . '-01';
+        $tgl_akhir = $param3 . '-' . str_pad($param2, 2, '0', STR_PAD_LEFT) . '-' . str_pad($param1, 2, '0', STR_PAD_LEFT);
+    }
+
+    return $db->table('absen')
+        ->where('user_id', $user_id)
+        ->where('keterangan', 'Masuk')
+        ->where('jam_pulang IS NULL', null, false)
+        ->where('DATE(tanggal) >=', $tgl_awal)
+        ->where('DATE(tanggal) <=', $tgl_akhir)
+        ->countAllResults();
 }
 
 function cek_terlambat_panggilan($user_id, $tgl_awal, $tgl_akhir)

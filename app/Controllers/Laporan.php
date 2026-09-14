@@ -103,14 +103,71 @@ class Laporan extends BaseController
     public function view_laporan_siswa()
     {
         $this->checkAuth();
+
+        // Gunakan getVar() agar kebal dan bisa menangkap dari POST maupun GET
+        $user_id_post  = $this->request->getVar('user_id');
+        $kelas_id      = $this->request->getVar('kelas_id');
+        $tipe_filter   = $this->request->getVar('tipe_filter');
+        $bulan         = $this->request->getVar('bulan');
+        $tahun         = $this->request->getVar('tahun');
+        $tanggal_mulai = $this->request->getVar('tanggal_mulai');
+        $tanggal_akhir = $this->request->getVar('tanggal_akhir');
+
+        // Pastikan default filter jika kosong
+        if (empty($tipe_filter)) $tipe_filter = 'bulan';
+
+        $user_id = empty($user_id_post) ? 'semua_data' : $user_id_post;
+
+        // =======================================================
+        // LOGIKA JUDUL PINTAR (TARGET SISWA/KELAS)
+        // =======================================================
+        $teks_judul = "Semua Siswa";
+        if ($user_id != 'semua_data') {
+            // Ambil nama 1 siswa jika AJAX pilih siswa aktif
+            $dt_siswa = $this->db->table('siswa')->where('nisn', $user_id)->get()->getRow();
+            if ($dt_siswa) $teks_judul = $dt_siswa->nama_siswa;
+        } elseif (!empty($kelas_id)) {
+            // Ambil nama kelas jika mem-filter per kelas
+            $dt_kelas = $this->db->table('kelas')->where('kelas_id', $kelas_id)->get()->getRow();
+            if ($dt_kelas) $teks_judul = "Siswa Kelas " . $dt_kelas->nama_kelas;
+        }
+
+        // =======================================================
+        // LOGIKA PERIODE (BULAN / RENTANG)
+        // =======================================================
+        $teks_periode = "";
+        $bulans = [1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April', 5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus', 9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'];
+
+        if ($tipe_filter == 'rentang' && !empty($tanggal_mulai) && !empty($tanggal_akhir)) {
+            // Format: 01 September 2026 s/d 14 September 2026
+            $tgl_m_indo = date('d', strtotime($tanggal_mulai)) . ' ' . $bulans[(int)date('m', strtotime($tanggal_mulai))] . ' ' . date('Y', strtotime($tanggal_mulai));
+            $tgl_a_indo = date('d', strtotime($tanggal_akhir)) . ' ' . $bulans[(int)date('m', strtotime($tanggal_akhir))] . ' ' . date('Y', strtotime($tanggal_akhir));
+
+            $teks_periode = "Periode: " . $tgl_m_indo . " s/d " . $tgl_a_indo;
+        } else {
+            // Fallback ke mode Bulan & Tahun
+            if (empty($bulan)) $bulan = date('m');
+            if (empty($tahun)) $tahun = date('Y');
+
+            $nama_bulan = $bulans[(int)$bulan] ?? 'Bulan Tidak Valid';
+            $teks_periode = "Bulan: " . $nama_bulan . " " . $tahun;
+        }
+
         $data = [
-            'sett_apps' => $this->db->table('app_setting')->where('id', 1)->get()->getRow(),
-            'user_id'   => $this->request->getPost('user_id'),
-            'kelas_id'  => $this->request->getPost('kelas_id'),
-            'bulan'     => $this->request->getPost('bulan'),
-            'tahun'     => $this->request->getPost('tahun'),
-            'area'      => 'siswa'
+            'sett_apps'     => $this->db->table('app_setting')->where('id', 1)->get()->getRow(),
+            'user_id'       => $user_id,
+            'kelas_id'      => $kelas_id,
+            'tipe_filter'   => $tipe_filter,
+            'bulan'         => $bulan,
+            'tahun'         => $tahun,
+            'tanggal_mulai' => $tanggal_mulai,
+            'tanggal_akhir' => $tanggal_akhir,
+            // Variabel matang yang dikirim ke View:
+            'teks_judul'    => $teks_judul,
+            'teks_periode'  => $teks_periode,
+            'area'          => 'siswa'
         ];
+
         return view('laporan/view_laporan_siswa', $data);
     }
 

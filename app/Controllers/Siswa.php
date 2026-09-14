@@ -597,75 +597,75 @@ class Siswa extends BaseController
         exit();
     }
 
-    public function update_kelas($kelas_id_asal)
-    {
-        $this->checkAuth();
+    // public function update_kelas($kelas_id_asal)
+    // {
+    //     $this->checkAuth();
 
-        // Ambil array ID Siswa yang dicentang
-        $id_siswa = $this->request->getPost('update');
+    //     // Ambil array ID Siswa yang dicentang
+    //     $id_siswa = $this->request->getPost('update');
 
-        if (empty($id_siswa)) {
-            session()->setFlashdata('error', 'Pilih minimal satu siswa terlebih dahulu!');
-            return redirect()->to('/siswa/daftar_siswa?kelas_id=' . $kelas_id_asal);
-        }
+    //     if (empty($id_siswa)) {
+    //         session()->setFlashdata('error', 'Pilih minimal satu siswa terlebih dahulu!');
+    //         return redirect()->to('/siswa/daftar_siswa?kelas_id=' . $kelas_id_asal);
+    //     }
 
-        // AKSI 1: HAPUS DATA TERPILIH
-        if ($this->request->getPost('hapus') == 'Y') {
-            $notify = $this->request->getPost('notify');
+    //     // AKSI 1: HAPUS DATA TERPILIH
+    //     if ($this->request->getPost('hapus') == 'Y') {
+    //         $notify = $this->request->getPost('notify');
 
-            foreach ($id_siswa as $id) {
-                $siswa = $this->db->table('siswa')->where('siswa_id', $id)->get()->getRow();
-                if ($siswa) {
-                    // Hapus file fisik menggunakan struktur folder /assets/ yang baru
-                    if ($siswa->photo && $siswa->photo != 'default.png' && file_exists(FCPATH . 'assets/img/siswa/' . $siswa->photo)) {
-                        unlink(FCPATH . 'assets/img/siswa/' . $siswa->photo);
-                    }
-                    if ($siswa->qr_code && file_exists(FCPATH . 'assets/img/qr/siswa/' . $siswa->qr_code)) {
-                        unlink(FCPATH . 'assets/img/qr/siswa/' . $siswa->qr_code);
-                    }
+    //         foreach ($id_siswa as $id) {
+    //             $siswa = $this->db->table('siswa')->where('siswa_id', $id)->get()->getRow();
+    //             if ($siswa) {
+    //                 // Hapus file fisik menggunakan struktur folder /assets/ yang baru
+    //                 if ($siswa->photo && $siswa->photo != 'default.png' && file_exists(FCPATH . 'assets/img/siswa/' . $siswa->photo)) {
+    //                     unlink(FCPATH . 'assets/img/siswa/' . $siswa->photo);
+    //                 }
+    //                 if ($siswa->qr_code && file_exists(FCPATH . 'assets/img/qr/siswa/' . $siswa->qr_code)) {
+    //                     unlink(FCPATH . 'assets/img/qr/siswa/' . $siswa->qr_code);
+    //                 }
 
-                    // Masukkan Notifikasi jika dicentang
-                    if ($notify == 'on') {
-                        $this->db->table('notif_siswa')->insert([
-                            'nama_siswa'  => $siswa->nama_siswa,
-                            'kelas'       => $siswa->kelas_id,
-                            'deksripsi'   => 'dihapus',
-                            'status_baca' => 'Belum Terbaca',
-                            'tanggal'     => date('Y-m-d H:i:s')
-                        ]);
-                    }
+    //                 // Masukkan Notifikasi jika dicentang
+    //                 if ($notify == 'on') {
+    //                     $this->db->table('notif_siswa')->insert([
+    //                         'nama_siswa'  => $siswa->nama_siswa,
+    //                         'kelas'       => $siswa->kelas_id,
+    //                         'deksripsi'   => 'dihapus',
+    //                         'status_baca' => 'Belum Terbaca',
+    //                         'tanggal'     => date('Y-m-d H:i:s')
+    //                     ]);
+    //                 }
 
-                    // Eksekusi Hapus Database
-                    $this->db->table('user')->where('username', $siswa->nisn)->delete();
-                    $this->db->table('siswa')->where('siswa_id', $id)->delete();
-                }
-            }
-            session()->setFlashdata('message', 'Data siswa terpilih berhasil dihapus.');
-        }
+    //                 // Eksekusi Hapus Database
+    //                 $this->db->table('user')->where('username', $siswa->nisn)->delete();
+    //                 $this->db->table('siswa')->where('siswa_id', $id)->delete();
+    //             }
+    //         }
+    //         session()->setFlashdata('message', 'Data siswa terpilih berhasil dihapus.');
+    //     }
 
-        // AKSI 2: PINDAH KELAS TERPILIH
-        elseif ($this->request->getPost('pindah') == 'Y') {
-            $tujuan_kelas = $this->request->getPost('kelas_id');
+    //     // AKSI 2: PINDAH KELAS TERPILIH
+    //     elseif ($this->request->getPost('pindah') == 'Y') {
+    //         $tujuan_kelas = $this->request->getPost('kelas_id');
 
-            if (empty($tujuan_kelas)) {
-                session()->setFlashdata('error', 'Pilih kelas tujuan terlebih dahulu!');
-                return redirect()->to('/siswa/daftar_siswa?kelas_id=' . $kelas_id_asal);
-            }
+    //         if (empty($tujuan_kelas)) {
+    //             session()->setFlashdata('error', 'Pilih kelas tujuan terlebih dahulu!');
+    //             return redirect()->to('/siswa/daftar_siswa?kelas_id=' . $kelas_id_asal);
+    //         }
 
-            foreach ($id_siswa as $id) {
-                $this->db->table('siswa')->where('siswa_id', $id)->update(['kelas_id' => $tujuan_kelas]);
-            }
-            session()->setFlashdata('message', 'Data siswa berhasil dipindahkan.');
-        }
+    //         foreach ($id_siswa as $id) {
+    //             $this->db->table('siswa')->where('siswa_id', $id)->update(['kelas_id' => $tujuan_kelas]);
+    //         }
+    //         session()->setFlashdata('message', 'Data siswa berhasil dipindahkan.');
+    //     }
 
-        // AKSI 3: CETAK KARTU MASSAL
-        elseif ($this->request->getPost('cetak') == 'Y') {
-            $ids = implode(',', $id_siswa);
-            return redirect()->to('/siswa/cetak_bulk?ids=' . $ids);
-        }
+    //     // AKSI 3: CETAK KARTU MASSAL
+    //     elseif ($this->request->getPost('cetak') == 'Y') {
+    //         $ids = implode(',', $id_siswa);
+    //         return redirect()->to('/siswa/cetak_bulk?ids=' . $ids);
+    //     }
 
-        return redirect()->to('/siswa/daftar_siswa?kelas_id=' . $kelas_id_asal);
-    }
+    //     return redirect()->to('/siswa/daftar_siswa?kelas_id=' . $kelas_id_asal);
+    // }
 
     public function cetak($id)
     {
@@ -736,5 +736,113 @@ class Siswa extends BaseController
 
         // Kita tetap menggunakan View 'cetak_semua' yang sudah dibuat di langkah sebelumnya
         return view('siswa/cetak_semua', $data);
+    }
+
+    public function semua_siswa()
+    {
+        // Pastikan ada fungsi proteksi login/admin (sesuaikan dengan bawaan controller Anda)
+        $this->checkAuth();
+
+        $db = \Config\Database::connect();
+
+        // Ambil semua data siswa beserta nama kelasnya, urutkan berdasarkan kelas lalu nama
+        $builder = $db->table('siswa');
+        $builder->select('siswa.*, kelas.nama_kelas');
+        $builder->join('kelas', 'kelas.kelas_id = siswa.kelas_id', 'left');
+        $builder->orderBy('kelas.nama_kelas', 'ASC');
+        $builder->orderBy('siswa.nama_siswa', 'ASC');
+        $siswa_data = $builder->get()->getResult();
+
+        // Ambil data kelas untuk kebutuhan dropdown "Pindah Kelas"
+        $kelas = $db->table('kelas')->get()->getResult();
+
+        $data = [
+            'siswa_data' => $siswa_data,
+            'kelas'      => $kelas,
+            'sett_apps'  => $db->table('app_setting')->where('id', 1)->get()->getRow(),
+        ];
+
+        return view('siswa/semua_siswa', $data);
+    }
+
+    public function download_kartu($id)
+    {
+        $this->checkAuth();
+
+        $siswa_id = decrypt_url($id);
+
+        $db = \Config\Database::connect();
+        $builder = $db->table('siswa');
+        $builder->select('siswa.*, kelas.nama_kelas');
+        $builder->join('kelas', 'kelas.kelas_id = siswa.kelas_id', 'left');
+        $builder->where('siswa.siswa_id', $siswa_id);
+
+        $siswa = $builder->get()->getRow();
+
+        if (!$siswa) {
+            session()->setFlashdata('error', 'Data siswa tidak ditemukan.');
+            return redirect()->back();
+        }
+
+        $data = [
+            'siswa'     => $siswa,
+            'sett_apps' => $db->table('app_setting')->where('id', 1)->get()->getRow(),
+        ];
+
+        // Kita buatkan view terpisah khusus untuk proses download gambar
+        return view('siswa/download_kartu_view', $data);
+    }
+
+    public function update_kelas($kelas_id = null)
+    {
+        $this->checkAuth();
+
+        // Ambil array siswa_id yang dicentang dari checkbox
+        $id_siswa_array = $this->request->getPost('update');
+
+        if (empty($id_siswa_array)) {
+            session()->setFlashdata('error', 'Tidak ada siswa yang dipilih.');
+            return redirect()->back();
+        }
+
+        // =======================================================
+        // 1. LOGIKA UNTUK DOWNLOAD MASSAL KARTU SISWA (GAMBAR ZIP)
+        // =======================================================
+        if ($this->request->getPost('download') == 'Y') {
+            $db = \Config\Database::connect();
+            $builder = $db->table('siswa');
+            $builder->select('siswa.*, kelas.nama_kelas');
+            $builder->join('kelas', 'kelas.kelas_id = siswa.kelas_id', 'left');
+            $builder->whereIn('siswa.siswa_id', $id_siswa_array); // Ambil hanya yang dicentang
+            $siswa_data = $builder->get()->getResult();
+
+            $data = [
+                'siswa_data' => $siswa_data,
+                'sett_apps'  => $db->table('app_setting')->where('id', 1)->get()->getRow(),
+            ];
+
+            return view('siswa/download_kartu_bulk_view', $data);
+        }
+
+        // =======================================================
+        // 2. LOGIKA UNTUK CETAK MASSAL (PDF / PRINT)
+        // =======================================================
+        if ($this->request->getPost('cetak') == 'Y') {
+            // ... (Biarkan logika cetak massal Anda yang sudah ada di sini)
+        }
+
+        // =======================================================
+        // 3. LOGIKA UNTUK HAPUS MASSAL
+        // =======================================================
+        if ($this->request->getPost('hapus') == 'Y') {
+            // ... (Biarkan logika hapus massal Anda yang sudah ada di sini)
+        }
+
+        // =======================================================
+        // 4. LOGIKA UNTUK PINDAH KELAS
+        // =======================================================
+        if ($this->request->getPost('pindah') == 'Y') {
+            // ... (Biarkan logika pindah kelas Anda yang sudah ada di sini)
+        }
     }
 }

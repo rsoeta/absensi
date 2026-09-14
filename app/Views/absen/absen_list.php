@@ -31,13 +31,13 @@
 		</div>
 		<div class="panel-body">
 			<div style="padding-bottom: 15px;">
-				<a href="<?= base_url('absen/create/' . encrypt_url($level_id)) ?>" class="btn btn-danger btn-sm">
+				<a href="<?= base_url('absen/create/' . $level_id) ?>" class="btn btn-danger btn-sm">
 					<i class="fas fa-plus-square"></i> Tambah Data
 				</a>
 			</div>
 
 			<div class="table-responsive">
-				<table id="data-table-default" class="table table-bordered table-hover align-middle text-white">
+				<table id="tabel-data-absen" class="table table-bordered table-hover align-middle text-white">
 					<thead>
 						<tr>
 							<th width="1%">No</th>
@@ -113,8 +113,9 @@
 								<td><small>M: <?= $absen->point ?> | P: <?= $absen->point_pulang ?></small></td>
 
 								<td>
-									<a href="<?= base_url('absen/update/' . encrypt_url($absen->absen_id) . '/' . encrypt_url($level_id)) ?>" class="btn btn-primary btn-sm mb-1"><i class="fas fa-pencil-alt"></i></a>
-									<a href="<?= base_url('absen/delete/' . encrypt_url($absen->absen_id) . '/' . encrypt_url($level_id)) ?>" class="btn btn-danger btn-sm mb-1" onclick="return confirm('Yakin hapus data absen ini?');"><i class="fas fa-trash-alt"></i></a>
+									<!-- Hapus encrypt_url agar load halaman secepat kilat -->
+									<a href="<?= base_url('absen/update/' . $absen->absen_id . '/' . $level_id) ?>" class="btn btn-primary btn-sm mb-1" title="Edit Data"><i class="fas fa-pencil-alt"></i></a>
+									<a href="<?= base_url('absen/delete/' . $absen->absen_id . '/' . $level_id) ?>" class="btn btn-danger btn-sm mb-1" title="Hapus Data" onclick="return confirm('Yakin hapus data absen ini?');"><i class="fas fa-trash-alt"></i></a>
 								</td>
 							</tr>
 						<?php endforeach; ?>
@@ -131,6 +132,17 @@
 			var photo = $(this).data('photo');
 			$('#modal-dialog3 #photo_karyawan').attr("src", "<?= base_url('assets/bukti_absen/') ?>" + photo);
 		});
+
+		// Inisiasi DataTables pada ID baru agar terhindar dari bentrok script bawaan template
+		if (typeof $.fn.DataTable === 'function') {
+			$('#tabel-data-absen').DataTable({
+				deferRender: true, // Memori browser hanya menggambar baris yang terlihat di layar (Anti-Lag)
+				responsive: true,
+				language: {
+					url: "//cdn.datatables.net/plug-ins/1.13.6/i18n/id.json"
+				}
+			});
+		}
 	});
 </script>
 

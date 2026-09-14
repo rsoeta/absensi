@@ -79,7 +79,8 @@ class Waktu_absen extends BaseController
     {
         if (!session()->get('userid') || session()->get('level_id') != 1) return redirect()->to('/auth');
 
-        $row = $this->db->table('waktu_absen')->where('waktu_absen', decrypt_url($id))->get()->getRow();
+        // Langsung panggil ID tanpa decrypt_url
+        $row = $this->db->table('waktu_absen')->where('waktu_absen', $id)->get()->getRow();
 
         if ($row) {
             $data = [
@@ -117,7 +118,8 @@ class Waktu_absen extends BaseController
         ];
 
         if (!$this->validate($rules)) {
-            return $this->update(encrypt_url($this->request->getPost('waktu_absen')));
+            // Hapus encrypt_url di sini
+            return $this->update($this->request->getPost('waktu_absen'));
         }
 
         $data = [

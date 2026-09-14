@@ -67,25 +67,25 @@
 
 		<p style="font-family:Verdana; right:50px; margin-top: 256px; text-align:right; padding-left: 10px;font-size: 8px; position: absolute;">Alamat Sekolah : <?= $sett_apps->alamat_sekolah ?> </p>
 
-		<img class="card-img-top" src="<?= base_url('assets/img/kartu/birunom.png') ?>">
+		<img class="card-img-top" src="<?= base_url('assets/img/kartu/birunom.png') ?>" style="width: 100%; border-radius: 5px;">
 
 		<?php
-		// Fallback Foto Profil
-		$foto_tampil = empty($s->photo) ? base_url('assets/img/icon/default.png') : base_url('assets/img/siswa/' . $s->photo);
+		// Fallback Foto Profil (Gunakan variabel $photo langsung)
+		$foto_tampil = empty($photo) ? base_url('assets/img/icon/default.png') : base_url('assets/img/siswa/' . $photo);
 
-		// Fallback QR Code
-		$qr_path = FCPATH . 'assets/img/qr/siswa/' . $s->qr_code;
-		if (empty($s->qr_code) || !file_exists($qr_path)) {
+		// Fallback QR Code (Gunakan variabel $qr_code dan $nisn langsung)
+		$qr_path = FCPATH . 'assets/img/qr/siswa/' . $qr_code;
+		if (empty($qr_code) || !file_exists($qr_path)) {
 			// Jika file fisik tidak ada, generate langsung via API menggunakan NISN
-			$qr_tampil = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . urlencode($s->nisn);
+			$qr_tampil = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . urlencode($nisn);
 		} else {
-			$qr_tampil = base_url('assets/img/qr/siswa/' . $s->qr_code);
+			$qr_tampil = base_url('assets/img/qr/siswa/' . $qr_code);
 		}
 		?>
 
-		<?php $foto_tampil = empty($photo) ? base_url('assets/img/icon/default.png') : base_url('assets/img/siswa/' . $photo); ?>
+		<!-- Gunakan $foto_tampil dan $qr_tampil yang sudah divalidasi di atas -->
 		<img style="border: 1px solid #ffffff;position: absolute;right: 30px;margin-top: 130px; object-fit:cover;" src="<?= $foto_tampil ?>" width="85px" height="100px">
-		<img style="position: absolute;margin-left: 35px;margin-top: 130px;" src="<?= base_url('assets/img/qr/siswa/' . $qr_code) ?>" width="120px" height="120px">
+		<img style="position: absolute;margin-left: 35px;margin-top: 130px;" src="<?= $qr_tampil ?>" width="120px" height="120px">
 		<img style="position: absolute;margin-left: 30px;margin-top: 10px;" src="<?= base_url('assets/img/logo/' . $sett_apps->logo_sekolah) ?>" width="65px" height="65px">
 	</div>
 </body>

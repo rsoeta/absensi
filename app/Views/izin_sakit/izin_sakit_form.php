@@ -36,7 +36,12 @@
                                 <tr>
                                     <td>Surat Keterangan</td>
                                     <td>
-                                        <input type="file" class="form-control" name="photo" id="photo" required onchange="validasiEkstensi()" accept=".jpg,.jpeg,.png,.pdf" />
+                                        <!-- Cek apakah user yang login adalah Admin (level_id = 1) -->
+                                        <!-- Jika bukan admin, tambahkan atribut required -->
+                                        <input type="file" class="form-control" name="photo" id="photo" <?= (session()->get('level_id') != 1) ? 'required' : '' ?> onchange="validasiEkstensi()" accept=".jpg,.jpeg,.png,.pdf" />
+                                        <?php if (session()->get('level_id') == 1) : ?>
+                                            <p class="text-warning mb-0 mt-1"><small>Note: Opsional untuk Admin.</small></p>
+                                        <?php endif; ?>
                                     </td>
                                 </tr>
                             <?php else : ?>

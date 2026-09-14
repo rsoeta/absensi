@@ -42,7 +42,7 @@
                                 <td><?= $waktu_absen->jam_pulang_guru ?></td>
                                 <td><?= $waktu_absen->jam_pulang_siswa ?></td>
                                 <td class="text-center">
-                                    <a href="<?= base_url('waktu_absen/update/' . encrypt_url($waktu_absen->waktu_absen)) ?>" class="btn btn-primary btn-sm"><i class="fas fa-pencil-alt"></i></a>
+                                    <a href="<?= base_url('waktu_absen/update/' . $waktu_absen->waktu_absen) ?>" class="btn btn-primary btn-sm"><i class="fas fa-pencil-alt"></i></a>
                                 </td>
                             </tr>
                         <?php endforeach; ?>

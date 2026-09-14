@@ -138,6 +138,7 @@ $routes->get('pegawai/download/(:any)', 'Pegawai::download/$1');
 // Rute Pengguna (Siswa)
 $routes->get('siswa', 'Siswa::index');
 $routes->get('siswa/daftar_siswa', 'Siswa::daftar_siswa');
+$routes->get('siswa/semua_siswa', 'Siswa::semua_siswa');
 $routes->get('siswa/create', 'Siswa::create');
 $routes->post('siswa/create_action', 'Siswa::create_action');
 $routes->get('siswa/update/(:segment)', 'Siswa::update/$1');
@@ -153,6 +154,7 @@ $routes->post('siswa/update_kelas/(:segment)', 'Siswa::update_kelas/$1');
 $routes->get('siswa/cetak/(:segment)', 'Siswa::cetak/$1');
 $routes->post('siswa/cetak_semua', 'Siswa::cetak_semua');
 $routes->get('siswa/cetak_bulk', 'Siswa::cetak_bulk');
+$routes->get('siswa/download_kartu/(:segment)', 'Siswa::download_kartu/$1');
 
 // Rute Pengguna (User/Admin)
 $routes->get('user', 'User::index');
@@ -232,6 +234,14 @@ $routes->post('laporan/view_laporan_pegawai', 'Laporan::view_laporan_pegawai');
 $routes->post('laporan/view_laporan_siswa', 'Laporan::view_laporan_siswa');
 $routes->post('laporan/get_data_siswa', 'Laporan::get_data_siswa');
 
+// --- ROUTING UNTUK CETAK ---
+$routes->get('cetak/laporan', 'Cetak::laporan');
+$routes->get('cetak/laporan_view_debug', 'Cetak::laporan_view_debug');
+
+// --- ROUTING NOTIF SISWA ---
+$routes->get('notif_siswa', 'Notif_siswa::index');
+$routes->get('notif_siswa/delete/(:segment)', 'Notif_siswa::delete/$1');
+
 // --- ROUTING REKAPITULASI ABSEN KELAS ---
 $routes->get('rekap_absen_kelas', 'Rekap_absen_kelas::index');
 
@@ -239,6 +249,11 @@ $routes->get('rekap_absen_kelas', 'Rekap_absen_kelas::index');
 $routes->get('absen/guru', 'Absen::guru');
 $routes->get('absen/pegawai', 'Absen::pegawai');
 $routes->get('absen/siswa', 'Absen::siswa');
+
+$routes->get('absen/create/(:segment)', 'Absen::create/$1');
+$routes->post('absen/create_action/(:segment)', 'Absen::create_action/$1');
+$routes->get('absen/update/(:segment)/(:segment)', 'Absen::update/$1/$2');
+$routes->post('absen/update_action/(:segment)', 'Absen::update_action/$1');
 $routes->get('absen/delete/(:segment)/(:segment)', 'Absen::delete/$1/$2');
 
 // Rute Pengguna (User/Admin)
