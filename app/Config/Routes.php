@@ -21,6 +21,9 @@ $routes->post('auth/edit_password/(:num)', 'Auth::edit_password/$1');
 // Rute Dashboard
 $routes->get('dashboard', 'Dashboard::index');
 $routes->get('dashboard_user', 'Dashboard::user'); // Rute untuk user non-admin
+// Rute API Grafik Chart.js
+$routes->get('dashboard/get_chart_admin', 'Dashboard::get_chart_admin');
+$routes->get('dashboard_user/get_chart_user', 'Dashboard_user::get_chart_user');
 
 // Rute App Setting
 $routes->get('app_setting/update/(:any)', 'App_setting::update/$1');

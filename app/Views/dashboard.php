@@ -146,7 +146,9 @@
 						Perkembangan Absensi
 						<small>Data absensi bulan ini</small>
 					</h4>
-					<canvas id="visitors-line-chart" class="widget-chart-full-width dark-mode" style="height: 260px; width: 100%;"></canvas>
+					<div style="position: relative; height: 260px; width: 100%;">
+						<canvas id="visitors-line-chart" class="widget-chart-full-width dark-mode"></canvas>
+					</div>
 				</div>
 				<div class="widget-chart-sidebar bg-black bg-opacity-70">
 					<div class="chart-number">
@@ -154,7 +156,9 @@
 						<small>Total Absen Hari ini</small>
 					</div>
 					<div class="flex-grow-1 d-flex align-items-center">
-						<canvas id="visitors-donut-chart" class="dark-mode" style="height: 180px; width: 100%; padding: 1rem;"></canvas>
+						<div style="position: relative; height: 180px; width: 100%; padding: 1rem;">
+							<canvas id="visitors-donut-chart" class="dark-mode"></canvas>
+						</div>
 					</div>
 					<ul class="chart-legend chart-legend-owo fs-11px"></ul>
 				</div>
