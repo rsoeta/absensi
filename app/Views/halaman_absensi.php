@@ -143,7 +143,19 @@
                                 <h1 class="panel-title"><span><b>SCAN UNTUK</b></span><span style="color: orange;"> MASUK / PULANG</span></h1>
                             </div>
                             <div class="panel-body text-center">
-                                <div id="reader" style="width: 100%; max-width: 500px; margin: 0 auto; border-radius:10px; overflow:hidden;"></div>
+                                <div style="width: 100%; max-width: 500px; margin: 0 auto; position: relative; border-radius:10px; overflow:hidden;">
+                                    <div id="reader" style="width: 100%;"></div>
+
+                                    <!-- ELEMEN SPINNER PENUTUP (White Background) -->
+                                    <div id="scanner-spinner" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.95); z-index: 9999; justify-content: center; align-items: center; flex-direction: column;">
+                                        <!-- Ubah warna spinner menjadi primary (biru) agar kontras dengan putih -->
+                                        <div class="spinner-border text-primary" role="status" style="width: 4rem; height: 4rem; border-width: 0.35em; margin-bottom: 15px;"></div>
+
+                                        <!-- Ubah warna teks menjadi gelap (#333) -->
+                                        <h4 style="color: #333; font-weight: bold; letter-spacing: 1px;">Sistem Memproses...</h4>
+                                        <small style="color: #666; font-weight: 500;">Mohon Tunggu Sebentar</small>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -358,29 +370,18 @@
 
         // FUNGSI INTI: Proses Absensi (Cepat & Tanpa Jeda Layar)
         function processAbsensi(kode) {
-            // Penanda apakah kamera sedang aktif dan berhasil di-pause
             let isScannerActive = false;
 
             // 1. Coba jeda kamera dan tampilkan efek Spinner Overlay HANYA jika kamera aktif
             if (typeof html5QrcodeScanner !== 'undefined' && html5QrcodeScanner) {
                 try {
                     html5QrcodeScanner.pause();
-                    isScannerActive = true; // Berhasil di-pause, berarti kamera sedang aktif
+                    isScannerActive = true;
 
-                    // Tampilkan spinner di kotak kamera
-                    if ($('#scanner-spinner').length === 0) {
-                        $('#reader').css('position', 'relative').append(`
-                            <div id="scanner-spinner" style="display: flex; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.65); z-index: 999; justify-content: center; align-items: center; flex-direction: column; color: white; border-radius: inherit; backdrop-filter: blur(2px);">
-                                <div class="spinner-border text-warning" role="status" style="width: 3.5rem; height: 3.5rem; border-width: 0.3em; margin-bottom: 15px;"></div>
-                                <span style="font-weight: 600; letter-spacing: 1px;">Memproses...</span>
-                            </div>
-                        `);
-                    } else {
-                        $('#scanner-spinner').fadeIn(150);
-                    }
+                    // Cukup panggil fadeIn, tidak perlu .append() HTML lagi
+                    $('#scanner-spinner').css('display', 'flex').hide().fadeIn(150);
                 } catch (error) {
-                    // Jika error (kamera sedang mati/di-stop), abaikan saja.
-                    // Proses absensi manual via input teks akan tetap berjalan.
+                    // Abaikan jika error
                 }
             }
 

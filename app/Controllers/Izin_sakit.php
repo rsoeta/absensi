@@ -14,7 +14,8 @@ class Izin_sakit extends BaseController
         $this->checkAuth();
 
         $data = [
-            'izin_sakit_data' => $this->db->table('izin_sakit')->get()->getResult(),
+            // --- UBAH BARIS INI: Tambahkan orderBy 'izin_sakit_id' DESC ---
+            'izin_sakit_data' => $this->db->table('izin_sakit')->orderBy('izin_sakit_id', 'DESC')->get()->getResult(),
             'sett_apps'       => $this->db->table('app_setting')->where('id', 1)->get()->getRow(),
         ];
 

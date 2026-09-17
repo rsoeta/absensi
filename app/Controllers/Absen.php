@@ -32,7 +32,11 @@ class Absen extends BaseController
         }
 
         $builder->where('user.level_id', $level_id);
-        $builder->orderBy('absen.tanggal', 'DESC');
+
+        // --- BAGIAN YANG DIREVISI ---
+        $builder->orderBy('absen.tanggal', 'DESC'); // 1. Kelompokkan dari tanggal paling baru
+        $builder->orderBy('COALESCE(absen.jam_pulang, absen.jam_masuk)', 'DESC'); // 2. Waktu aktivitas terakhir (Pulang/Masuk) berada paling atas
+
         return $builder->get()->getResult();
     }
 

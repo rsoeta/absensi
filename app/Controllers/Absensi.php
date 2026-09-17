@@ -12,43 +12,6 @@ class Absensi extends BaseController
         date_default_timezone_set('Asia/Jakarta');
     }
 
-    // public function index()
-    // {
-    //     $tanggal_hari_ini = date('Y-m-d');
-    //     $row = $this->db->table('halaman_absensi')->where('halaman_absensi_id', 1)->get()->getRow();
-    //     $cekharilibur = $this->db->table('hari_libur')->where('DATE(tanggal)', $tanggal_hari_ini)->get()->getRow();
-
-    //     // Otomatis tembus jika aplikasi berjalan di mode development
-    //     if (($cekharilibur || date('D') == 'Sun') && getenv('CI_ENVIRONMENT') !== 'development') {
-    //         return view('halaman_absensi_mt');
-    //     } else {
-    //         if (!session()->get('un_lock')) {
-    //             $data['sett_apps'] = $this->db->table('app_setting')->where('id', 1)->get()->getRow();
-    //             return view('lock_screen', $data);
-    //         } else {
-    //             $peng = $this->db->table('pengumuman')->where('running_text_id', 1)->get()->getRow();
-
-    //             // Ambil jadwal absensi berdasarkan hari ini
-    //             $nama_hari = $this->getHariIni();
-    //             $jadwal = $this->db->table('waktu_absen')->where('nama_hari', $nama_hari)->get()->getRow();
-
-    //             $data = [
-    //                 'sett_apps'         => $this->db->table('app_setting')->where('id', 1)->get()->getRow(),
-    //                 'status_pengumuman' => $peng ? $peng->status : 'Tidak',
-    //                 'text'              => $peng ? $peng->text : '',
-    //                 'dataabsen'         => $this->db->table('absen')->where('tanggal', $tanggal_hari_ini)->orderBy('absen_id', 'DESC')->get()->getResult(),
-
-    //                 // Variabel disesuaikan dengan kebutuhan View (_m untuk Murid)
-    //                 'nama_hari'         => $nama_hari,
-    //                 'jam_masuk_p_g'     => $jadwal ? $jadwal->jam_masuk_guru : '00:00',
-    //                 'jam_keluar_p_g'    => $jadwal ? $jadwal->jam_pulang_guru : '00:00',
-    //                 'jam_masuk_m'       => $jadwal ? $jadwal->jam_masuk_siswa : '00:00',
-    //                 'jam_keluar_m'      => $jadwal ? $jadwal->jam_pulang_siswa : '00:00',
-    //             ];
-    //             return view('halaman_absensi', $data);
-    //         }
-    //     }
-    // }
     public function index()
     {
         $tanggal_hari_ini = date('Y-m-d');
@@ -87,8 +50,15 @@ class Absensi extends BaseController
                     'sett_apps'         => $this->db->table('app_setting')->where('id', 1)->get()->getRow(),
                     'status_pengumuman' => $peng ? $peng->status : 'Tidak',
                     'text'              => $peng ? $peng->text : '',
-                    'dataabsen'         => $this->db->table('absen')->where('tanggal', $tanggal_hari_ini)->orderBy('absen_id', 'DESC')->get()->getResult(),
-                    'belum_absen'       => $siswa_belum_absen, // Variabel baru untuk dikirim ke view
+
+                    // --- UBAH BAGIAN INI ---
+                    'dataabsen' => $this->db->table('absen')
+                        ->where('tanggal', $tanggal_hari_ini)
+                        ->orderBy('COALESCE(jam_pulang, jam_masuk)', 'DESC', false) // <-- Tambahkan parameter false ini!
+                        ->get()->getResult(),
+                    // -----------------------
+
+                    'belum_absen'       => $siswa_belum_absen,
 
                     // Variabel disesuaikan dengan kebutuhan View (_m untuk Murid)
                     'nama_hari'         => $nama_hari,
@@ -126,53 +96,14 @@ class Absensi extends BaseController
         }
     }
 
-    // public function show_latest_absen()
-    // {
-    //     $data = $this->db->table('absen')->where('tanggal', date('Y-m-d'))->orderBy('absen_id', 'DESC')->get()->getResult();
-    //     $str = '';
-
-    //     foreach ($data as $absen) {
-    //         $user = $this->db->table('user')->where('user_id', $absen->user_id)->get()->getRow();
-    //         $name = 'null';
-    //         $level = 'null';
-
-    //         if ($user) {
-    //             if ($user->level_id == 1) {
-    //                 $name = 'Admin Aplikasi';
-    //                 $level = 'Admin Aplikasi';
-    //             } elseif ($user->level_id == 2) {
-    //                 $guru = $this->db->table('guru')->where('nip', $user->username)->get()->getRow();
-    //                 $name = $guru ? $guru->nama_guru : 'Unknown';
-    //                 $level = 'Guru';
-    //             } elseif ($user->level_id == 3) {
-    //                 $pegawai = $this->db->table('pegawai')->where('nip', $user->username)->get()->getRow();
-    //                 $name = $pegawai ? $pegawai->nama_pegawai : 'Unknown';
-    //                 $level = 'Pegawai';
-    //             } elseif ($user->level_id == 4) {
-    //                 $siswa = $this->db->table('siswa')->where('nisn', $user->username)->get()->getRow();
-    //                 $name = $siswa ? $siswa->nama_siswa : 'Unknown';
-    //                 $level = 'Murid';
-    //             }
-    //         }
-
-    //         $sts_m = ($absen->status_masuk == 'Terlambat') ? '<i class="fas fa-exclamation-circle" style="color: #ff3502;"></i>' : '<i class="fas fa-check-circle" style="color: #04c142;"></i>';
-    //         $sts_k = ($absen->status_pulang == 'Terlambat') ? '<i class="fas fa-exclamation-circle" style="color: #ff3502;"></i>' : (($absen->status_pulang == 'Tepat Waktu') ? '<i class="fas fa-check-circle" style="color: #04c142;"></i>' : '');
-
-    //         $str .= '<tr>
-    //                     <td>' . $name . '</td>
-    //                     <td>' . $level . '</td>
-    //                     <td>' . $absen->tanggal . '</td>
-    //                     <td>' . $absen->keterangan . '</td>
-    //                     <td>' . $absen->jam_masuk . ' <span>' . $sts_m . '</span></td>
-    //                     <td>' . $absen->jam_pulang . ' <span>' . $sts_k . '</span></td>
-    //                 </tr>';
-    //     }
-    //     return $str;
-    // }
-
     public function show_latest_absen()
     {
-        $data = $this->db->table('absen')->where('tanggal', date('Y-m-d'))->orderBy('absen_id', 'DESC')->get()->getResult();
+        // --- TAMBAHKAN PARAMETER 'false' DI AKHIR orderBy ---
+        $data = $this->db->table('absen')
+            ->where('tanggal', date('Y-m-d'))
+            ->orderBy('COALESCE(jam_pulang, jam_masuk)', 'DESC', false)
+            ->get()->getResult();
+
         $str = '';
 
         foreach ($data as $absen) {
