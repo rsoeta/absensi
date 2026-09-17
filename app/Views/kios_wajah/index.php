@@ -324,21 +324,60 @@
             };
             faceapi.matchDimensions(canvas, displaySize);
 
+            // Scan wajah setiap 100 milidetik
             setInterval(async () => {
                 if (!faceMatcher) return;
-                const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptors();
+
+                const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
+                    .withFaceLandmarks()
+                    .withFaceDescriptors();
+
                 const resizedDetections = faceapi.resizeResults(detections, displaySize);
                 const ctx = canvas.getContext('2d');
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-                resizedDetections.forEach((d) => {
-                    const result = faceMatcher.findBestMatch(d.descriptor);
-                    const box = d.detection.box;
+                const results = resizedDetections.map(d => faceMatcher.findBestMatch(d.descriptor));
 
-                    ctx.strokeStyle = result.label === 'unknown' ? '#dc3545' : '#28a745';
+                results.forEach((result, i) => {
+                    const box = resizedDetections[i].detection.box;
+
+                    // 1. Gambar kotak wajah secara manual
+                    ctx.strokeStyle = result.label === 'unknown' ? '#dc3545' : '#28a745'; // Merah jika asing, Hijau jika valid
                     ctx.lineWidth = 3;
                     ctx.strokeRect(box.x, box.y, box.width, box.height);
 
+                    // 2. Format teks label & ubah nilai jarak menjadi Persentase Kecocokan
+                    let labelText = "TIDAK DIKENAL";
+                    if (result.label !== 'unknown') {
+                        const parts = result.label.split('_');
+                        if (parts.length >= 3) {
+                            const nama = result.label.replace(parts[0] + '_' + parts[1] + '_', '');
+                            const akurasi = Math.round((1 - result.distance) * 100);
+                            labelText = `${nama} (${akurasi}%)`;
+                        }
+                    }
+
+                    // 3. Tulis teks Anti-Cermin (Reverse Context)
+                    ctx.save();
+                    // Geser titik nol (0,0) ke pojok kanan kotak di dalam koordinat asli
+                    ctx.translate(box.x + box.width, box.y);
+                    // Balikkan skala X agar teks mundur, jadi saat terkena cermin CSS, teksnya maju/normal!
+                    ctx.scale(-1, 1);
+
+                    ctx.font = 'bold 18px "Segoe UI", sans-serif';
+                    const textWidth = ctx.measureText(labelText).width;
+
+                    // Gambar background teks agar mudah dibaca
+                    ctx.fillStyle = result.label === 'unknown' ? 'rgba(220, 53, 69, 0.9)' : 'rgba(40, 167, 69, 0.9)';
+                    ctx.fillRect(0, -32, textWidth + 20, 32);
+
+                    // Cetak teksnya
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillText(labelText, 10, -10);
+
+                    ctx.restore();
+
+                    // 4. Eksekusi absen jika dikenali
                     if (result.label !== 'unknown' && !isProcessing) {
                         tembakAbsen(result.label);
                     }
