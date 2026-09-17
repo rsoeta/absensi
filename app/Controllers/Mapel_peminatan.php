@@ -11,6 +11,18 @@ class Mapel_peminatan extends BaseController
         $this->db = \Config\Database::connect();
     }
 
+    // =======================================================
+    // GEMBOK ANTI-SISWA: Siswa dilarang masuk ke fungsi CRUD
+    // =======================================================
+    protected function blockSiswa()
+    {
+        if (session()->get('level_id') == 4) {
+            session()->setFlashdata('error', 'Siswa tidak diizinkan untuk mengubah data.');
+            header('Location: ' . base_url('mapel_peminatan'));
+            exit;
+        }
+    }
+
     public function index()
     {
         if (!session()->get('userid')) return redirect()->to('/auth');
@@ -23,15 +35,16 @@ class Mapel_peminatan extends BaseController
         if (session()->get('level_id') == 1) {
             return view('mapel_peminatan/mapel_peminatan_list', $data);
         } else {
-            return view('web_user/mapel_peminatan_list', $data); // Asumsi folder web_user sudah digabungkan ke Views
+            // Level 2 (Guru), 3 (Pegawai), 4 (Siswa) akan dilempar ke sini
+            return view('web_user/mapel_peminatan_list', $data);
         }
     }
 
     public function create()
     {
         if (!session()->get('userid')) return redirect()->to('/auth');
+        $this->blockSiswa(); // Kunci!
 
-        // Mengambil data guru berdasarkan userid (Menerjemahkan fungsi helper guru_id)
         $user_id = session()->get('userid');
         $guru = $this->db->table('guru')->where('nip', $this->db->table('user')->where('user_id', $user_id)->get()->getRow()->username ?? '')->get()->getRow();
         $guru_id = $guru ? $guru->id_guru : null;
@@ -55,6 +68,7 @@ class Mapel_peminatan extends BaseController
     public function create_action()
     {
         if (!session()->get('userid')) return redirect()->to('/auth');
+        $this->blockSiswa(); // Kunci!
 
         if (!$this->validate(['nama_mapel_peminatan' => 'required'])) return $this->create();
 
@@ -75,6 +89,7 @@ class Mapel_peminatan extends BaseController
     public function update($id)
     {
         if (!session()->get('userid')) return redirect()->to('/auth');
+        $this->blockSiswa(); // Kunci!
 
         $row = $this->db->table('mapel_peminatan')->where('id', decrypt_url($id))->get()->getRow();
 
@@ -102,6 +117,7 @@ class Mapel_peminatan extends BaseController
     public function update_action()
     {
         if (!session()->get('userid')) return redirect()->to('/auth');
+        $this->blockSiswa(); // Kunci!
 
         if (!$this->validate(['nama_mapel_peminatan' => 'required'])) {
             return $this->update(encrypt_url($this->request->getPost('id')));
@@ -119,6 +135,7 @@ class Mapel_peminatan extends BaseController
     public function delete($id)
     {
         if (!session()->get('userid')) return redirect()->to('/auth');
+        $this->blockSiswa(); // Kunci!
 
         $real_id = decrypt_url($id);
         $row = $this->db->table('mapel_peminatan')->where('id', $real_id)->get()->getRow();

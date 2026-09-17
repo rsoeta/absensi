@@ -25,3 +25,17 @@ CREATE TABLE `surat_panggilan` (
 
 ALTER TABLE `app_setting` 
 ADD COLUMN `tema_aplikasi` VARCHAR(50) NOT NULL DEFAULT 'default' AFTER `wa_blast`;
+
+-- absen_mandiri geolocation
+ALTER TABLE absen 
+ADD COLUMN lat_masuk VARCHAR(50) NULL AFTER is_geolocation,
+ADD COLUMN long_masuk VARCHAR(50) NULL AFTER lat_masuk,
+ADD COLUMN photo_masuk VARCHAR(255) NULL AFTER long_masuk,
+ADD COLUMN lat_pulang VARCHAR(50) NULL AFTER photo_masuk,
+ADD COLUMN long_pulang VARCHAR(50) NULL AFTER lat_pulang,
+ADD COLUMN photo_pulang VARCHAR(255) NULL AFTER long_pulang;
+
+-- face recognition
+ALTER TABLE siswa ADD COLUMN face_descriptor TEXT NULL;
+ALTER TABLE guru ADD COLUMN face_descriptor TEXT NULL;
+ALTER TABLE pegawai ADD COLUMN face_descriptor TEXT NULL;

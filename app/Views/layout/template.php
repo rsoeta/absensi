@@ -17,6 +17,28 @@
         <link rel="stylesheet" href="<?= base_url('assets/css/tema_muhammadiyah.css') ?>">
     <?php endif; ?>
 
+    <style>
+        /* Mengecilkan ukuran SweetAlert2 agar responsif dan nyaman di Mobile */
+        .swal2-popup.swal-mungil {
+            font-size: 0.85rem !important;
+            width: 85% !important;
+            max-width: 320px !important;
+            padding: 1.2em !important;
+            border-radius: 15px !important;
+        }
+
+        .swal2-popup.swal-mungil .swal2-title {
+            font-size: 1.25rem !important;
+            margin-bottom: 0.5em !important;
+        }
+
+        .swal2-popup.swal-mungil .swal2-icon {
+            width: 3.5em !important;
+            height: 3.5em !important;
+            margin: 1em auto .5em !important;
+        }
+    </style>
+
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport" />
     <meta content="" name="description" />
     <meta content="" name="author" />
@@ -75,11 +97,16 @@
             </div>
 
             <div class="navbar-nav">
-                <div class="navbar-item dropdown">
-                    <a href="<?= base_url('absensi') ?>" target="_blank" class="navbar-link dropdown-toggle icon">
-                        <img src="<?= base_url('assets/image.webp') ?>" alt="Halaman Website" height="27px">
-                        Visit Halaman Absensi
-                    </a>
+                <!-- Tombol Switcher Mode Kios -->
+                <div class="navbar-nav ms-auto align-items-center">
+                    <div class="btn-group" role="group">
+                        <a href="<?= base_url('absensi') ?>" target="_blank" class="btn btn-sm btn-success active">
+                            <i class="fas fa-qrcode"></i> Kios QR Code
+                        </a>
+                        <a href="<?= base_url('kios_wajah') ?>" target="_blank" class="btn btn-sm btn-warning fw-bold">
+                            <i class="fas fa-fingerprint"></i> Kios FR Biometric
+                        </a>
+                    </div>
                 </div>
                 <div class="navbar-item dropdown">
                     <?php
@@ -394,6 +421,11 @@
                             <div class="menu-item <?= url_is('absen_geolocation*') ? 'active' : '' ?>">
                                 <a href="<?= base_url('absen_geolocation/update/' . encrypt_url(1)) ?>" class="menu-link">
                                     <div class="menu-text">Absensi Geolocation</div>
+                                </a>
+                            </div>
+                            <div class="menu-item <?= url_is('face_generator*') ? 'active' : '' ?>">
+                                <a href="<?= base_url('face_generator') ?>" class="menu-link">
+                                    <div class="menu-title">AI Face Generator (128-D)</div>
                                 </a>
                             </div>
                             <div class="menu-item <?= url_is('pengumuman*') ? 'active' : '' ?>">

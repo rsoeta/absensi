@@ -1,84 +1,129 @@
 <?= $this->extend('layout/template') ?>
 <?= $this->section('content') ?>
+
+<style>
+    /* ATURAN MOBILE-FIRST & TOUCH TARGETS (MIN 48x48PX) */
+    @media (max-width: 767.98px) {
+
+        .form-control,
+        .form-select,
+        .btn {
+            min-height: 48px;
+            font-size: 16px !important;
+            /* Mencegah auto-zoom pada iOS/Android */
+        }
+
+        .panel-body {
+            padding: 1rem !important;
+        }
+
+        #map {
+            height: 350px !important;
+            /* Tinggi peta disesuaikan untuk layar HP */
+        }
+    }
+</style>
+
 <div id="content" class="app-content">
+    <h1 class="page-header mb-3">PENGATURAN GEOLOCATION</h1>
+
     <div class="row">
-        <div class="col-xl-6">
-            <div class="panel panel-inverse">
-                <div class="panel-heading">
-                    <h4 class="panel-title">KELOLA DATA ABSEN_GEOLOCATION</h4>
+        <!-- Form Pengaturan -->
+        <div class="col-xl-6 mb-3">
+            <div class="panel panel-inverse shadow-sm" style="border-radius: 10px; overflow: hidden;">
+                <div class="panel-heading" style="background: #123e87; color: white;">
+                    <h4 class="panel-title"><i class="fa fa-map-marked-alt me-2"></i> Konfigurasi Titik Pusat & Radius</h4>
                 </div>
                 <div class="panel-body">
                     <form action="<?= $action ?>" method="post">
-                        <table class="table table-bordered table-hover">
-                            <tr>
-                                <td>Is Aktif</td>
-                                <td><select name="is_aktif" class="form-control theSelect">
-                                        <option value="Aktif" <?= $is_aktif == 'Aktif' ? 'selected' : '' ?>>Aktif</option>
-                                        <option value="Non Aktif" <?= $is_aktif == 'Non Aktif' ? 'selected' : '' ?>>Non Aktif</option>
-                                    </select>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Is Photo</td>
-                                <td><select name="is_photo" class="form-control theSelect">
-                                        <option value="Aktif" <?= $is_photo == 'Aktif' ? 'selected' : '' ?>>Aktif</option>
-                                        <option value="Non Aktif" <?= $is_photo == 'Non Aktif' ? 'selected' : '' ?>>Non Aktif</option>
-                                    </select>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td width='200'>Latitude</td>
-                                <td><input type="text" class="form-control" name="latitude" id="latitude" value="<?= $latitude ?>" required /></td>
-                            </tr>
-                            <tr>
-                                <td width='200'>Longitude</td>
-                                <td><input type="text" class="form-control" name="longitude" id="longitude" value="<?= $longitude ?>" required /></td>
-                            </tr>
-                            <tr>
-                                <td width='200'>Radius</td>
-                                <td><input type="text" class="form-control" name="radius" id="radius" value="<?= $radius ?>" required /></td>
-                            </tr>
-                            <tr>
-                                <td></td>
-                                <td>
-                                    <input type="hidden" name="id" value="<?= $id ?>" />
-                                    <button type="submit" class="btn btn-danger"><i class="fas fa-save"></i> <?= $button ?></button>
-                                </td>
-                            </tr>
-                        </table>
+                        <input type="hidden" name="id" value="<?= $id ?>" />
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-dark">Status Geolocation (Aktif / Tidak)</label>
+                            <select name="is_aktif" class="form-control theSelect" required>
+                                <option value="Ya" <?= $is_aktif == 'Ya' ? 'selected' : '' ?>>Ya (Aktif)</option>
+                                <option value="Tidak" <?= $is_aktif == 'Tidak' ? 'selected' : '' ?>>Tidak (Non Aktif)</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-dark">Validasi Foto Selfie</label>
+                            <select name="is_photo" class="form-control theSelect" required>
+                                <option value="Ya" <?= $is_photo == 'Ya' ? 'selected' : '' ?>>Ya (Wajib)</option>
+                                <option value="Tidak" <?= $is_photo == 'Tidak' ? 'selected' : '' ?>>Tidak</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-dark">Latitude (Lintang)</label>
+                            <input type="text" class="form-control font-monospace" name="latitude" id="latitude" value="<?= $latitude ?>" required readonly placeholder="Klik titik pada peta di samping" />
+                            <small class="text-muted">Klik langsung pada peta untuk memperbarui titik koordinat pusat.</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-dark">Longitude (Bujur)</label>
+                            <input type="text" class="form-control font-monospace" name="longitude" id="longitude" value="<?= $longitude ?>" required readonly placeholder="Klik titik pada peta di samping" />
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-dark">Radius Absen (Meter)</label>
+                            <input type="number" class="form-control" name="radius" id="radius" value="<?= $radius ?>" required min="1" placeholder="Contoh: 50" />
+                            <small class="text-muted">Batas maksimal jarak siswa/guru dari titik pusat instansi.</small>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary fw-bold py-3 shadow" style="border-radius: 8px;">
+                                <i class="fas fa-save me-2"></i> SIMPAN PERUBAHAN
+                            </button>
+                        </div>
                     </form>
                 </div>
             </div>
         </div>
 
-        <div class="col-md-6">
-            <div class="panel panel-inverse">
-                <div class="panel-heading">
-                    <h4 class="panel-title">Peta</h4>
+        <!-- Peta Interaktif -->
+        <div class="col-xl-6 mb-3">
+            <div class="panel panel-inverse shadow-sm" style="border-radius: 10px; overflow: hidden;">
+                <div class="panel-heading" style="background: #123e87; color: white;">
+                    <h4 class="panel-title"><i class="fa fa-globe-asia me-2"></i> Peta Area Instansi (Klik untuk Set Titik)</h4>
                 </div>
-                <div class="panel-body">
-                    <div id="map" style="width: 100%; height: 500px;"></div>
+                <div class="panel-body p-0">
+                    <div id="map" style="width: 100%; height: 505px; z-index: 1;"></div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.11.0/js/standalone/selectize.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
     $(document).ready(function() {
-        $(".theSelect").select2();
+        if (typeof $.fn.select2 === 'function') {
+            $(".theSelect").select2({
+                width: '100%'
+            });
+        }
 
+        // Inisialisasi Peta Leaflet
         const getLocationMap = L.map('map');
-        const osm = new L.TileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+
+        // --- UBAH BAGIAN INI MENJADI GOOGLE SATELLITE HYBRID ---
+        const googleSatellite = new L.TileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
             minZoom: 8,
-            maxZoom: 50
+            maxZoom: 21, // Max zoom diperbesar agar bisa melihat atap gedung lebih jelas
+            attribution: '&copy; Google Maps Satellite'
         });
-        getLocationMap.scrollWheelZoom.disable()
-        getLocationMap.setView(new L.LatLng('-6.175392', '106.827153'), 14)
-        getLocationMap.addLayer(osm)
+
+        getLocationMap.scrollWheelZoom.disable();
+
+        // Default awal sebelum data dimuat
+        getLocationMap.setView(new L.LatLng(-7.378772, 107.728867), 16);
+
+        // Masukkan layer satelit ke dalam map
+        getLocationMap.addLayer(googleSatellite);
+        // --------------------------------------------------------
+
         const getLocationMapMarker = L.marker([0, 0]).addTo(getLocationMap);
 
         function getToLoc(lat, lng) {
@@ -91,30 +136,43 @@
         function addRadius(radius) {
             var lat = $('#latitude').val();
             var lng = $('#longitude').val();
+
             getLocationMap.eachLayer(function(layer) {
-                if (layer instanceof L.Circle) getLocationMap.removeLayer(layer);
+                if (layer instanceof L.Circle) {
+                    getLocationMap.removeLayer(layer);
+                }
             });
-            if (lat != '' && lng != '') L.circle([lat, lng], {
-                color: 'red',
-                fillColor: '#f03',
-                fillOpacity: 0.5,
-                radius: radius
-            }).addTo(getLocationMap);
+
+            if (lat != '' && lng != '' && !isNaN(radius)) {
+                L.circle([lat, lng], {
+                    color: '#123e87',
+                    fillColor: '#ffd500',
+                    fillOpacity: 0.35,
+                    radius: parseFloat(radius)
+                }).addTo(getLocationMap);
+            }
         }
 
-        <?php if ($button == 'Update') echo "getToLoc($latitude, $longitude); addRadius($('#radius').val());"; ?>
+        // Jika data sudah ada, arahkan peta ke koordinat database
+        <?php if ($button == 'Update' && !empty($latitude) && !empty($longitude)): ?>
+            getToLoc(<?= $latitude ?>, <?= $longitude ?>);
+            addRadius($('#radius').val());
+        <?php endif; ?>
 
+        // Event klik pada peta untuk mengubah titik pusat instansi
         getLocationMap.on('click', function(e) {
             const {
-                lat = 0, lng = 0
+                lat,
+                lng
             } = e.latlng;
-            getToLoc(lat, lng);
+            getToLoc(lat.toFixed(6), lng.toFixed(6));
             addRadius($('#radius').val());
         });
 
-        $(document).on('keyup', '#radius', function() {
-            addRadius($(this).val())
+        // Update lingkaran radius secara real-time saat angka radius diketik
+        $(document).on('input', '#radius', function() {
+            addRadius($(this).val());
         });
-    })
+    });
 </script>
 <?= $this->endSection() ?>

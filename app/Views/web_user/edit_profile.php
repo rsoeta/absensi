@@ -1,78 +1,90 @@
-<div id="content" class="app-content p-0">
+<?= $this->extend('web_user/template_user') ?>
+<?= $this->section('content') ?>
 
+<?php
+$userid = session()->get('userid');
+$level_id = session()->get('level_id');
+?>
+
+<div id="content" class="app-content p-0">
 	<div class="profile">
 		<div class="profile-header">
 			<div class="profile-header-cover"></div>
 			<div class="profile-header-content">
 				<div class="profile-header-info">
 					<h4 class="mt-0 mb-1">
-						<?php if ($this->fungsi->user_login()->level_id == '2') { ?>
-							<?= nama_guru($this->session->userdata('userid')) ?>
-						<?php } else if ($this->fungsi->user_login()->level_id == '3') { ?>
-							<?= nama_pegawai($this->session->userdata('userid')) ?>
-						<?php } else if ($this->fungsi->user_login()->level_id == '4') { ?>
-							<?= nama_siswa($this->session->userdata('userid')) ?>
-						<?php } ?>
+						<?php if ($level_id == '2') : ?>
+							<?= ucwords(strtolower(nama_guru($userid))) ?>
+						<?php elseif ($level_id == '3') : ?>
+							<?= ucwords(strtolower(nama_pegawai($userid))) ?>
+						<?php elseif ($level_id == '4') : ?>
+							<?= ucwords(strtolower(nama_siswa($userid))) ?>
+						<?php endif; ?>
 					</h4>
 					<p class="mb-2">
-						<?php if ($this->fungsi->user_login()->level_id == '2') { ?>
-							NIP :<?= $username ?>
-						<?php } else if ($this->fungsi->user_login()->level_id == '3') { ?>
+						<?php if ($level_id == '2' || $level_id == '3') : ?>
 							NIP : <?= $username ?>
-						<?php } else if ($this->fungsi->user_login()->level_id == '4') { ?>
+						<?php elseif ($level_id == '4') : ?>
 							NISN : <?= $username ?>
-						<?php } ?>
+						<?php endif; ?>
 					</p>
-					<a href="#" class="btn btn-xs btn-yellow">Edit Profile</a>
+					<a href="javascript:;" class="btn btn-xs btn-yellow">Edit Profile</a>
 				</div>
 			</div>
 			<ul class="profile-header-tab nav nav-tabs">
-				<li class="nav-item"><a href="#profile-about" class="nav-link active" data-bs-toggle="tab"></a></li>
+				<li class="nav-item"><a href="#profile-about" class="nav-link active" data-bs-toggle="tab">Profil & Pengaturan</a></li>
 			</ul>
 		</div>
 	</div>
-	<div class="profile-content">
+
+	<div class="profile-content p-4">
+		<!-- Notifikasi Flash Message -->
+		<?php if (session()->getFlashdata('message')) : ?>
+			<div class="alert alert-success">
+				<i class="fas fa-check-circle"></i> <?= session()->getFlashdata('message') ?>
+			</div>
+		<?php endif; ?>
+
 		<div class="tab-content p-0">
 			<div class="tab-pane fade active show" id="profile-about">
-				<div class="table-responsive form-inline">
-					<form action="<?= base_url() ?>Dashboard_user/update_profile" method="post" enctype="multipart/form-data">
-						<table class="table table-profile align-middle">
+				<div class="table-responsive">
+					<form action="<?= base_url('dashboard_user/update_profile') ?>" method="post" enctype="multipart/form-data">
+						<table class="table table-profile align-middle text-white">
 							<tbody>
-								<input type="hidden" class="form-control" name="user_id" id="user_id" placeholder="user_id" value="<?php echo $user_id; ?>" />
-								<td class="field">Username</td>
-								<td><input type="text" readonly class="form-control" name="username" id="username" placeholder="Username" value="<?php echo $username; ?>" /></td>
+								<input type="hidden" class="form-control" name="user_id" id="user_id" value="<?= $user_id; ?>" />
+								<tr>
+									<td class="field" width="20%">Username</td>
+									<td><input type="text" readonly class="form-control bg-dark text-white" name="username" id="username" value="<?= $username; ?>" /></td>
 								</tr>
 								<tr class="highlight">
-									<td class="field">Password</td>
-									<td><input type="password" class="form-control" name="password" id="password" placeholder="Password" value="" />
-										<small style="color: red">(Biarkan kosong jika tidak diganti)</small>
+									<td class="field">Password Baru</td>
+									<td>
+										<input type="password" class="form-control" name="password" id="password" placeholder="Masukkan password baru..." />
+										<small class="text-danger">* Biarkan kosong jika tidak ingin mengganti password.</small>
 									</td>
 								</tr>
-								<tr class="divider">
 								<tr class="highlight">
-									<td class="field">Photo</td>
+									<td class="field">Foto Profil</td>
 									<td>
-										<?php if ($this->fungsi->user_login()->level_id == '2') { ?>
-											<img style="width: 150px;height: 150px;border-radius: 5%;" src="<?= base_url() ?>assets/img/guru/<?= photo_guru($this->session->userdata('userid')) ?>" alt="" />
-										<?php } else if ($this->fungsi->user_login()->level_id == '3') { ?>
-											<img style="width: 150px;height: 150px;border-radius: 5%;" src="<?= base_url() ?>assets/img/pegawai/<?= photo_pegawai($this->session->userdata('userid')) ?>" alt="" />
-										<?php } else if ($this->fungsi->user_login()->level_id == '4') { ?>
-											<img style="width: 150px;height: 150px;border-radius: 5%;" src="<?= base_url() ?>assets/img/siswa/<?= photo_siswa($this->session->userdata('userid')) ?>" alt="" />
-										<?php } ?>
-										<?php if ($this->fungsi->user_login()->level_id == '2') { ?>
-											<input type="hidden" name="photo_lama" value="<?= photo_guru($this->session->userdata('userid')) ?>">
-										<?php } else if ($this->fungsi->user_login()->level_id == '3') { ?>
-											<input type="hidden" name="photo_lama" value="<?= photo_pegawai($this->session->userdata('userid')) ?>">
-										<?php } else if ($this->fungsi->user_login()->level_id == '4') { ?>
-											<input type="hidden" name="photo_lama" value="<?= photo_siswa($this->session->userdata('userid')) ?>">
-										<?php } ?>
-										<p style="color: red">Note :Pilih photo Jika Ingin Merubah photo</p>
-										<input type="file" class="form-control" name="photo" id="photo" placeholder="photo" value="" onchange="return validasiEkstensi()" />
+										<div class="mb-2">
+											<?php if ($level_id == '2') : ?>
+												<img id="preview-foto" style="width: 150px; height: 150px; border-radius: 5%; object-fit: cover;" src="<?= base_url('assets/img/guru/' . photo_guru($userid)) ?>" alt="Foto Guru" />
+												<input type="hidden" name="photo_lama" value="<?= photo_guru($userid) ?>">
+											<?php elseif ($level_id == '3') : ?>
+												<img id="preview-foto" style="width: 150px; height: 150px; border-radius: 5%; object-fit: cover;" src="<?= base_url('assets/img/pegawai/' . photo_pegawai($userid)) ?>" alt="Foto Pegawai" />
+												<input type="hidden" name="photo_lama" value="<?= photo_pegawai($userid) ?>">
+											<?php elseif ($level_id == '4') : ?>
+												<img id="preview-foto" style="width: 150px; height: 150px; border-radius: 5%; object-fit: cover;" src="<?= base_url('assets/img/siswa/' . photo_siswa($userid)) ?>" alt="Foto Siswa" />
+												<input type="hidden" name="photo_lama" value="<?= photo_siswa($userid) ?>">
+											<?php endif; ?>
+										</div>
+										<p class="text-warning mb-1">Catatan: Pilih foto baru jika ingin mengubah foto profil.</p>
+										<input type="file" class="form-control" name="photo" id="photo" onchange="return validasiEkstensi()" />
 									</td>
 								</tr>
 								<tr class="highlight">
 									<td class="field">&nbsp;</td>
-									<td class="">
+									<td>
 										<button type="submit" class="btn btn-primary w-150px"><i class="fas fa-save"></i> Update</button>
 									</td>
 								</tr>
@@ -90,19 +102,21 @@
 		var inputFile = document.getElementById('photo');
 		var pathFile = inputFile.value;
 		var ekstensiOk = /(\.jpg|\.jpeg|\.png)$/i;
+
 		if (!ekstensiOk.exec(pathFile)) {
 			alert('Silakan upload file yang memiliki ekstensi .jpeg/.jpg/.png');
 			inputFile.value = '';
 			return false;
 		} else {
-			// Preview photo
+			// PREVIEW FOTO SECARA REALTIME
 			if (inputFile.files && inputFile.files[0]) {
 				var reader = new FileReader();
 				reader.onload = function(e) {
-					document.getElementById('preview').innerHTML = '<iframe src="' + e.target.result + '" style="height:150px; width:200px"/>';
+					document.getElementById('preview-foto').src = e.target.result;
 				};
 				reader.readAsDataURL(inputFile.files[0]);
 			}
 		}
 	}
 </script>
+<?= $this->endSection() ?>

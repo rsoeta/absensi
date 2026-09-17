@@ -243,15 +243,9 @@ class Siswa extends BaseController
 
         $photoName = $this->request->getPost('photo_lama');
         $file = $this->request->getFile('photo');
-        if ($file && $file->isValid() && !$file->hasMoved()) {
-            if ($photoName && $photoName != 'default.png' && file_exists(FCPATH . 'assets/img/siswa/' . $photoName)) {
-                unlink(FCPATH . 'assets/img/siswa/' . $photoName);
-            }
-            $photoName = $file->getRandomName();
-            $file->move(FCPATH . 'assets/img/siswa', $photoName);
-        }
 
-        $this->db->table('siswa')->where('siswa_id', $siswa_id)->update([
+        // Siapkan array data update untuk tabel siswa
+        $updateData = [
             'nisn'             => $nisn,
             'nama_siswa'       => $nama_siswa,
             'jk_kelamin'       => $this->request->getPost('jk_kelamin'),
@@ -273,9 +267,25 @@ class Siswa extends BaseController
             'nama_ibu'         => $this->request->getPost('nama_ibu'),
             'pekerjaan_ibu'    => $this->request->getPost('pekerjaan_ibu'),
             'penerima_kps'     => $this->request->getPost('penerima_kps'),
-            'photo'            => $photoName,
             'qr_code'          => $image_name,
-        ]);
+        ];
+
+        if ($file && $file->isValid() && !$file->hasMoved()) {
+            if ($photoName && $photoName != 'default.png' && file_exists(FCPATH . 'assets/img/siswa/' . $photoName)) {
+                unlink(FCPATH . 'assets/img/siswa/' . $photoName);
+            }
+            $photoName = $file->getRandomName();
+            $file->move(FCPATH . 'assets/img/siswa', $photoName);
+
+            // --- KUNCI UTAMA: Reset Face Descriptor karena Admin mengunggah foto baru ---
+            $updateData['face_descriptor'] = null;
+        }
+
+        // Masukkan nama foto ke dalam array data update
+        $updateData['photo'] = $photoName;
+
+        // Eksekusi update database siswa
+        $this->db->table('siswa')->where('siswa_id', $siswa_id)->update($updateData);
 
         session()->setFlashdata('message', 'Update Record Success');
         return redirect()->to('/siswa/daftar_siswa?kelas_id=' . $kelas_id);
@@ -828,21 +838,70 @@ class Siswa extends BaseController
         // 2. LOGIKA UNTUK CETAK MASSAL (PDF / PRINT)
         // =======================================================
         if ($this->request->getPost('cetak') == 'Y') {
-            // ... (Biarkan logika cetak massal Anda yang sudah ada di sini)
+            $siswa_data = $this->db->table('siswa')->whereIn('siswa_id', $id_siswa_array)->get()->getResult();
+
+            $data = [
+                'sett_apps' => $this->db->table('app_setting')->where('id', 1)->get()->getRow(),
+                'siswa'     => $siswa_data
+            ];
+
+            // Langsung lempar ke view agar terhindar dari limit karakter URL jika mencetak ratusan siswa sekaligus
+            return view('siswa/cetak_semua', $data);
         }
 
         // =======================================================
         // 3. LOGIKA UNTUK HAPUS MASSAL
         // =======================================================
         if ($this->request->getPost('hapus') == 'Y') {
-            // ... (Biarkan logika hapus massal Anda yang sudah ada di sini)
+            $notify = $this->request->getPost('notify');
+
+            foreach ($id_siswa_array as $id) {
+                $siswa = $this->db->table('siswa')->where('siswa_id', $id)->get()->getRow();
+                if ($siswa) {
+                    // Hapus file fisik gambar dan QR Code
+                    if ($siswa->photo && $siswa->photo != 'default.png' && file_exists(FCPATH . 'assets/img/siswa/' . $siswa->photo)) {
+                        unlink(FCPATH . 'assets/img/siswa/' . $siswa->photo);
+                    }
+                    if ($siswa->qr_code && file_exists(FCPATH . 'assets/img/qr/siswa/' . $siswa->qr_code)) {
+                        unlink(FCPATH . 'assets/img/qr/siswa/' . $siswa->qr_code);
+                    }
+
+                    // Masukkan Notifikasi jika dicentang
+                    if ($notify == 'on') {
+                        $this->db->table('notif_siswa')->insert([
+                            'nama_siswa'  => $siswa->nama_siswa,
+                            'kelas'       => $siswa->kelas_id,
+                            'deksripsi'   => 'dihapus',
+                            'status_baca' => 'Belum Terbaca',
+                            'tanggal'     => date('Y-m-d H:i:s')
+                        ]);
+                    }
+
+                    // Eksekusi Hapus Database
+                    $this->db->table('user')->where('username', $siswa->nisn)->delete();
+                    $this->db->table('siswa')->where('siswa_id', $id)->delete();
+                }
+            }
+            session()->setFlashdata('message', 'Data siswa terpilih berhasil dihapus.');
+            return redirect()->back();
         }
 
         // =======================================================
         // 4. LOGIKA UNTUK PINDAH KELAS
         // =======================================================
         if ($this->request->getPost('pindah') == 'Y') {
-            // ... (Biarkan logika pindah kelas Anda yang sudah ada di sini)
+            $tujuan_kelas = $this->request->getPost('kelas_id');
+
+            if (empty($tujuan_kelas)) {
+                session()->setFlashdata('error', 'Pilih kelas tujuan terlebih dahulu!');
+                return redirect()->back();
+            }
+
+            foreach ($id_siswa_array as $id) {
+                $this->db->table('siswa')->where('siswa_id', $id)->update(['kelas_id' => $tujuan_kelas]);
+            }
+            session()->setFlashdata('message', 'Data siswa berhasil dipindahkan.');
+            return redirect()->back();
         }
     }
 }

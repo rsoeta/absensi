@@ -26,7 +26,13 @@ if (document.querySelector(".app-with-light-sidebar")) {
 }
 
 var handleVisitorsAreaChart = function () {
-	const ctx = document.getElementById("visitors-line-chart").getContext("2d");
+	// Pengecekan elemen agar tidak error di halaman tanpa grafik
+	var canvasElement = document.getElementById("visitors-line-chart");
+	if (!canvasElement) {
+		return;
+	}
+
+	const ctx = canvasElement.getContext("2d");
 
 	// create list of day of this month and assign it as datany's labels
 	const days = [];
@@ -35,7 +41,6 @@ var handleVisitorsAreaChart = function () {
 	for (let i = 1; i <= lastDay.getDate(); i++) {
 		days.push(i);
 	}
-
 
 	var datany = {
 		labels: days,
@@ -85,10 +90,8 @@ var handleVisitorsAreaChart = function () {
 						},
 						tooltip: {
 							mode: "index",
-							// get tooltip text
 							callbacks: {
 								title: function(tooltipItems, data) {
-									//Return value for title
 									return 'Tanggal: ' + tooltipItems[0].label;
 								}
 							}
@@ -101,17 +104,11 @@ var handleVisitorsAreaChart = function () {
 					},
 					scales: {
 						x: {
-							title: {
-								display: true,
-								text: "Hari",
-							},
+							title: { display: true, text: "Hari" },
 						},
 						y: {
 							stacked: true,
-							title: {
-								display: true,
-								text: "Tanggal",
-							},
+							title: { display: true, text: "Tanggal" },
 						},
 					},
 				},
@@ -120,17 +117,19 @@ var handleVisitorsAreaChart = function () {
 			return myChart;
 		},
 		error: function(data){
-			console.log(
-				"Error:",
-				data
-			)
+			console.log("Error:", data)
 		}
 	})
 };
 
 var handleVisitorsDonutChart = function () {
+	// Pengecekan elemen agar tidak error di halaman tanpa donut chart
+	var canvasDonutElement = document.getElementById("visitors-donut-chart");
+	if (!canvasDonutElement) {
+		return;
+	}
 
-	const ctx = document.getElementById("visitors-donut-chart").getContext("2d");
+	const ctx = canvasDonutElement.getContext("2d");
 
 	var datany = {
 		labels: ["Hadir", "Izin", "Sakit", "Alpa"],
@@ -183,13 +182,9 @@ var handleVisitorsDonutChart = function () {
 			});
 		
 			return myChart;
-			
 		},
 		error: function(data){
-			console.log(
-				"Error:",
-				data
-			)
+			console.log("Error:", data)
 		}
 	})
 };

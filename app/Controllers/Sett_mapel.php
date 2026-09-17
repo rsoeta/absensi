@@ -11,6 +11,19 @@ class Sett_mapel extends BaseController
         $this->db = \Config\Database::connect();
     }
 
+    // =======================================================
+    // GEMBOK ANTI-SISWA: Tolak akses mutlak untuk Siswa
+    // =======================================================
+    protected function blockSiswa()
+    {
+        if (session()->get('level_id') == 4) {
+            session()->setFlashdata('error', 'Akses Ditolak: Siswa tidak diizinkan mengakses halaman Setting Mapel.');
+            // Tendang kembali ke dashboard siswa
+            header('Location: ' . base_url('dashboard_user'));
+            exit;
+        }
+    }
+
     // Fungsi helper internal untuk mendapatkan tahun ajaran aktif
     private function cek_tahun()
     {
@@ -25,6 +38,7 @@ class Sett_mapel extends BaseController
     public function index()
     {
         if (!session()->get('userid')) return redirect()->to('/auth');
+        $this->blockSiswa(); // Gembok terpasang!
 
         $data = [
             'sett_mapel_data' => $this->db->table('sett_mapel')->get()->getResult(),
@@ -45,6 +59,7 @@ class Sett_mapel extends BaseController
     public function create_action()
     {
         if (!session()->get('userid')) return redirect()->to('/auth');
+        $this->blockSiswa(); // Gembok terpasang!
 
         $rules = [
             'guru_id'  => 'required',
@@ -84,6 +99,7 @@ class Sett_mapel extends BaseController
     public function delete($id)
     {
         if (!session()->get('userid')) return redirect()->to('/auth');
+        $this->blockSiswa(); // Gembok terpasang!
 
         $real_id = decrypt_url($id);
         $row = $this->db->table('sett_mapel')->where('sett_mapel_id', $real_id)->get()->getRow();

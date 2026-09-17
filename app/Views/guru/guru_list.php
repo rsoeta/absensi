@@ -97,16 +97,19 @@
 						</div>
 					</div>
 
-					<form action="<?= base_url('guru/update_guru') ?>" method="POST">
-						<div class="mb-3">
-							<button type="submit" name="hapus" value="Y" class="btn btn-danger btn-sm" onclick="return confirm('Yakin hapus data terpilih?');"><i class="fa fa-trash"></i> Hapus Terpilih</button>
+					<form id="form-bulk" action="<?= base_url('guru/update_guru') ?>" method="POST">
+						<div class="mb-3 d-flex flex-wrap gap-2">
+							<!-- Hapus massal menggunakan SweetAlert2 -->
+							<button type="button" class="btn btn-danger btn-sm" onclick="konfirmasiHapusMassal()"><i class="fa fa-trash"></i> Hapus Terpilih</button>
 							<button type="submit" name="cetak" value="Y" class="btn btn-white btn-sm" formtarget="_blank"><i class="fa fa-print"></i> Cetak Kartu Terpilih</button>
+							<!-- Tambahan tombol download massal gambar -->
+							<button type="submit" name="download" value="Y" class="btn btn-info btn-sm text-white" formtarget="_blank"><i class="fa fa-images"></i> Download Gambar Terpilih</button>
 						</div>
 
 						<div class="table-responsive">
-							<table id="data-table-default3" class="table table-bordered table-hover text-white align-middle">
+							<table id="data-table-default3" class="table table-bordered table-hover text-white align-middle text-nowrap">
 								<thead>
-									<tr>
+									<tr class="text-center">
 										<th width="1%">No</th>
 										<th width="1%"><input type='checkbox' id='checkAll'></th>
 										<th>Photo</th>
@@ -125,26 +128,31 @@
 									<?php $no = 1;
 									foreach ($guru_data as $guru) : ?>
 										<tr>
-											<td><?= $no++ ?></td>
-											<td><input type="checkbox" name="update[]" value="<?= $guru->guru_id ?>"></td>
-											<td>
+											<td class="text-center"><?= $no++ ?></td>
+											<td class="text-center"><input type="checkbox" name="update[]" value="<?= $guru->guru_id ?>"></td>
+											<td class="text-center">
 												<?php $foto = empty($guru->photo) ? 'default.png' : $guru->photo; ?>
 												<a id="view_gambar" href="#modal-dialog" data-bs-toggle="modal" data-photo="<?= $foto ?>" data-nama_guru="<?= $guru->nama_guru ?>">
-													<img src="<?= base_url('assets/img/guru/' . $foto) ?>" class="rounded h-30px my-n1 mx-n1" style="object-fit:cover; width:30px;" />
+													<img src="<?= base_url('assets/img/guru/' . $foto) ?>" class="rounded shadow-sm" style="height: 35px; width: 35px; object-fit: cover;" />
 												</a>
 											</td>
 											<td><?= $guru->nip ?></td>
 											<td><?= $guru->nama_guru ?></td>
-											<td><?= $guru->jk_kelamin ?></td>
-											<td><?= $guru->nama_status_guru ?? $guru->status_guru_id ?></td>
-											<td><?= $guru->alamat ?></td>
+											<td class="text-center"><?= $guru->jk_kelamin ?></td>
+											<td class="text-center"><?= $guru->nama_status_guru ?? $guru->status_guru_id ?></td>
+											<td><span class="d-inline-block text-truncate" style="max-width: 150px;"><?= $guru->alamat ?></span></td>
 											<td><?= $guru->no_hp ?></td>
 											<td><?= $guru->tempat_lahir ?></td>
-											<td><?= $guru->tanggal_lahir ?></td>
+											<td class="text-center"><?= $guru->tanggal_lahir ?></td>
 											<td class="text-center">
-												<a href="<?= base_url('guru/cetak/' . encrypt_url($guru->guru_id)) ?>" target="_blank" class="btn btn-white btn-sm"><i class="fas fa-print"></i></a>
-												<a href="<?= base_url('guru/update/' . encrypt_url($guru->guru_id)) ?>" class="btn btn-primary btn-sm"><i class="fas fa-pencil-alt"></i></a>
-												<a href="<?= base_url('guru/delete/' . encrypt_url($guru->guru_id)) ?>" class="btn btn-danger btn-sm" onclick="return confirm('Apakah Anda Yakin?')"><i class="fas fa-trash-alt"></i></a>
+												<div class="btn-group">
+													<a href="<?= base_url('guru/cetak/' . encrypt_url($guru->guru_id)) ?>" target="_blank" class="btn btn-white btn-sm" title="Cetak PDF"><i class="fas fa-print"></i></a>
+													<!-- Tambahan tombol download gambar per orang -->
+													<a href="<?= base_url('guru/download_kartu_img/' . encrypt_url($guru->guru_id)) ?>" target="_blank" class="btn btn-info btn-sm text-white" title="Download Gambar"><i class="fas fa-image"></i></a>
+													<a href="<?= base_url('guru/update/' . encrypt_url($guru->guru_id)) ?>" class="btn btn-primary btn-sm" title="Edit"><i class="fas fa-pencil-alt"></i></a>
+													<!-- Hapus perorangan menggunakan SweetAlert2 -->
+													<a href="javascript:void(0);" onclick="konfirmasiHapus('<?= base_url('guru/delete/' . encrypt_url($guru->guru_id)) ?>')" class="btn btn-danger btn-sm" title="Hapus"><i class="fas fa-trash-alt"></i></a>
+												</div>
 											</td>
 										</tr>
 									<?php endforeach; ?>
@@ -205,6 +213,67 @@
 			error: function() {
 				Swal.fire('Error', 'Gagal mengupload data. Cek koneksi internet.', 'error');
 				$('#file_excel').val('');
+			}
+		});
+	}
+
+	function konfirmasiHapus(urlDelete) {
+		Swal.fire({
+			title: 'Hapus Data?',
+			text: "Data guru ini akan dihapus permanen!",
+			icon: 'warning',
+			showCancelButton: true,
+			confirmButtonColor: '#d33',
+			cancelButtonColor: '#3085d6',
+			confirmButtonText: 'Ya, Hapus!',
+			cancelButtonText: 'Batal',
+			width: '400px', // Ringkas untuk mobile
+			customClass: {
+				popup: 'swal2-compact-popup'
+			}
+		}).then((result) => {
+			if (result.isConfirmed) {
+				window.location.href = urlDelete;
+			}
+		});
+	}
+
+	function konfirmasiHapusMassal() {
+		if ($('input[name="update[]"]:checked').length === 0) {
+			Swal.fire({
+				title: 'Oops!',
+				text: 'Pilih minimal satu data guru untuk dihapus.',
+				icon: 'warning',
+				width: '400px',
+				customClass: {
+					popup: 'swal2-compact-popup'
+				}
+			});
+			return;
+		}
+
+		Swal.fire({
+			title: 'Hapus Data Terpilih?',
+			text: "Semua data guru yang dicentang akan dihapus permanen!",
+			icon: 'warning',
+			showCancelButton: true,
+			confirmButtonColor: '#d33',
+			cancelButtonColor: '#3085d6',
+			confirmButtonText: 'Ya, Hapus Semua!',
+			cancelButtonText: 'Batal',
+			width: '400px',
+			customClass: {
+				popup: 'swal2-compact-popup'
+			}
+		}).then((result) => {
+			if (result.isConfirmed) {
+				// Sisipkan input hidden agar controller membaca aksi 'hapus'
+				$('<input>').attr({
+					type: 'hidden',
+					name: 'hapus',
+					value: 'Y'
+				}).appendTo('#form-bulk');
+				$('#form-bulk').submit();
 			}
 		});
 	}

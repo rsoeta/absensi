@@ -13,6 +13,11 @@
         <link rel="icon" type="image/png" href="<?= base_url('assets/img/logo/default.png') ?>">
     <?php endif; ?>
 
+    <!-- CUSTOM THEME OVERRIDES (EKSTERNAL) -->
+    <?php if (isset($sett_apps) && $sett_apps->tema_aplikasi == 'muhammadiyah') : ?>
+        <link rel="stylesheet" href="<?= base_url('assets/css/tema_muhammadiyah.css') ?>">
+    <?php endif; ?>
+
     <link href="<?= base_url('assets/css/vendor.min.css') ?>" rel="stylesheet" />
     <link href="<?= base_url('assets/css/transparent/app.min.css') ?>" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
@@ -64,6 +69,47 @@
         .swal2-styled.swal2-confirm {
             padding: 0.5em 1.5em !important;
             font-size: 0.9rem !important;
+        }
+
+        /* Memaksa kamera QR agar tidak efek cermin (tulisan tidak terbalik) */
+        #reader video {
+            transform: none !important;
+        }
+
+        /* 1. Kunci posisi awal konten tepat di bawah header (asumsi tinggi header 50px - 60px) */
+        #content.app-content {
+            padding-top: 55px !important;
+            margin-top: 0 !important;
+        }
+
+        /* 2. TARIK PAKSA baris panel ke atas */
+        #content.app-content>.row {
+            margin-top: -70px !important;
+            /* JURUS UTAMA: Naikkan angka minus ini (misal -50px atau -60px) jika masih kurang mepet! */
+            position: relative;
+            z-index: 5;
+        }
+
+        /* 3. Sembunyikan elemen siluman bawaan template */
+        .theme-panel,
+        #page-loader,
+        .page-loader,
+        .pace {
+            display: none !important;
+        }
+
+        /* 4. Maksimalkan ukuran ruang Kamera */
+        .video-wrapper {
+            position: relative;
+            border-radius: 15px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #000;
+            height: 520px;
+            /* Area kamera ekstra luas */
+            width: 100%;
         }
     </style>
 </head>

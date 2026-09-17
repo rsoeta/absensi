@@ -35,7 +35,7 @@ class Absen extends BaseController
 
         // --- BAGIAN YANG DIREVISI ---
         $builder->orderBy('absen.tanggal', 'DESC'); // 1. Kelompokkan dari tanggal paling baru
-        $builder->orderBy('COALESCE(absen.jam_pulang, absen.jam_masuk)', 'DESC'); // 2. Waktu aktivitas terakhir (Pulang/Masuk) berada paling atas
+        $builder->orderBy('COALESCE(absen.jam_pulang, absen.jam_masuk)', 'DESC', false);
 
         return $builder->get()->getResult();
     }
@@ -74,7 +74,7 @@ class Absen extends BaseController
     }
 
     // =========================================================================
-    // 1. FUNGSI DELETE (Sudah Diperbarui tanpa decrypt_url)
+    // 1. FUNGSI DELETE (Sudah Diperbarui dengan pengaman !empty)
     // =========================================================================
     public function delete($id, $level_id)
     {
@@ -86,11 +86,11 @@ class Absen extends BaseController
 
         $row = $this->db->table('absen')->where('absen_id', $real_id)->get()->getRow();
         if ($row) {
-            // Hapus foto fisik jika ada
-            if ($row->selfie_masuk && file_exists(FCPATH . 'assets/bukti_absen/' . $row->selfie_masuk)) {
+            // Gunakan !empty() agar tidak error jika kolom tidak ada di tabel database
+            if (!empty($row->selfie_masuk) && file_exists(FCPATH . 'assets/bukti_absen/' . $row->selfie_masuk)) {
                 unlink(FCPATH . 'assets/bukti_absen/' . $row->selfie_masuk);
             }
-            if ($row->selfie_keluar && file_exists(FCPATH . 'assets/bukti_absen/' . $row->selfie_keluar)) {
+            if (!empty($row->selfie_keluar) && file_exists(FCPATH . 'assets/bukti_absen/' . $row->selfie_keluar)) {
                 unlink(FCPATH . 'assets/bukti_absen/' . $row->selfie_keluar);
             }
 

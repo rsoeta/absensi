@@ -164,15 +164,9 @@ class Pegawai extends BaseController
 
         $photoName = $this->request->getPost('photo_lama');
         $file = $this->request->getFile('photo');
-        if ($file && $file->isValid() && !$file->hasMoved()) {
-            if ($photoName && $photoName != 'default.png' && file_exists(FCPATH . 'assets/img/pegawai/' . $photoName)) {
-                unlink(FCPATH . 'assets/img/pegawai/' . $photoName);
-            }
-            $photoName = $file->getRandomName();
-            $file->move(FCPATH . 'assets/img/pegawai', $photoName);
-        }
 
-        $this->db->table('pegawai')->where('pegawai_id', $pegawai_id)->update([
+        // Siapkan array data update untuk tabel pegawai
+        $updateData = [
             'nip'               => $nip,
             'nama_pegawai'      => $nama_pegawai,
             'jk_kelamin'        => $this->request->getPost('jk_kelamin'),
@@ -181,9 +175,25 @@ class Pegawai extends BaseController
             'no_hp'             => $this->request->getPost('no_hp'),
             'tempat_lahir'      => $this->request->getPost('tempat_lahir'),
             'tanggal_lahir'     => $this->request->getPost('tanggal_lahir'),
-            'photo'             => $photoName,
             'qr_code'           => $image_name,
-        ]);
+        ];
+
+        if ($file && $file->isValid() && !$file->hasMoved()) {
+            if ($photoName && $photoName != 'default.png' && file_exists(FCPATH . 'assets/img/pegawai/' . $photoName)) {
+                unlink(FCPATH . 'assets/img/pegawai/' . $photoName);
+            }
+            $photoName = $file->getRandomName();
+            $file->move(FCPATH . 'assets/img/pegawai', $photoName);
+
+            // --- KUNCI UTAMA: Reset Face Descriptor karena Admin mengunggah foto baru ---
+            $updateData['face_descriptor'] = null;
+        }
+
+        // Masukkan nama foto ke dalam array data update
+        $updateData['photo'] = $photoName;
+
+        // Eksekusi update database pegawai
+        $this->db->table('pegawai')->where('pegawai_id', $pegawai_id)->update($updateData);
 
         session()->setFlashdata('message', 'Update Record Success');
         return redirect()->to('/pegawai');

@@ -3,14 +3,14 @@
 
 <!-- Modal Preview Foto Absen -->
 <div class="modal fade" id="modal-dialog3">
-	<div class="modal-dialog">
+	<div class="modal-dialog modal-sm modal-dialog-centered">
 		<div class="modal-content">
-			<div class="modal-header">
-				<h4 class="modal-title">Foto Absen</h4>
-				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true"></button>
+			<div class="modal-header bg-dark">
+				<h4 class="modal-title text-white"><i class="fa fa-camera"></i> Bukti Selfie</h4>
+				<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-hidden="true"></button>
 			</div>
-			<div class="modal-body text-center">
-				<img src="" id="photo_karyawan" style="max-width: 100%; border-radius: 8px; border: 1px solid #555;" />
+			<div class="modal-body text-center bg-light p-2">
+				<img src="" id="photo_karyawan" class="img-fluid rounded shadow" style="width: 100%; border: 3px solid #123e87;" />
 			</div>
 		</div>
 	</div>
@@ -37,85 +37,88 @@
 			</div>
 
 			<div class="table-responsive">
-				<table id="tabel-data-absen" class="table table-bordered table-hover align-middle text-white">
+				<!-- Menghapus class text-white agar selaras dengan Tema Muhammadiyah cerah -->
+				<table id="tabel-data-absen" class="table table-bordered table-hover align-middle text-nowrap">
 					<thead>
-						<tr>
+						<tr class="text-center bg-light">
 							<th width="1%">No</th>
-							<th>Nama</th>
+							<th>Nama Lengkap</th>
 							<th>Tanggal</th>
 							<th>Keterangan</th>
-							<th>Masuk</th>
-							<th>Status Masuk</th>
-							<th>Pulang</th>
-							<th>Status Pulang</th>
-							<th>Geo Location</th>
-							<th>Foto Masuk</th>
-							<th>Foto Pulang</th>
-							<th>Point</th>
-							<th width="10%">Action</th>
+							<th>Data Masuk (Jam, Status, Lokasi)</th>
+							<th>Data Pulang (Jam, Status, Lokasi)</th>
+							<th>Point (M|P)</th>
+							<th width="8%">Action</th>
 						</tr>
 					</thead>
 					<tbody>
 						<?php $no = 1;
 						foreach ($absen_data as $absen) : ?>
 							<tr>
-								<td><?= $no++ ?></td>
+								<td class="text-center"><?= $no++ ?></td>
 								<td class="fw-bold"><?= $absen->nama_lengkap ?? 'Unknown' ?></td>
-								<td><?= date('d-M-Y', strtotime($absen->tanggal)) ?></td>
-								<td><?= $absen->keterangan ?></td>
+								<td class="text-center"><?= date('d-M-Y', strtotime($absen->tanggal)) ?></td>
+								<td class="text-center"><?= $absen->keterangan ?></td>
 
-								<td><?= $absen->jam_masuk ?? '-' ?></td>
-								<td>
+								<!-- KOLOM DATA MASUK COMPACT -->
+								<td class="text-center">
+									<span class="d-block fw-bold text-primary mb-1"><?= $absen->jam_masuk ?? '-' ?></span>
+
 									<?php if ($absen->status_masuk == 'Terlambat') : ?>
-										<span class="badge bg-danger">Terlambat</span>
-									<?php elseif ($absen->status_masuk == 'Tepat Waktu') : ?>
-										<span class="badge bg-success">Tepat Waktu</span>
+										<span class="badge bg-danger mb-1">Terlambat</span>
+									<?php elseif ($absen->status_masuk == 'Tepat Waktu' || $absen->status_masuk == 'Hadir') : ?>
+										<span class="badge bg-success mb-1">Tepat Waktu</span>
 									<?php else : ?>
-										<span class="badge bg-secondary">Tidak Ada</span>
+										<span class="badge bg-secondary mb-1">Tidak Ada</span>
 									<?php endif; ?>
+
+									<div class="d-flex justify-content-center gap-1 mt-1">
+										<?php if (!empty($absen->photo_masuk)) : ?>
+											<a href="javascript:;" class="btn btn-xs btn-info text-white shadow-sm view_data" data-bs-toggle="modal" data-bs-target="#modal-dialog3" data-photo="<?= $absen->photo_masuk ?>" title="Lihat Selfie Masuk">
+												<i class="fas fa-camera"></i>
+											</a>
+										<?php endif; ?>
+
+										<?php if (!empty($absen->lat_masuk) && !empty($absen->long_masuk)): ?>
+											<a href="https://maps.google.com/?q=<?= $absen->lat_masuk ?>,<?= $absen->long_masuk ?>" target="_blank" class="btn btn-xs btn-success shadow-sm" title="Lihat Peta Masuk">
+												<i class="fa fa-map-marker-alt"></i>
+											</a>
+										<?php endif; ?>
+									</div>
 								</td>
 
-								<td><?= $absen->jam_pulang ?? '-' ?></td>
-								<td>
+								<!-- KOLOM DATA PULANG COMPACT -->
+								<td class="text-center">
+									<span class="d-block fw-bold text-primary mb-1"><?= $absen->jam_pulang ?? '-' ?></span>
+
 									<?php if ($absen->status_pulang == 'Terlambat') : ?>
-										<span class="badge bg-danger">Terlambat</span>
-									<?php elseif ($absen->status_pulang == 'Tepat Waktu') : ?>
-										<span class="badge bg-success">Tepat Waktu</span>
+										<span class="badge bg-danger mb-1">Terlambat</span>
+									<?php elseif ($absen->status_pulang == 'Tepat Waktu' || $absen->status_pulang == 'Hadir') : ?>
+										<span class="badge bg-success mb-1">Tepat Waktu</span>
 									<?php else : ?>
-										<span class="badge bg-secondary">Tidak Ada</span>
+										<span class="badge bg-secondary mb-1">Tidak Ada</span>
 									<?php endif; ?>
+
+									<div class="d-flex justify-content-center gap-1 mt-1">
+										<?php if (!empty($absen->photo_pulang)) : ?>
+											<a href="javascript:;" class="btn btn-xs btn-info text-white shadow-sm view_data" data-bs-toggle="modal" data-bs-target="#modal-dialog3" data-photo="<?= $absen->photo_pulang ?>" title="Lihat Selfie Pulang">
+												<i class="fas fa-camera"></i>
+											</a>
+										<?php endif; ?>
+
+										<?php if (!empty($absen->lat_pulang) && !empty($absen->long_pulang)): ?>
+											<a href="https://maps.google.com/?q=<?= $absen->lat_pulang ?>,<?= $absen->long_pulang ?>" target="_blank" class="btn btn-xs btn-success shadow-sm" title="Lihat Peta Pulang">
+												<i class="fa fa-map-marker-alt"></i>
+											</a>
+										<?php endif; ?>
+									</div>
 								</td>
 
-								<td>
-									<?php if (!empty($absen->is_geolocation)): ?>
-										<a href="https://maps.google.com/?q=<?= $absen->is_geolocation ?>" target="_blank" class="text-info"><i class="fa fa-map-marker-alt"></i> Lihat Map</a>
-									<?php else: ?>
-										-
-									<?php endif; ?>
-								</td>
+								<td class="text-center"><small class="fw-bold"><?= $absen->point ?> | <?= $absen->point_pulang ?></small></td>
 
 								<td class="text-center">
-									<?php if (!empty($absen->selfie_masuk)) : ?>
-										<a href="javascript:;" id="view_data" data-bs-toggle="modal" data-bs-target="#modal-dialog3" data-photo="<?= $absen->selfie_masuk ?>">
-											<i class="fas fa-camera text-info"></i> View
-										</a>
-									<?php else: ?> - <?php endif; ?>
-								</td>
-
-								<td class="text-center">
-									<?php if (!empty($absen->selfie_keluar)) : ?>
-										<a href="javascript:;" id="view_data" data-bs-toggle="modal" data-bs-target="#modal-dialog3" data-photo="<?= $absen->selfie_keluar ?>">
-											<i class="fas fa-camera text-warning"></i> View
-										</a>
-									<?php else: ?> - <?php endif; ?>
-								</td>
-
-								<td><small>M: <?= $absen->point ?> | P: <?= $absen->point_pulang ?></small></td>
-
-								<td>
-									<!-- Hapus encrypt_url agar load halaman secepat kilat -->
 									<a href="<?= base_url('absen/update/' . $absen->absen_id . '/' . $level_id) ?>" class="btn btn-primary btn-sm mb-1" title="Edit Data"><i class="fas fa-pencil-alt"></i></a>
-									<a href="<?= base_url('absen/delete/' . $absen->absen_id . '/' . $level_id) ?>" class="btn btn-danger btn-sm mb-1" title="Hapus Data" onclick="return confirm('Yakin hapus data absen ini?');"><i class="fas fa-trash-alt"></i></a>
+									<a href="<?= base_url('absen/delete/' . $absen->absen_id . '/' . $level_id) ?>" class="btn btn-danger btn-sm mb-1 btn-delete-absen" title="Hapus Data"><i class="fas fa-trash-alt"></i></a>
 								</td>
 							</tr>
 						<?php endforeach; ?>
@@ -128,15 +131,41 @@
 
 <script>
 	$(document).ready(function() {
-		$(document).on('click', '#view_data', function() {
+		// --- SCRIPT PREVIEW FOTO ---
+		$(document).on('click', '.view_data', function() {
 			var photo = $(this).data('photo');
-			$('#modal-dialog3 #photo_karyawan').attr("src", "<?= base_url('assets/bukti_absen/') ?>" + photo);
+			// Ubah path menjadi assets/img/absen/ sesuai sistem penyimpanan baru
+			$('#modal-dialog3 #photo_karyawan').attr("src", "<?= base_url('assets/img/absen/') ?>" + photo);
+		});
+
+		// --- SCRIPT SWEETALERT2 UNTUK TOMBOL HAPUS ---
+		$(document).on('click', '.btn-delete-absen', function(e) {
+			e.preventDefault();
+			var urlHapus = $(this).attr('href');
+
+			Swal.fire({
+				title: 'Hapus Data?',
+				text: "Data absen ini akan dihapus permanen.",
+				icon: 'warning',
+				showCancelButton: true,
+				confirmButtonColor: '#d33',
+				cancelButtonColor: '#858796',
+				confirmButtonText: '<i class="fas fa-trash"></i> Ya, Hapus',
+				cancelButtonText: 'Batal',
+				customClass: {
+					popup: 'swal-mungil'
+				}
+			}).then((result) => {
+				if (result.isConfirmed) {
+					window.location.href = urlHapus;
+				}
+			});
 		});
 
 		// Inisiasi DataTables pada ID baru agar terhindar dari bentrok script bawaan template
 		if (typeof $.fn.DataTable === 'function') {
 			$('#tabel-data-absen').DataTable({
-				deferRender: true, // Memori browser hanya menggambar baris yang terlihat di layar (Anti-Lag)
+				deferRender: true,
 				responsive: true,
 				language: {
 					url: "//cdn.datatables.net/plug-ins/1.13.6/i18n/id.json"

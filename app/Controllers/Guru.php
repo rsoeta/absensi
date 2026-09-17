@@ -180,15 +180,9 @@ class Guru extends BaseController
         // Update Photo
         $photoName = $this->request->getPost('photo_lama');
         $file = $this->request->getFile('photo');
-        if ($file && $file->isValid() && !$file->hasMoved()) {
-            if ($photoName && $photoName != 'default.png' && file_exists(FCPATH . 'assets/img/guru/' . $photoName)) {
-                unlink(FCPATH . 'assets/img/guru/' . $photoName);
-            }
-            $photoName = $file->getRandomName();
-            $file->move(FCPATH . 'assets/img/guru', $photoName);
-        }
 
-        $this->db->table('guru')->where('guru_id', $guru_id)->update([
+        // Siapkan array data update untuk tabel guru
+        $updateData = [
             'nip'            => $nip,
             'nama_guru'      => $nama_guru,
             'jk_kelamin'     => $this->request->getPost('jk_kelamin'),
@@ -197,9 +191,25 @@ class Guru extends BaseController
             'no_hp'          => $this->request->getPost('no_hp'),
             'tempat_lahir'   => $this->request->getPost('tempat_lahir'),
             'tanggal_lahir'  => $this->request->getPost('tanggal_lahir'),
-            'photo'          => $photoName,
             'qr_code'        => $image_name,
-        ]);
+        ];
+
+        if ($file && $file->isValid() && !$file->hasMoved()) {
+            if ($photoName && $photoName != 'default.png' && file_exists(FCPATH . 'assets/img/guru/' . $photoName)) {
+                unlink(FCPATH . 'assets/img/guru/' . $photoName);
+            }
+            $photoName = $file->getRandomName();
+            $file->move(FCPATH . 'assets/img/guru', $photoName);
+
+            // --- KUNCI UTAMA: Reset Face Descriptor karena Admin mengunggah foto baru ---
+            $updateData['face_descriptor'] = null;
+        }
+
+        // Masukkan nama foto ke dalam array data update
+        $updateData['photo'] = $photoName;
+
+        // Eksekusi update database guru
+        $this->db->table('guru')->where('guru_id', $guru_id)->update($updateData);
 
         session()->setFlashdata('message', 'Update Record Success');
         return redirect()->to('/guru');
@@ -372,5 +382,137 @@ class Guru extends BaseController
 
         session()->setFlashdata('message', 'Import Data Excel Berhasil!');
         return redirect()->to('/guru');
+    }
+
+    public function cetak($encrypted_id = null)
+    {
+        $this->checkAuth();
+
+        $real_id = decrypt_url($encrypted_id);
+        $row = $this->db->table('guru')->where('guru_id', $real_id)->get()->getRow();
+
+        if ($row) {
+            $data = [
+                'guru'           => $row,
+                'guru_id'        => $row->guru_id ?? '',
+                'sett_apps'      => $this->db->table('app_setting')->where('id', 1)->get()->getRow(),
+                'nip'            => $row->nip ?? '',
+                'qr_code'        => $row->qr_code ?? '',
+                'nama_guru'      => $row->nama_guru ?? '',
+                'jk_kelamin'     => $row->jk_kelamin ?? '',
+                'status_guru_id' => $row->status_guru_id ?? '',
+                'alamat'         => $row->alamat ?? '',
+                'no_hp'          => $row->no_hp ?? '',
+                'tempat_lahir'   => $row->tempat_lahir ?? '',
+                'tanggal_lahir'  => $row->tanggal_lahir ?? '',
+                'photo'          => $row->photo ?? '',
+                'download_mode'  => false, // Format cetak PDF/Browser
+            ];
+
+            // Kita arahkan ke view cetak kartu guru yang sama dengan user panel
+            return view('guru/cetak', $data);
+        } else {
+            session()->setFlashdata('error', 'Data Guru Tidak Ditemukan');
+            return redirect()->to(site_url('guru'));
+        }
+    }
+
+    public function download_kartu_img($encrypted_id = null)
+    {
+        $this->checkAuth();
+
+        $real_id = decrypt_url($encrypted_id);
+        $row = $this->db->table('guru')->where('guru_id', $real_id)->get()->getRow();
+
+        if ($row) {
+            $data = [
+                'guru'           => $row, // Alias objek utama agar view tidak error "Undefined variable"
+                'guru_id'        => $row->guru_id ?? '',
+                'sett_apps'      => $this->db->table('app_setting')->where('id', 1)->get()->getRow(),
+                'nip'            => $row->nip ?? '',
+                'qr_code'        => $row->qr_code ?? '',
+                'nama_guru'      => $row->nama_guru ?? '',
+                'jk_kelamin'     => $row->jk_kelamin ?? '',
+                'status_guru_id' => $row->status_guru_id ?? '',
+                'alamat'         => $row->alamat ?? '',
+                'no_hp'          => $row->no_hp ?? '',
+                'tempat_lahir'   => $row->tempat_lahir ?? '',
+                'tanggal_lahir'  => $row->tanggal_lahir ?? '',
+                'photo'          => $row->photo ?? '',
+                'download_mode'  => true, // Penanda agar skrip html2canvas berjalan otomatis
+            ];
+
+            // Kita arahkan ke view download kartu yang sudah ada skrip html2canvas-nya
+            return view('guru/download_kartu_view', $data);
+        } else {
+            session()->setFlashdata('error', 'Data Guru Tidak Ditemukan');
+            return redirect()->to(site_url('guru'));
+        }
+    }
+
+    public function update_guru()
+    {
+        $this->checkAuth();
+
+        // Ambil array guru_id yang dicentang dari checkbox
+        $id_guru_array = $this->request->getPost('update');
+
+        if (empty($id_guru_array)) {
+            session()->setFlashdata('error', 'Tidak ada data guru yang dipilih.');
+            return redirect()->back();
+        }
+
+        // =======================================================
+        // 1. LOGIKA UNTUK DOWNLOAD MASSAL KARTU (GAMBAR)
+        // =======================================================
+        if ($this->request->getPost('download') == 'Y') {
+            $guru_data = $this->db->table('guru')->whereIn('guru_id', $id_guru_array)->get()->getResult();
+
+            $data = [
+                'guru_data' => $guru_data,
+                'sett_apps' => $this->db->table('app_setting')->where('id', 1)->get()->getRow(),
+            ];
+
+            // Pastikan Anda membuat/menyesuaikan view ini untuk merender html2canvas massal
+            return view('guru/download_kartu_bulk_view', $data);
+        }
+
+        // =======================================================
+        // 2. LOGIKA UNTUK CETAK MASSAL (PDF / PRINT)
+        // =======================================================
+        if ($this->request->getPost('cetak') == 'Y') {
+            $guru_data = $this->db->table('guru')->whereIn('guru_id', $id_guru_array)->get()->getResult();
+
+            $data = [
+                'sett_apps' => $this->db->table('app_setting')->where('id', 1)->get()->getRow(),
+                'guru_data' => $guru_data
+            ];
+
+            return view('guru/cetak_semua', $data);
+        }
+
+        // =======================================================
+        // 3. LOGIKA UNTUK HAPUS MASSAL
+        // =======================================================
+        if ($this->request->getPost('hapus') == 'Y') {
+            foreach ($id_guru_array as $id) {
+                $guru = $this->db->table('guru')->where('guru_id', $id)->get()->getRow();
+                if ($guru) {
+                    // Hapus file fisik gambar dan QR Code
+                    if ($guru->photo && $guru->photo != 'default.png' && file_exists(FCPATH . 'assets/img/guru/' . $guru->photo)) {
+                        unlink(FCPATH . 'assets/img/guru/' . $guru->photo);
+                    }
+                    if ($guru->qr_code && file_exists(FCPATH . 'assets/img/qr/guru/' . $guru->qr_code)) {
+                        unlink(FCPATH . 'assets/img/qr/guru/' . $guru->qr_code);
+                    }
+
+                    // Eksekusi Hapus Database User dan Guru
+                    $this->db->table('user')->where('username', $guru->nip)->delete();
+                    $this->db->table('guru')->where('guru_id', $id)->delete();
+                }
+            }
+            session()->setFlashdata('message', 'Data guru terpilih berhasil dihapus.');
+            return redirect()->back();
+        }
     }
 }

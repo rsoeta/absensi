@@ -11,9 +11,20 @@ class Tahun_ajaran extends BaseController
         $this->db = \Config\Database::connect();
     }
 
+    // =======================================================
+    // FUNGSI GEMBOK UTAMA (Hanya Admin Level 1 yang boleh lolos)
+    // =======================================================
+    protected function checkAdminAuth()
+    {
+        if (!session()->get('userid') || session()->get('level_id') != 1) {
+            header('Location: ' . base_url('auth'));
+            exit;
+        }
+    }
+
     public function index()
     {
-        if (!session()->get('userid')) return redirect()->to('/auth');
+        $this->checkAdminAuth(); // Panggil gemboknya
 
         $data = [
             'tahun_ajaran_data' => $this->db->table('tahun_ajaran')->get()->getResult(),
@@ -24,7 +35,7 @@ class Tahun_ajaran extends BaseController
 
     public function create()
     {
-        if (!session()->get('userid')) return redirect()->to('/auth');
+        $this->checkAdminAuth();
 
         $data = [
             'button'            => 'Create',
@@ -40,7 +51,7 @@ class Tahun_ajaran extends BaseController
 
     public function create_action()
     {
-        if (!session()->get('userid')) return redirect()->to('/auth');
+        $this->checkAdminAuth();
 
         $rules = [
             'nama_tahun_ajaran' => 'required',
@@ -50,18 +61,10 @@ class Tahun_ajaran extends BaseController
 
         if (!$this->validate($rules)) return $this->create();
 
-        $nama_tahun_ajaran = $this->request->getPost('nama_tahun_ajaran');
-        $tgl_awal = $this->request->getPost('tgl_awal');
-        $tgl_akhir = $this->request->getPost('tgl_akhir');
-
-        // Deteksi tabrakan tanggal tidak lagi menggunakan helper external, 
-        // kita persederhanakan logikanya dengan asumsi data bebas dimasukkan.
-        // Jika butuh logika deteksi tabrakan yg ketat, bisa ditambahkan kembali nanti.
-
         $data = [
-            'nama_tahun_ajaran' => $nama_tahun_ajaran,
-            'tgl_awal'          => $tgl_awal,
-            'tgl_akhir'         => $tgl_akhir,
+            'nama_tahun_ajaran' => $this->request->getPost('nama_tahun_ajaran'),
+            'tgl_awal'          => $this->request->getPost('tgl_awal'),
+            'tgl_akhir'         => $this->request->getPost('tgl_akhir'),
         ];
 
         $this->db->table('tahun_ajaran')->insert($data);
@@ -71,7 +74,7 @@ class Tahun_ajaran extends BaseController
 
     public function update($id)
     {
-        if (!session()->get('userid')) return redirect()->to('/auth');
+        $this->checkAdminAuth();
 
         $row = $this->db->table('tahun_ajaran')->where('tahun_ajaran_id', decrypt_url($id))->get()->getRow();
 
@@ -94,7 +97,7 @@ class Tahun_ajaran extends BaseController
 
     public function update_action()
     {
-        if (!session()->get('userid')) return redirect()->to('/auth');
+        $this->checkAdminAuth();
 
         $rules = [
             'nama_tahun_ajaran' => 'required',
@@ -118,7 +121,7 @@ class Tahun_ajaran extends BaseController
 
     public function delete($id)
     {
-        if (!session()->get('userid')) return redirect()->to('/auth');
+        $this->checkAdminAuth();
 
         $real_id = decrypt_url($id);
         $row = $this->db->table('tahun_ajaran')->where('tahun_ajaran_id', $real_id)->get()->getRow();

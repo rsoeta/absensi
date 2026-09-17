@@ -1,3 +1,6 @@
+<?= $this->extend('web_user/template_user') ?>
+<?= $this->section('content') ?>
+
 <?php $db = \Config\Database::connect(); ?>
 <style>
     /* Optimasi SweetAlert2 khusus untuk layar Mobile */
@@ -156,7 +159,7 @@
                     <div class="accordion" id="accordion" role="tablist">
                         <div class="card mb-0">
                             <div class="card-header" id="headingOne" role="tab">
-                                <h5 class="mb-0"><a data-toggle="collapse" href="#" aria-expanded="true" aria-controls="Pengumuman" class="">Aturan Absensi Sekolah</a></h5>
+                                <h5 class="mb-0"><a data-toggle="collapse" href="#" style="text-decoration: none;" aria-expanded="true" aria-controls="Pengumuman" class="">Aturan Absensi Sekolah</a></h5>
                             </div>
                             <div class="collapse show" id="Pengumuman" role="tabpanel" font color="#ff0000" aria-labelledby="headingOne" data-parent="#accordion">
                                 <div class="card-body">
@@ -178,13 +181,13 @@
 
                         <div class="card mb-0">
                             <div class="card-header" id="headingOne" role="tab">
-                                <h5 class="mb-0"><a data-toggle="collapse" href="#" aria-expanded="false" aria-controls="CekHasil" class="collapsed">Link Sekolah </a></h5>
+                                <h5 class="mb-0"><a data-toggle="collapse" href="#" style="text-decoration: none;" aria-expanded="false" aria-controls="CekHasil" class="collapsed">Link Sekolah </a></h5>
                             </div>
                             <div class="collapse show" id="Pengumuman" role="tabpanel" aria-labelledby="headingOne" data-parent="#accordion">
                                 <div class="card-body">
                                     <ol>
-                                        <li><a href="https://sman1tual.sch.id">www.sman1tual.sch.id</a></li>
-                                        <li><a href="https://youtu.be/ex59s-AlXc0">Tutorial Ijin dan Melihat Riwayat Absensi </a></li>
+                                        <li><a href="<?= base_url(); ?>" style="text-decoration: none;"><?= parse_url(base_url(), PHP_URL_HOST); ?></a></li>
+                                        <!-- <li><a href="https://youtu.be/ex59s-AlXc0">Tutorial Ijin dan Melihat Riwayat Absensi </a></li> -->
                                     </ol>
                                 </div>
                             </div>
@@ -324,91 +327,92 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
 <script>
-    const getLocationMap = L.map('embed-map');
-    const osmUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-    const osmAttrib = 'Leaflet © <a href="https://openstreetmap.org">OpenStreetMap</a> contributors';
-    const osm = new L.TileLayer(osmUrl, {
-        minZoom: 8,
-        maxZoom: 50,
-        attribution: osmAttrib
-    });
-
-    let myCircle;
+    let getLocationMap, myCircle, getLocationMapMarker;
     let insidekah = false;
     let outsidekah = false;
 
-    getLocationMap.scrollWheelZoom.disable()
-    getLocationMap.setView(new L.LatLng('-6.175392', '106.827153'), 14)
-    getLocationMap.addLayer(osm)
-    let getLocationMapMarker = L.marker(['-6.175392', '106.827153']).addTo(getLocationMap);
+    function initMap() {
+        // PERBAIKAN: Pastikan elemen map ada sebelum inisiasi
+        if (document.getElementById('embed-map')) {
+            getLocationMap = L.map('embed-map');
+            const osmUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+            const osmAttrib = 'Leaflet © OpenStreetMap contributors';
+            const osm = new L.TileLayer(osmUrl, {
+                minZoom: 8,
+                maxZoom: 50,
+                attribution: osmAttrib
+            });
+
+            getLocationMap.scrollWheelZoom.disable();
+            getLocationMap.setView(new L.LatLng('-6.175392', '106.827153'), 14);
+            getLocationMap.addLayer(osm);
+            getLocationMapMarker = L.marker(['-6.175392', '106.827153']).addTo(getLocationMap);
+
+            addLapanganRadius();
+            setInterval(() => {
+                getCurrentLocation();
+            }, 5000); // PERBAIKAN: Jeda diubah jadi 5 detik agar tidak membebani browser/HP user
+        }
+    }
 
     function getToLoc(lat, lng) {
+        if (!getLocationMap) return;
         const zoom = 17;
         getLocationMap.setView(new L.LatLng(lat, lng), zoom);
 
-        if (getLocationMapMarker) {
-            getLocationMap.removeLayer(getLocationMapMarker)
-        }
+        if (getLocationMapMarker) getLocationMap.removeLayer(getLocationMapMarker);
+
         getLocationMapMarker = L.marker([lat, lng]).addTo(getLocationMap);
-        getLocationMapMarker.setLatLng([lat, lng])
+        getLocationMapMarker.setLatLng([lat, lng]);
 
-        $('#latitude').val(lat)
-        $('#longitude').val(lng)
+        $('#latitude').val(lat);
+        $('#longitude').val(lng);
 
-        var d = getLocationMapMarker.getLatLng().distanceTo(myCircle.getLatLng());
-        var isInside = d < myCircle.getRadius();
+        if (myCircle) {
+            var d = getLocationMapMarker.getLatLng().distanceTo(myCircle.getLatLng());
+            var isInside = d < myCircle.getRadius();
 
-        if (isInside) {
-            outsidekah = false
-            if (insidekah == false) {
-                insidekah = true
-                $('#notif-radius').html("* Anda berada pada radius absen geolocation")
-                $(':input[type="submit"]').prop('disabled', false);
-                $('#start-camera').prop('disabled', false);
-                $('#is_radius').val('Y');
-            }
-        } else {
-            insidekah = false
-            if (outsidekah == false) {
-                outsidekah = true
-                $('#notif-radius').html("* Anda berada diluar radius absen geolocation")
-                $(':input[type="submit"]').prop('disabled', true);
-                $('#start-camera').prop('disabled', true);
-                $('#is_radius').val('N');
+            if (isInside) {
+                outsidekah = false;
+                if (!insidekah) {
+                    insidekah = true;
+                    $('#notif-radius').html("<span class='text-success fw-bold'>* Anda berada di dalam zona absen</span>");
+                    $(':input[type="submit"]').prop('disabled', false);
+                    $('#start-camera').prop('disabled', false);
+                    $('#is_radius').val('Y');
+                }
+            } else {
+                insidekah = false;
+                if (!outsidekah) {
+                    outsidekah = true;
+                    $('#notif-radius').html("<span class='text-danger fw-bold'>* Anda berada di LUAR zona absen</span>");
+                    $(':input[type="submit"]').prop('disabled', true);
+                    $('#start-camera').prop('disabled', true);
+                    $('#is_radius').val('N');
+                }
             }
         }
     }
 
     function createRadius(lat, lng, radius) {
-        myCircle = L.circle([lat, lng], {
-            color: 'red',
-            fillColor: '#f03',
-            fillOpacity: 0.5,
-            radius: radius
-        }).addTo(getLocationMap);
+        if (getLocationMap) {
+            myCircle = L.circle([lat, lng], {
+                color: 'red',
+                fillColor: '#f03',
+                fillOpacity: 0.5,
+                radius: radius
+            }).addTo(getLocationMap);
+        }
     }
 
     function getCurrentLocation() {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(function(position) {
-                getToLoc(position.coords.latitude, position.coords.longitude)
-                $('.alertnya').html('')
+                getToLoc(position.coords.latitude, position.coords.longitude);
+                $('.alertnya').html('');
+            }, function(error) {
+                console.log("GPS Error: ", error.message);
             });
-        } else {
-            Swal.fire({
-                icon: 'error',
-                title: 'Perhatian',
-                text: 'Geolocation tidak didukung browser ini.',
-                customClass: {
-                    popup: 'swal2-popup'
-                }
-            });
-            $('.alertnya').html(`
-				<div class="alert alert-danger alert-dismissible fade show" role="alert">
-					<strong>Perhatian</strong> Izin lokasi harus diberikan untuk mengetahui lokasi anda.
-					<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-				</div>
-			`)
         }
     }
 
@@ -416,97 +420,89 @@
         $.ajax({
             url: '<?= base_url('dashboard_user/getLapanganRadius') ?>',
             type: 'POST',
-            data: {},
             success: function(res) {
-                res = JSON.parse(res)
-                createRadius(res.lat, res.lng, res.radius_diizinkan)
+                if (res) {
+                    res = typeof res === 'string' ? JSON.parse(res) : res;
+                    createRadius(res.lat, res.lng, res.radius_diizinkan);
+                }
             }
-        })
+        });
     }
 
     $(document).ready(function() {
         $(':input[type="submit"]').prop('disabled', true);
         $('#start-camera').prop('disabled', true);
-        addLapanganRadius()
-        setInterval(() => {
-            getCurrentLocation()
-        }, 100);
-    })
+        initMap(); // Panggil saat HTML sudah siap
+    });
 </script>
 
 <script>
     $('#btn-act-absen').click(function() {
-        var latitude = $('#latitude').val()
-        var longitude = $('#longitude').val()
-        var photo = $('#photo').val()
-        var kdnya = $('#codeny').val()
-        var is_radius = $('#is_radius').val()
+        var latitude = $('#latitude').val();
+        var longitude = $('#longitude').val();
+        var photo = $('#photo').val();
+        var kdnya = $('#codeny').val();
+        var is_radius = $('#is_radius').val();
 
-        if (latitude == null || latitude == '') {
+        if (!latitude || !longitude) {
             Swal.fire({
                 icon: 'info',
                 title: 'Tunggu sebentar',
-                text: 'Latitude kosong',
+                text: 'Sedang mencari lokasi GPS Anda...',
                 customClass: {
                     popup: 'swal2-popup'
                 }
-            })
-        } else if (longitude == null || longitude == '') {
-            Swal.fire({
-                icon: 'info',
-                title: 'Tunggu sebentar',
-                text: 'Longitude kosong',
-                customClass: {
-                    popup: 'swal2-popup'
-                }
-            })
+            });
+            return;
         } else if (is_radius == '' || is_radius == 'N') {
             Swal.fire({
-                icon: 'info',
+                icon: 'error',
                 title: 'Luar Radius',
-                text: 'Silahkan mendekat ke zona absen',
+                text: 'Silahkan mendekat ke zona area sekolah untuk absen',
                 customClass: {
                     popup: 'swal2-popup'
                 }
-            })
+            });
+            return;
         }
 
         if (typeof photo === "undefined") {
-            do_absen(kdnya, photo)
+            do_absen(kdnya, photo);
         } else {
-            if (photo == null || photo == '') {
+            if (!photo) {
                 Swal.fire({
-                    icon: 'info',
-                    title: 'Photo Kosong',
-                    text: 'Silahkan ambil photo dahulu',
+                    icon: 'warning',
+                    title: 'Foto Wajib',
+                    text: 'Silahkan klik tombol Ambil Foto terlebih dahulu!',
                     customClass: {
                         popup: 'swal2-popup'
                     }
-                })
+                });
             } else {
-                do_absen(kdnya, photo)
+                do_absen(kdnya, photo);
             }
         }
     });
 
-    const Toast = Swal.mixin({
+    // PERBAIKAN: Ganti nama variabel menjadi AbsenToast agar tidak bentrok dengan template utama
+    var AbsenToast = Swal.mixin({
         toast: true,
         position: 'top',
         showConfirmButton: false,
         timer: 3000,
         timerProgressBar: true,
         didOpen: (toast) => {
-            toast.addEventListener('mouseenter', Swal.stopTimer)
-            toast.addEventListener('mouseleave', Swal.resumeTimer)
+            toast.addEventListener('mouseenter', Swal.stopTimer);
+            toast.addEventListener('mouseleave', Swal.resumeTimer);
         }
-    })
+    });
 
     var baseURL = '<?= base_url() ?>/';
 
     function do_absen(codeny, photo) {
         Swal.fire({
-            title: 'Loading...',
-            html: '<i class="fas fa-spinner fa-spin"></i>',
+            title: 'Memproses Absen...',
+            html: '<i class="fas fa-spinner fa-spin fa-2x"></i>',
             allowOutsideClick: false,
             showConfirmButton: false,
             customClass: {
@@ -525,21 +521,22 @@
                 var dt = typeof data === 'string' ? JSON.parse(data) : data;
                 var telatkah = dt.telatkah;
                 if (dt.response == 'ok') {
-                    Toast.fire({
+                    // Panggil menggunakan nama variabel yang baru
+                    AbsenToast.fire({
                         icon: 'success',
-                        title: 'Absensi Berhasil'
-                    })
+                        title: 'Absensi Berhasil!'
+                    });
                 } else {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Oops...',
+                        title: 'Gagal',
                         text: dt.message,
-                        footer: 'Mengalami masalah? hubungi <a href="#">admin</a>',
                         customClass: {
                             popup: 'swal2-popup'
                         }
-                    })
+                    });
                 }
+
                 let audiony = new Audio();
                 if (telatkah == 'ya') {
                     audiony = new Audio(baseURL + 'assets/audio/audio_Umhxc2ZDeHlpc1JpYWNIUVdzNG1sZz09.wav');
@@ -550,18 +547,10 @@
 
                 setTimeout(() => {
                     location.reload();
-                }, 1500);
-            },
-            error: function(e) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: e.statusText || 'Terjadi kesalahan koneksi',
-                    customClass: {
-                        popup: 'swal2-popup'
-                    }
-                });
+                }, 2000);
             }
         });
     }
 </script>
+
+<?= $this->endSection() ?>

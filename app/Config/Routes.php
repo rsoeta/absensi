@@ -20,7 +20,29 @@ $routes->post('auth/edit_password/(:num)', 'Auth::edit_password/$1');
 
 // Rute Dashboard
 $routes->get('dashboard', 'Dashboard::index');
+
+// Rute Dashboard User
 $routes->get('dashboard_user', 'Dashboard::user'); // Rute untuk user non-admin
+// Tambahkan rute untuk Edit Profile User
+$routes->get('dashboard_user/absen', 'Dashboard_user::absen');
+$routes->get('dashboard_user/edit_profile', 'Dashboard_user::edit_profile');
+$routes->post('dashboard_user/update_profile', 'Dashboard_user::update_profile');
+$routes->get('dashboard_user/izin_sakit', 'Dashboard_user::izin_sakit');
+$routes->get('dashboard_user/create_izin_sakit', 'Dashboard_user::create_izin_sakit');
+$routes->post('Dashboard_user/create_action_izin_sakit', 'Dashboard_user::create_action_izin_sakit');
+$routes->post('dashboard_user/create_action_izin_sakit', 'Dashboard_user::create_action_izin_sakit');
+$routes->get('dashboard_user/update_izin_sakit/(:any)', 'Dashboard_user::update_izin_sakit/$1');
+$routes->post('dashboard_user/update_action_izin_sakit', 'Dashboard_user::update_action_izin_sakit');
+$routes->get('dashboard_user/delete_izin_sakit/(:any)', 'Dashboard_user::delete_izin_sakit/$1');
+$routes->get('Dashboard_user/delete_izin_sakit/(:any)', 'Dashboard_user::delete_izin_sakit/$1');
+$routes->get('dashboard_user/kartu/(:any)', 'Dashboard_user::kartu/$1');
+$routes->get('Dashboard_user/kartu/(:any)', 'Dashboard_user::kartu/$1');
+$routes->get('dashboard_user/download_kartu_img/(:any)', 'Dashboard_user::download_kartu_img/$1');
+$routes->get('Dashboard_user/download_kartu_img/(:any)', 'Dashboard_user::download_kartu_img/$1');
+// Rute untuk Absen Mandiri (Web User)
+$routes->get('dashboard_user/absen_mandiri', 'Dashboard_user::absen_mandiri');
+$routes->post('dashboard_user/proses_absen_mandiri', 'Dashboard_user::proses_absen_mandiri');
+
 // Rute API Grafik Chart.js
 $routes->get('dashboard/get_chart_admin', 'Dashboard::get_chart_admin');
 $routes->get('dashboard_user/get_chart_user', 'Dashboard_user::get_chart_user');
@@ -28,6 +50,7 @@ $routes->get('dashboard_user/get_chart_user', 'Dashboard_user::get_chart_user');
 // Rute App Setting
 $routes->get('app_setting/update/(:any)', 'App_setting::update/$1');
 $routes->post('app_setting/update_action', 'App_setting::update_action');
+
 // Rute Pengaturan Sistem
 $routes->get('absen_geolocation/update/(:any)', 'Absen_geolocation::update/$1');
 $routes->post('absen_geolocation/update_action', 'Absen_geolocation::update_action');
@@ -110,54 +133,11 @@ $routes->get('tahun_ajaran/delete/(:segment)', 'Tahun_ajaran::delete/$1');
 $routes->post('sett_mapel/create_action', 'Sett_mapel::create_action');
 $routes->get('sett_mapel/delete/(:segment)', 'Sett_mapel::delete/$1');
 
-// Rute Pengguna (Guru)
-$routes->get('guru', 'Guru::index');
-$routes->get('guru/create', 'Guru::create');
-$routes->post('guru/create_action', 'Guru::create_action');
-$routes->get('guru/update/(:segment)', 'Guru::update/$1');
-$routes->post('guru/update_action', 'Guru::update_action');
-$routes->get('guru/delete/(:segment)', 'Guru::delete/$1');
-$routes->get('guru/cetak/(:segment)', 'Guru::cetak/$1');
-$routes->post('guru/update_guru', 'Guru::update_guru');
-$routes->get('guru/excel', 'Guru::excel');
-$routes->post('guru/preview_excel', 'Guru::preview_excel');
-$routes->post('guru/insert_all_from_excel', 'Guru::insert_all_from_excel');
-$routes->get('guru/download/(:any)', 'Guru::download/$1');
-
-// Rute Pengguna (Pegawai)
-$routes->get('pegawai', 'Pegawai::index');
-$routes->get('pegawai/create', 'Pegawai::create');
-$routes->post('pegawai/create_action', 'Pegawai::create_action');
-$routes->get('pegawai/update/(:segment)', 'Pegawai::update/$1');
-$routes->post('pegawai/update_action', 'Pegawai::update_action');
-$routes->get('pegawai/delete/(:segment)', 'Pegawai::delete/$1');
-$routes->get('pegawai/cetak/(:segment)', 'Pegawai::cetak/$1');
-$routes->post('pegawai/update_pegawai', 'Pegawai::update_pegawai'); // Pastikan fungsi ini ada/dibuat di Pegawai.php jika diperlukan
-$routes->get('pegawai/excel', 'Pegawai::excel');
-$routes->post('pegawai/preview_excel', 'Pegawai::preview_excel');
-$routes->post('pegawai/insert_all_from_excel', 'Pegawai::insert_all_from_excel');
-$routes->get('pegawai/download/(:any)', 'Pegawai::download/$1');
-
-// Rute Pengguna (Siswa)
-$routes->get('siswa', 'Siswa::index');
-$routes->get('siswa/daftar_siswa', 'Siswa::daftar_siswa');
-$routes->get('siswa/semua_siswa', 'Siswa::semua_siswa');
-$routes->get('siswa/create', 'Siswa::create');
-$routes->post('siswa/create_action', 'Siswa::create_action');
-$routes->get('siswa/update/(:segment)', 'Siswa::update/$1');
-$routes->post('siswa/update_action', 'Siswa::update_action');
-$routes->get('siswa/delete/(:segment)', 'Siswa::delete/$1');
-$routes->get('siswa/cetak/(:segment)', 'Siswa::cetak/$1');
-$routes->post('siswa/update_kelas/(:segment)', 'Siswa::update_kelas/$1');
-$routes->get('siswa/export_excel', 'Siswa::export_excel');
-$routes->post('siswa/preview_excel', 'Siswa::preview_excel');
-$routes->post('siswa/insert_all_from_excel', 'Siswa::insert_all_from_excel');
-$routes->get('siswa/download/(:any)', 'Siswa::download/$1');
-$routes->post('siswa/update_kelas/(:segment)', 'Siswa::update_kelas/$1');
-$routes->get('siswa/cetak/(:segment)', 'Siswa::cetak/$1');
-$routes->post('siswa/cetak_semua', 'Siswa::cetak_semua');
-$routes->get('siswa/cetak_bulk', 'Siswa::cetak_bulk');
-$routes->get('siswa/download_kartu/(:segment)', 'Siswa::download_kartu/$1');
+// Rute Face Recognition (Face Generator)
+$routes->get('face_generator', 'Face_generator::index');
+$routes->post('face_generator/save_descriptor', 'Face_generator::save_descriptor');
+$routes->get('kios_wajah', 'Kios_wajah::index');
+$routes->post('kios_wajah/proses_absen_otomatis', 'Kios_wajah::proses_absen_otomatis');
 
 // Rute Pengguna (User/Admin)
 $routes->get('user', 'User::index');
@@ -273,3 +253,60 @@ $routes->get('cron_wa/process', 'Cron_wa::process');
 
 // Rute untuk eksekusi via Terminal / Cronjob (cPanel produksi)
 $routes->cli('cron_wa/process', 'Cron_wa::process');
+
+// Rute Pengguna (Guru)
+$routes->get('guru', 'Guru::index');
+$routes->get('guru/create', 'Guru::create');
+$routes->post('guru/create_action', 'Guru::create_action');
+$routes->get('guru/update/(:segment)', 'Guru::update/$1');
+$routes->post('guru/update_action', 'Guru::update_action');
+$routes->get('guru/delete/(:segment)', 'Guru::delete/$1');
+$routes->get('guru/cetak/(:segment)', 'Guru::cetak/$1');
+$routes->post('guru/update_guru', 'Guru::update_guru');
+$routes->get('guru/excel', 'Guru::excel');
+$routes->post('guru/preview_excel', 'Guru::preview_excel');
+$routes->post('guru/insert_all_from_excel', 'Guru::insert_all_from_excel');
+$routes->get('guru/download/(:any)', 'Guru::download/$1');
+// Rute Pengguna (Guru)
+$routes->get('guru/cetak/(:any)', 'Guru::cetak/$1');
+$routes->get('Guru/cetak/(:any)', 'Guru::cetak/$1');
+$routes->get('guru/download_kartu_img/(:any)', 'Guru::download_kartu_img/$1');
+$routes->get('Guru/download_kartu_img/(:any)', 'Guru::download_kartu_img/$1');
+
+// Rute Pengguna (Pegawai)
+$routes->get('pegawai', 'Pegawai::index');
+$routes->get('pegawai/create', 'Pegawai::create');
+$routes->post('pegawai/create_action', 'Pegawai::create_action');
+$routes->get('pegawai/update/(:segment)', 'Pegawai::update/$1');
+$routes->post('pegawai/update_action', 'Pegawai::update_action');
+$routes->get('pegawai/delete/(:segment)', 'Pegawai::delete/$1');
+$routes->get('pegawai/cetak/(:segment)', 'Pegawai::cetak/$1');
+$routes->post('pegawai/update_pegawai', 'Pegawai::update_pegawai'); // Pastikan fungsi ini ada/dibuat di Pegawai.php jika diperlukan
+$routes->get('pegawai/excel', 'Pegawai::excel');
+$routes->post('pegawai/preview_excel', 'Pegawai::preview_excel');
+$routes->post('pegawai/insert_all_from_excel', 'Pegawai::insert_all_from_excel');
+$routes->get('pegawai/download/(:any)', 'Pegawai::download/$1');
+
+// Rute Pengguna (Siswa)
+$routes->get('siswa', 'Siswa::index');
+$routes->get('siswa/daftar_siswa', 'Siswa::daftar_siswa');
+$routes->get('siswa/semua_siswa', 'Siswa::semua_siswa');
+$routes->get('siswa/create', 'Siswa::create');
+$routes->post('siswa/create_action', 'Siswa::create_action');
+$routes->get('siswa/update/(:segment)', 'Siswa::update/$1');
+$routes->post('siswa/update_action', 'Siswa::update_action');
+$routes->get('siswa/delete/(:segment)', 'Siswa::delete/$1');
+$routes->get('siswa/cetak/(:segment)', 'Siswa::cetak/$1');
+$routes->post('siswa/update_kelas/(:segment)', 'Siswa::update_kelas/$1');
+$routes->get('siswa/export_excel', 'Siswa::export_excel');
+$routes->post('siswa/preview_excel', 'Siswa::preview_excel');
+$routes->post('siswa/insert_all_from_excel', 'Siswa::insert_all_from_excel');
+$routes->get('siswa/download/(:any)', 'Siswa::download/$1');
+$routes->post('siswa/update_kelas/(:segment)', 'Siswa::update_kelas/$1');
+$routes->get('siswa/cetak/(:segment)', 'Siswa::cetak/$1');
+$routes->post('siswa/cetak_semua', 'Siswa::cetak_semua');
+$routes->get('siswa/cetak_bulk', 'Siswa::cetak_bulk');
+$routes->get('siswa/download_kartu/(:segment)', 'Siswa::download_kartu/$1');
+
+$routes->get('auth/logout', 'Auth::logout');
+$routes->get('Auth/logout', 'Auth::logout');

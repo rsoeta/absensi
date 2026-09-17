@@ -2,15 +2,14 @@
 
 namespace App\Controllers;
 
-use App\Models\UserModel;
-
 class Auth extends BaseController
 {
-    protected $userModel;
+    protected $db;
 
     public function __construct()
     {
-        $this->userModel = new UserModel();
+        // Gunakan Query Builder secara konsisten
+        $this->db = \Config\Database::connect();
         date_default_timezone_set('Asia/Jakarta');
     }
 
@@ -29,7 +28,7 @@ class Auth extends BaseController
 
     public function profile()
     {
-        return view('profile'); // Nantinya disesuaikan jika menggunakan layout template CI4
+        return view('profile');
     }
 
     public function process()
@@ -38,15 +37,18 @@ class Auth extends BaseController
         $password = $this->request->getPost('password');
 
         if ($username && $password) {
-            // Pencarian data user dengan hash SHA1 sesuai versi aslinya
-            $user = $this->userModel->where('username', $username)
+            // Pencarian data user menggunakan Query Builder agar mutlak menjadi Object (getRow)
+            $user = $this->db->table('user')
+                ->where('username', $username)
                 ->where('password', sha1($password))
-                ->first();
+                ->get()
+                ->getRow();
 
             if ($user) {
                 $sessionData = [
                     'userid'   => $user->user_id,
-                    'level_id' => $user->level_id
+                    'level_id' => $user->level_id,
+                    'username' => $user->username // Tambahan Krusial: Dibutuhkan oleh dashboard_user (NISN/NIP)
                 ];
                 session()->set($sessionData);
 
@@ -60,13 +62,15 @@ class Auth extends BaseController
                 return redirect()->to('/auth');
             }
         }
-    }
-
-    public function logout()
-    {
-        session()->remove(['userid', 'level_id']);
         return redirect()->to('/auth');
     }
+
+    // public function logout()
+    // {
+    //     // Bersihkan semua session saat logout
+    //     session()->remove(['userid', 'level_id', 'username']);
+    //     return redirect()->to('/auth');
+    // }
 
     public function lock()
     {
@@ -82,20 +86,20 @@ class Auth extends BaseController
             'email'   => $this->request->getPost('email'),
         ];
 
-        $this->userModel->update($id, $data);
+        $this->db->table('user')->where('user_id', $id)->update($data);
         session()->setFlashdata('message', 'Data Berhasil diupdate');
         return redirect()->to('/auth/profile');
     }
 
     public function edit_password($id)
     {
-        $user = $this->userModel->find($id);
+        $user = $this->db->table('user')->where('user_id', $id)->get()->getRow();
 
         if ($user && sha1($this->request->getPost('lama')) == $user->password) {
             $data = [
                 'password' => sha1($this->request->getPost('password')),
             ];
-            $this->userModel->update($id, $data);
+            $this->db->table('user')->where('user_id', $id)->update($data);
 
             session()->setFlashdata('message', 'Data Password Berhasil diupdate');
             return redirect()->to('/auth/logout');
@@ -103,5 +107,11 @@ class Auth extends BaseController
             session()->setFlashdata('error', 'Password Lama Salah');
             return redirect()->to('/auth/profile');
         }
+    }
+
+    public function logout()
+    {
+        session()->destroy();
+        return redirect()->to('/auth');
     }
 }
