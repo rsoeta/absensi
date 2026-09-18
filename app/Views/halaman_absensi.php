@@ -430,7 +430,6 @@
                     // Abaikan jika error
                 }
             }
-
             $.ajax({
                 url: baseURL + '/absensi/get_info_absen',
                 type: 'POST',
@@ -451,7 +450,7 @@
                         document.querySelector('.load_time').setAttribute('datetime', iso8601(new Date()));
                         timeago().render(document.querySelectorAll('.need_to_be_rendered'), 'id');
 
-                        // 2. Gunakan Alert Pop-up Center untuk Notifikasi
+                        // 2. Alert Berhasil (Dengan Nama)
                         Swal.fire({
                             icon: 'success',
                             title: dt.nama,
@@ -475,21 +474,24 @@
                             timerProgressBar: true
                         });
                     } else {
+                        // KUNCI: Gunakan nama (jika ada di JSON response) alih-alih tulisan 'Gagal' statis
+                        let judulPenolakan = (dt.nama && dt.nama.trim() !== '') ? dt.nama : 'Peringatan';
+
                         Swal.fire({
                             icon: 'error',
-                            title: 'Gagal',
-                            text: dt.message,
+                            title: judulPenolakan,
+                            text: dt.message, // Menampilkan pesan dinamis dari Controller yang sudah menyertakan nama
                             timer: 3000,
                             showConfirmButton: false,
                             timerProgressBar: true
                         });
+
                         if (dt.list_absensi) $('#list_data_absen').html(dt.list_absensi);
                     }
 
                     // 4. Reset Input, Hilangkan Spinner & Lanjut Kamera
                     $('#hasil_scanan').val('').focus();
                     setTimeout(() => {
-                        // Hanya hilangkan spinner dan resume kamera jika sebelumnya berhasil di-pause
                         if (isScannerActive) {
                             $('#scanner-spinner').fadeOut(150);
                             try {
