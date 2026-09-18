@@ -451,10 +451,8 @@
                         document.querySelector('.load_time').setAttribute('datetime', iso8601(new Date()));
                         timeago().render(document.querySelectorAll('.need_to_be_rendered'), 'id');
 
-                        // 2. Gunakan Toast untuk Notifikasi
+                        // 2. Gunakan Alert Pop-up Center untuk Notifikasi
                         Swal.fire({
-                            toast: true,
-                            position: 'top-end',
                             icon: 'success',
                             title: dt.nama,
                             text: dt.message,
@@ -469,23 +467,21 @@
 
                     } else if (dt.response === 'holiday') {
                         Swal.fire({
-                            toast: true,
-                            position: 'top-end',
                             icon: 'info',
                             title: 'Hari Libur',
                             text: dt.message,
                             timer: 3000,
-                            showConfirmButton: false
+                            showConfirmButton: false,
+                            timerProgressBar: true
                         });
                     } else {
                         Swal.fire({
-                            toast: true,
-                            position: 'top-end',
                             icon: 'error',
                             title: 'Gagal',
                             text: dt.message,
                             timer: 3000,
-                            showConfirmButton: false
+                            showConfirmButton: false,
+                            timerProgressBar: true
                         });
                         if (dt.list_absensi) $('#list_data_absen').html(dt.list_absensi);
                     }
@@ -505,14 +501,14 @@
                 error: function() {
                     $('#hasil_scanan').val('').focus();
                     Swal.fire({
-                        toast: true,
-                        position: 'top-end',
                         icon: 'error',
                         title: 'Koneksi Terputus',
                         text: 'Gagal menghubungi server.',
                         timer: 3000,
-                        showConfirmButton: false
+                        showConfirmButton: false,
+                        timerProgressBar: true
                     });
+
                     setTimeout(() => {
                         if (isScannerActive) {
                             $('#scanner-spinner').fadeOut(150);
