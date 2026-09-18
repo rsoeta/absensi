@@ -508,7 +508,7 @@ class Absensi extends BaseController
             if ($proses == 'ok') {
                 return $this->response->setJSON([
                     'response' => 'ok',
-                    'message' => 'found',
+                    'message' => 'Berhasil', // Bisa disesuaikan
                     'type' => $type,
                     'kode' => $kode,
                     'nama' => $nama,
@@ -516,16 +516,25 @@ class Absensi extends BaseController
                     'list_absensi' => $this->show_latest_absen(),
                     'telatkah' => $this->cek_telat($user->user_id)
                 ]);
-            } elseif ($proses == 'no') {
-                return $this->response->setJSON(['response' => 'not allowed', 'message' => 'Absen Sudah dilakukan hari ini', 'list_absensi' => $this->show_latest_absen()]);
             } elseif ($proses == 'holiday') {
                 return $this->response->setJSON(['response' => 'holiday', 'message' => 'Hari Libur']);
-            } elseif ($proses == 'not allowed pulang') {
-                return $this->response->setJSON(['response' => 'not allowed pulang', 'message' => 'Absen pulang tidak diperbolehkan', 'list_absensi' => $this->show_latest_absen()]);
+            } else {
+                // KUNCI: Menangkap kalimat penolakan kustom ("Sabar Budi...", "Maaf Budi...")
+                return $this->response->setJSON([
+                    'response' => 'error',
+                    'message' => $proses, // Variabel pesan dinamis dilempar ke sini
+                    'nama' => $nama,      // Kirim nama untuk dijadikan Judul Alert di frontend
+                    'list_absensi' => $this->show_latest_absen()
+                ]);
             }
         }
 
-        return $this->response->setJSON(['response' => 'not found', 'message' => 'Data Tidak Ditemukan', 'list_absensi' => $this->show_latest_absen()]);
+        // Jika QR benar-benar tidak terdaftar di database
+        return $this->response->setJSON([
+            'response' => 'not found',
+            'message' => 'Kode QR Tidak Dikenali',
+            'list_absensi' => $this->show_latest_absen()
+        ]);
     }
 
     public function proses_wa_fonnte()
