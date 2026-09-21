@@ -27,33 +27,46 @@
 		</div>
 		<div class="panel-body">
 			<form action="<?= base_url('siswa/update_kelas/' . $kelas_id) ?>" method="POST">
-				<div class="row mb-3">
-					<div class="col-md-5">
-						<a href="<?= base_url('siswa/create') ?>" class="btn btn-danger btn-sm"><i class="fas fa-plus-square"></i> Tambah Data</a>
-						<a href="<?= base_url('siswa/export_excel?id=' . $kelas_id) ?>" class="btn btn-success btn-sm"><i class="far fa-file-excel"></i> Export Excel</a>
-						<a href="<?= base_url('siswa') ?>" class="btn btn-info btn-sm"><i class="fa fa-undo"></i> Kembali</a>
+				<div class="control-panel mb-3">
+					<!-- Baris 1: Tombol Aksi Dasar & Pencarian -->
+					<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+						<div class="btn-group">
+							<a href="<?= base_url('siswa/create') ?>" class="btn btn-danger btn-sm"><i class="fas fa-plus-square"></i> Tambah Data</a>
+							<a href="<?= base_url('siswa/export_excel?id=all') ?>" class="btn btn-success btn-sm"><i class="far fa-file-excel"></i> Export Excel</a>
+							<a href="<?= base_url('siswa') ?>" class="btn btn-info btn-sm"><i class="fa fa-undo"></i> Kembali</a>
+						</div>
+
+						<div class="input-group w-auto" style="min-width: 250px;">
+							<span class="input-group-text bg-light"><i class="fas fa-search text-muted"></i></span>
+							<input type="text" id="pencarian_siswa" class="form-control" placeholder="Cari NISN, Nama, atau Kelas...">
+						</div>
 					</div>
-					<div class="col-md-7 text-end">
-						<div class="input-group d-inline-flex w-auto mb-2">
-							<select name="kelas_id" class="form-control theSelect mb-0" style="min-width: 150px;">
+
+					<!-- Baris 2: Aksi Massal (Bulk Actions) dengan Background Soft -->
+					<div class="d-flex flex-wrap justify-content-between align-items-center p-2 bg-light border rounded gap-2">
+
+						<!-- Kiri: Form Pindah Kelas -->
+						<div class="input-group w-auto">
+							<select name="kelas_id" class="form-control theSelect" style="min-width: 180px;">
 								<option value="">-- Pindah Kelas --</option>
 								<?php foreach ($kelas as $k) : ?>
 									<option value="<?= $k->kelas_id ?>"><?= $k->nama_kelas ?></option>
 								<?php endforeach; ?>
 							</select>
-							<button type="submit" name="pindah" value="Y" class="btn btn-primary"><i class="fa fa-save"></i> Terapkan Pindah</button>
+							<button type="submit" name="pindah" value="Y" class="btn btn-primary"><i class="fa fa-save"></i> Terapkan</button>
 						</div>
 
-						<div class="d-flex justify-content-end align-items-center mt-2">
-							<div class="me-3">
-								<input type="checkbox" name="notify" id="notify" checked>
-								<label for="notify" class="text-white">Notifikasi Hapus?</label>
+						<!-- Kanan: Form Hapus, Cetak & Download Massal -->
+						<div class="d-flex flex-wrap align-items-center gap-2">
+							<div class="form-check form-switch mt-1 me-2">
+								<input class="form-check-input" type="checkbox" name="notify" id="notify" checked>
+								<label class="form-check-label text-dark fw-bold" style="font-size: 13px;" for="notify">Notif Hapus?</label>
 							</div>
-							<button type="submit" name="hapus" value="Y" class="btn btn-danger me-2" onclick="return confirm('Yakin hapus data siswa terpilih?');"><i class="fa fa-trash"></i> Hapus Terpilih</button>
-							<button type="submit" name="cetak" value="Y" class="btn btn-white" formtarget="_blank"><i class="fa fa-print"></i> Cetak Kartu</button>
-							<!-- Tombol Download Massal (Baru) -->
-							<button type="submit" name="download" value="Y" class="btn btn-success me-2" formtarget="_blank"><i class="fa fa-download"></i> Download Kartu</button>
+							<button type="submit" name="hapus" value="Y" class="btn btn-danger btn-sm" onclick="return confirm('Yakin hapus data siswa terpilih?');"><i class="fa fa-trash"></i> Hapus</button>
+							<button type="submit" name="cetak" value="Y" class="btn btn-white btn-sm" formtarget="_blank"><i class="fa fa-print"></i> Cetak</button>
+							<button type="submit" name="download" value="Y" class="btn btn-success btn-sm" formtarget="_blank"><i class="fa fa-download"></i> Download</button>
 						</div>
+
 					</div>
 				</div>
 
@@ -157,6 +170,18 @@
 			$('#modal-dialog #cuts').text(nama_siswa);
 			$('#modal-dialog #photo_siswa').attr("src", imgurl);
 			$('#modal-dialog #download').attr("href", "<?= base_url('siswa/download/') ?>" + photo);
+		});
+
+		// Deteksi ketikan pada kotak input
+		$("#pencarian_siswa").on("keyup", function() {
+			// Ambil teks yang diketik dan ubah ke huruf kecil
+			var keyword = $(this).val().toLowerCase();
+
+			// Filter setiap baris <tr> di dalam <tbody>
+			$("table tbody tr").filter(function() {
+				// Tampilkan baris jika ada teks yang cocok, sembunyikan jika tidak
+				$(this).toggle($(this).text().toLowerCase().indexOf(keyword) > -1);
+			});
 		});
 	});
 </script>
