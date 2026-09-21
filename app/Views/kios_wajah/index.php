@@ -189,7 +189,7 @@
                                                 <?php if (!empty($belum_absen)) : ?>
                                                     <?php $no = 1;
                                                     foreach ($belum_absen as $siswa) : ?>
-                                                        <tr>
+                                                        <tr class="baris-siswa" id="row-belum-absen-<?= $siswa->nisn ?>" data-nisn="<?= $siswa->nisn ?>" data-nama="<?= $siswa->nama_siswa ?>">
                                                             <td><?= $no++ ?></td>
                                                             <td><?= $siswa->nisn ?></td>
                                                             <td class="text-start"><?= $siswa->nama_siswa ?></td>
@@ -394,11 +394,15 @@
                     $('#notif-board').removeClass('bg-dark bg-warning border-secondary').addClass('bg-success text-white');
                     $('#notif-text').html(`<i class="fa fa-check-circle"></i> Absen ${res.jenis} Berhasil!<br>${res.nama}`);
 
-                    // Bunyikan Audio Berhasil (Ganti dengan file audio Anda jika ada)
                     const audio = new Audio('<?= base_url("assets/audio/audio_Umhxc2ZDeHlpc1JpYWNIUVdzNG1sZz09.wav") ?>');
                     audio.play().catch(e => console.log('Auto-play dicegah browser'));
 
-                    // Reload halaman secara mulus setelah 3 detik untuk memperbarui tabel data
+                    // HAPUS BARIS DARI TABEL BELUM ABSEN SECARA INSTAN
+                    $('tr[data-nama="' + res.nama + '"]').fadeOut(400, function() {
+                        $(this).remove();
+                    });
+
+                    // Reload halaman secara mulus setelah 3 detik untuk update tabel Riwayat Absen
                     setTimeout(() => {
                         location.reload();
                     }, 3000);

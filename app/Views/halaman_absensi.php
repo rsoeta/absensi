@@ -111,6 +111,10 @@
             /* Area kamera ekstra luas */
             width: 100%;
         }
+
+        .text-white {
+            color: #fff !important;
+        }
     </style>
 </head>
 
@@ -212,7 +216,7 @@
                     <div class="col-md-12">
                         <div class="card border-danger">
                             <div class="card-header bg-danger text-white">
-                                <h5 class="mb-0"><i class="fas fa-user-times"></i> Data Siswa Belum Absen Hari Ini</h5>
+                                <h5 class="mb-0"><i class="fas fa-user-times text-white"></i> Data Siswa Belum Absen Hari Ini</h5>
                             </div>
                             <div class="card-body">
                                 <?php
@@ -266,7 +270,7 @@
                                                 <?php $no = 1;
                                                 foreach ($belum_absen as $siswa) : ?>
                                                     <!-- Tambahkan class baris-siswa untuk target filter js -->
-                                                    <tr class="baris-siswa">
+                                                    <tr class="baris-siswa" id="row-belum-absen-<?= $siswa->nisn ?>" data-nisn="<?= $siswa->nisn ?>" data-nama="<?= $siswa->nama_siswa ?>">
                                                         <td><?= $no++ ?></td>
                                                         <td class="nisn-siswa"><?= $siswa->nisn ?></td>
                                                         <td class="text-start nama-siswa"><?= $siswa->nama_siswa ?></td>
@@ -464,6 +468,16 @@
                         let audioSrc = (dt.telatkah === 'ya') ? 'audio_Umhxc2ZDeHlpc1JpYWNIUVdzNG1sZz09.wav' : 'audio_UUdXKzNPRzE2THZweGRTOWMvMnVFdz09.wav';
                         new Audio(baseURL + '/assets/audio/' + audioSrc).play();
 
+                        // 4. HAPUS BARIS DARI TABEL BELUM ABSEN SECARA REAL-TIME
+                        $('tr[data-nisn="' + dt.kode + '"]').fadeOut(500, function() {
+                            $(this).remove();
+
+                            // Cek jika tabel sudah kosong (semua siswa sudah absen)
+                            if ($('.baris-siswa').length === 0) {
+                                $('#tabel_belum_absen tbody').html('<tr><td colspan="5" class="text-center text-success fw-bold">Alhamdulillah, semua siswa sudah absen hari ini!</td></tr>');
+                            }
+                        });
+
                     } else if (dt.response === 'holiday') {
                         Swal.fire({
                             icon: 'info',
@@ -576,28 +590,6 @@
                     }
                 }
             });
-
-
-            // jalankanAntreanWA();
-
-            // // Trigger ketika tombol Pilih di tabel Belum Absen diklik
-            // $('.btn-pilih-nisn').on('click', function() {
-            //     var nisn = $(this).data('nisn'); // Ambil NISN dari tombol
-
-            //     // Isi inputan dan langsung eksekusi absen
-            //     $('#hasil_scanan').val(nisn);
-            //     processAbsensi(nisn);
-
-            //     // Hilangkan baris siswa ini dari tabel secara halus (visual saja)
-            //     $(this).closest('tr').fadeOut('fast');
-
-            //     // RESET INPUT PENCARIAN & FILTER KELAS
-            //     $('#cari_siswa_belum_absen').val('');
-            //     $('#filter_kelas_belum_absen').val('');
-
-            //     // Picu ulang event untuk mengembalikan tabel ke kondisi awal (tampil semua)
-            //     $('#cari_siswa_belum_absen').trigger('keyup');
-            // });
 
             // Trigger ketika tombol Pilih di tabel Belum Absen diklik
             $('.btn-pilih-nisn').on('click', function() {
