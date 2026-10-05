@@ -62,6 +62,21 @@ foreach ($months_to_fetch as $my) {
 }
 ?>
 
+<style>
+	/* 1. Mengubah Header menjadi Hijau Khas Excel */
+
+	/* 2. Baris Ganjil: Hijau Muda (termasuk kolom sticky yang terkunci) */
+	.tabel-belang-hijau tbody tr:nth-child(odd),
+	.tabel-belang-hijau tbody tr:nth-child(odd) td.nama-sticky {
+		background-color: #e8f5e9 !important;
+	}
+
+	/* 3. Baris Genap: Putih (termasuk kolom sticky yang terkunci) */
+	.tabel-belang-hijau tbody tr:nth-child(even),
+	.tabel-belang-hijau tbody tr:nth-child(even) td.nama-sticky {
+		background-color: #ffffff !important;
+	}
+</style>
 <div id="content" class="app-content">
 	<div class="panel panel-inverse">
 		<div class="panel-heading">
@@ -70,7 +85,7 @@ foreach ($months_to_fetch as $my) {
 		<div class="panel-body bg-white text-dark">
 			<!-- <form action="<?= base_url('cetak/laporan') ?>" method="GET" target="_blank" class="mb-4"> -->
 			<!-- Ubah dari action="base_url('cetak/laporan')" menjadi: -->
-			<form action="<?= base_url('cetak/laporan_view_debug') ?>" method="get" target="_blank">
+			<form action="<?= base_url('cetak/laporan_view_debug') ?>" method="get" target="_blank" class="mb-4">
 				<input type="hidden" name="user_id" value="<?= $user_id ?>">
 				<input type="hidden" name="kelas_id" value="<?= $kelas_id ?>">
 				<input type="hidden" name="tipe_filter" value="<?= $tipe_filter ?>">
@@ -79,7 +94,14 @@ foreach ($months_to_fetch as $my) {
 				<input type="hidden" name="tanggal_mulai" value="<?= $tanggal_mulai ?>">
 				<input type="hidden" name="tanggal_akhir" value="<?= $tanggal_akhir ?>">
 				<input type="hidden" name="area" value="<?= $area ?>">
-				<button type="submit" class="btn btn-danger"><i class="fa fa-print"></i> Cetak</button>
+
+				<!-- Tombol Cetak -->
+				<button type="submit" class="btn btn-danger me-2"><i class="fa fa-print"></i> Cetak</button>
+
+				<!-- Tombol Export Excel -->
+				<button type="submit" formaction="<?= base_url('laporan/export_excel_siswa') ?>" formtarget="_blank" class="btn btn-success">
+					<i class="far fa-file-excel"></i> Export Excel
+				</button>
 			</form>
 
 			<div class="text-center" style="min-height: 800px;">
@@ -96,10 +118,13 @@ foreach ($months_to_fetch as $my) {
 				</h4>
 
 				<div class="table-responsive px-4">
-					<table class="table table-bordered table-sm text-dark align-middle border-dark text-center" style="white-space: nowrap;">
-						<thead class="bg-light fw-bold">
+					<!-- Tambahkan class tabel-belang-hijau di sini -->
+					<table class="table tabel-belang-hijau table-bordered table-sm text-dark align-middle border-dark text-center" style="white-space: nowrap;">
+						<!-- Hapus class bg-light dari thead -->
+						<thead class="fw-bold">
 							<tr>
-								<td rowspan="2" class="align-middle text-start px-2">Nama Siswa</td>
+								<!-- Hapus background-color: #f8f9fa; dari inline style -->
+								<td rowspan="2" class="align-middle text-start px-2" style="position: sticky; left: 0; z-index: 3; outline: 1px solid #212529;">Nama Siswa</td>
 								<td colspan="<?= $total_hari ?>">Tanggal</td>
 								<td colspan="6">Keterangan Total</td>
 							</tr>
@@ -111,13 +136,13 @@ foreach ($months_to_fetch as $my) {
 								<td style="width: 30px;">S</td>
 								<td style="width: 30px;">I</td>
 								<td style="width: 30px;">✓</td>
-								<td style="background-color: grey; color: white; width: 30px;">✓</td>
+								<!-- Biarkan warna abu dan biru untuk kolom rekap -->
+								<td style="background-color: #808080; color: white; width: 30px;">✓</td>
 								<td style="background-color: #5353ec; color: white; width: 30px;">B</td>
 							</tr>
 						</thead>
 						<tbody>
 							<?php
-							// Query Dinamis Berdasarkan Kelas
 							if ($user_id == 'semua_data') {
 								if (!empty($kelas_id)) {
 									$query = $db->query("SELECT u.user_id FROM user u JOIN siswa s ON s.nisn = u.username WHERE u.level_id='4' AND s.kelas_id='$kelas_id' ORDER BY s.nama_siswa ASC")->getResult();
@@ -125,29 +150,25 @@ foreach ($months_to_fetch as $my) {
 									$query = $db->query("SELECT u.user_id FROM user u JOIN siswa s ON s.nisn = u.username WHERE u.level_id='4' ORDER BY s.nama_siswa ASC")->getResult();
 								}
 							} else {
-								// Buat array pura-pura agar bisa di-loop seperti 'semua_data'
 								$query = [(object)['user_id' => $user_id]];
 							}
 
 							foreach ($query as $data) : ?>
 								<tr>
-									<td class="text-start fw-bold px-2"><?= nama_siswa($data->user_id) ?></td>
+									<!-- Tambahkan class nama-sticky dan HAPUS background-color: #ffffff; dari inline style -->
+									<td class="text-start fw-bold px-2 nama-sticky" style="position: sticky; left: 0; z-index: 2; outline: 1px solid #dee2e6;">
+										<?= nama_siswa($data->user_id) ?>
+									</td>
 
-									<!-- Loop Status Harian -->
 									<?php foreach ($periode_dates as $pd) : ?>
-										<?php
-										// Sesuaikan format parameter tanggal ke Y/m/j sesuai requirement asli fungsi Anda ($tahun/$bulan/$x)
-										$format_tgl = date('Y/m/j', strtotime($pd));
-										?>
+										<?php $format_tgl = date('Y/m/j', strtotime($pd)); ?>
 										<?= cek_absen($data->user_id, $format_tgl, $result_holdaydate) ?>
 									<?php endforeach; ?>
 
 									<?php
-									// Ambil tanggal mulai dan akhir dari array kolom tabel yang di-generate
 									$tgl_awal = $periode_dates[0];
 									$tgl_akhir = end($periode_dates);
 									?>
-									<!-- Area Hitung Total (Helper) -->
 									<td><?= cek_alpha($data->user_id, $tgl_awal, $tgl_akhir, $result_holdaydate) ?></td>
 									<td><?= cek_sakit($data->user_id, $tgl_awal, $tgl_akhir) ?></td>
 									<td><?= cek_izin($data->user_id, $tgl_awal, $tgl_akhir) ?></td>

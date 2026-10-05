@@ -10,6 +10,8 @@ $routes->post('absensi/un_lock', 'Absensi::un_lock');
 $routes->post('absensi/get_info_absen', 'Absensi::get_info_absen');
 $routes->get('absensi/proses_wa_fonnte', 'Absensi::proses_wa_fonnte');
 
+$routes->post('absensi/get_riwayat_absen_serverside', 'Absensi::get_riwayat_absen_serverside');
+
 // Rute Otentikasi (Login & Logout)
 $routes->get('auth', 'Auth::index');
 $routes->post('auth/process', 'Auth::process');
@@ -216,6 +218,8 @@ $routes->post('laporan/view_laporan_guru', 'Laporan::view_laporan_guru');
 $routes->post('laporan/view_laporan_pegawai', 'Laporan::view_laporan_pegawai');
 $routes->post('laporan/view_laporan_siswa', 'Laporan::view_laporan_siswa');
 $routes->post('laporan/get_data_siswa', 'Laporan::get_data_siswa');
+// Rute untuk Export Excel
+$routes->get('laporan/export_excel_siswa', 'Laporan::export_excel_siswa');
 
 // --- ROUTING UNTUK CETAK ---
 $routes->get('cetak/laporan', 'Cetak::laporan');

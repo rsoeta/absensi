@@ -52,10 +52,10 @@ class Absensi extends BaseController
                     'text'              => $peng ? $peng->text : '',
 
                     // --- UBAH BAGIAN INI ---
-                    'dataabsen' => $this->db->table('absen')
-                        ->where('tanggal', $tanggal_hari_ini)
-                        ->orderBy('COALESCE(jam_pulang, jam_masuk)', 'DESC', false) // <-- Tambahkan parameter false ini!
-                        ->get()->getResult(),
+                    // 'dataabsen' => $this->db->table('absen')
+                    //     ->where('tanggal', $tanggal_hari_ini)
+                    //     ->orderBy('COALESCE(jam_pulang, jam_masuk)', 'DESC', false) // <-- Tambahkan parameter false ini!
+                    //     ->get()->getResult(),
                     // -----------------------
 
                     'belum_absen'       => $siswa_belum_absen,
@@ -206,137 +206,6 @@ class Absensi extends BaseController
         ];
         return $hari_map[date('D')] ?? 'Unknown';
     }
-
-    // public function insert_absen_data($id_user, $kode)
-    // {
-    //     $cekdataabsenmasuk = $this->db->table('absen')->where('user_id', $id_user)->where('tanggal', date('Y-m-d'))->get()->getRow();
-
-    //     // 1. Ganti hardcode 'Senin' dengan deteksi hari dinamis
-    //     $hari_ini = $this->getHariIni();
-    //     $dtabsentime = $this->db->table('waktu_absen')->where('nama_hari', $hari_ini)->get()->getRow();
-
-    //     // 2. Blok // --- HARDCODE EKSTREM SEMENTARA --- SEPENUHNYA DIHAPUS
-
-    //     if ($dtabsentime) {
-    //         $user = $this->db->table('user')->where('user_id', $id_user)->get()->getRow();
-
-    //         if (in_array($user->level_id, [2, 3])) {
-    //             $late_waktu_absen = $dtabsentime->jam_masuk_guru;
-    //             $minutes_to_add = $dtabsentime->absen_terlambat_guru;
-    //         } elseif ($user->level_id == 4) {
-    //             $late_waktu_absen = $dtabsentime->jam_masuk_siswa;
-    //             $minutes_to_add = $dtabsentime->absen_terlambat_siswa;
-    //         }
-
-    //         // 3. Sertakan elemen Detik ('H:i:s') dalam komparasi agar PHP tidak bingung
-    //         $time = new \DateTime($late_waktu_absen);
-    //         $time->add(new \DateInterval('PT' . $minutes_to_add . 'M'));
-    //         $stamp = $time->format('H:i:s'); // Diubah jadi H:i:s
-    //         $now = date('H:i:s');            // Diubah jadi H:i:s
-
-    //         $status = ($now > $stamp) ? 'Terlambat' : 'Tepat Waktu';
-    //         $point = ($now > $stamp) ? 3 : 5;
-    //         $tgl = date('Y-m-d');
-
-    //         // Format Tanggal Indonesia
-    //         $hari_array = ['Sunday' => 'Minggu', 'Monday' => 'Senin', 'Tuesday' => 'Selasa', 'Wednesday' => 'Rabu', 'Thursday' => 'Kamis', 'Friday' => 'Jumat', 'Saturday' => 'Sabtu'];
-    //         $bulan_array = ['01' => 'Januari', '02' => 'Februari', '03' => 'Maret', '04' => 'April', '05' => 'Mei', '06' => 'Juni', '07' => 'Juli', '08' => 'Agustus', '09' => 'September', '10' => 'Oktober', '11' => 'November', '12' => 'Desember'];
-    //         $tanggal_indo = $hari_array[date('l')] . ', ' . date('d') . ' ' . $bulan_array[date('m')] . ' ' . date('Y');
-
-    //         // Jika sudah absen masuk hari ini (Proses Pulang)
-    //         if ($cekdataabsenmasuk) {
-    //             if ($cekdataabsenmasuk->jam_pulang != null) {
-    //                 return 'no'; // Sudah absen pulang
-    //             } else {
-    //                 $allowedtopulang = 0;
-    //                 if (in_array($user->level_id, [2, 3]) && $now >= $dtabsentime->jam_pulang_guru) {
-    //                     $allowedtopulang = 1;
-    //                 } elseif ($user->level_id == 4 && $now >= $dtabsentime->jam_pulang_siswa) {
-    //                     $allowedtopulang = 1;
-    //                 }
-
-    //                 if ($allowedtopulang == 1) {
-    //                     $jam_pulang = date('H:i:s');
-
-    //                     $this->db->table('absen')->where('absen_id', $cekdataabsenmasuk->absen_id)->update([
-    //                         'jam_pulang' => $jam_pulang,
-    //                         'status_pulang' => 'Tepat Waktu',
-    //                         'point_pulang' => 5,
-    //                     ]);
-
-    //                     if ($user->level_id == 4) {
-    //                         $siswa = $this->db->table('siswa')->where('nisn', $user->username)->get()->getRow();
-    //                         $setting = $this->db->table('app_setting')->where('id', 1)->get()->getRow();
-    //                         $kelas = $this->db->table('kelas')->where('kelas_id', $siswa->kelas_id)->get()->getRow();
-
-    //                         if ($setting->wa_blast == 'Aktif' && $siswa && !empty($setting->template_notif_wa)) {
-    //                             // Eksekusi Template WA Pulang
-    //                             $pesan_wa = $setting->template_notif_wa;
-    //                             $pesan_wa = str_replace('[nama_sekolah]', $setting->nama_sekolah, $pesan_wa);
-    //                             $pesan_wa = str_replace('[tanggal]', $tanggal_indo, $pesan_wa);
-    //                             $pesan_wa = str_replace('[nama_siswa]', $siswa->nama_siswa, $pesan_wa);
-    //                             $pesan_wa = str_replace('[nisn]', $siswa->nisn, $pesan_wa);
-    //                             $pesan_wa = str_replace('[kelas]', $kelas ? $kelas->nama_kelas : '-', $pesan_wa);
-    //                             $pesan_wa = str_replace('[tipe_absen]', 'Pulang', $pesan_wa);
-    //                             $pesan_wa = str_replace('[jam_absen]', date('H:i'), $pesan_wa);
-    //                             $pesan_wa = str_replace('[status_absen]', 'Tepat Waktu', $pesan_wa);
-
-    //                             $this->db->table('tabel_antrean_wa')->insert([
-    //                                 'no_hp' => $siswa->no_hp_wali_siswa,
-    //                                 'pesan' => $pesan_wa,
-    //                                 'status' => 'pending',
-    //                                 'created_at' => date('Y-m-d H:i:s')
-    //                             ]);
-    //                         }
-    //                     }
-    //                     return 'ok';
-    //                 } else {
-    //                     return 'not allowed pulang';
-    //                 }
-    //             }
-    //         } else {
-    //             // Jika belum absen masuk (Proses Masuk)
-    //             $jam_masuk = date('H:i:s');
-
-    //             $this->db->table('absen')->insert([
-    //                 'user_id' => $id_user,
-    //                 'tanggal' => $tgl,
-    //                 'keterangan' => 'Masuk',
-    //                 'jam_masuk' => $jam_masuk,
-    //                 'point' => $point,
-    //                 'status_masuk' => $status
-    //             ]);
-
-    //             if ($user->level_id == 4) {
-    //                 $siswa = $this->db->table('siswa')->where('nisn', $user->username)->get()->getRow();
-    //                 $setting = $this->db->table('app_setting')->where('id', 1)->get()->getRow();
-    //                 $kelas = $this->db->table('kelas')->where('kelas_id', $siswa->kelas_id)->get()->getRow();
-
-    //                 if ($setting->wa_blast == 'Aktif' && $siswa && !empty($setting->template_notif_wa)) {
-    //                     // Eksekusi Template WA Masuk
-    //                     $pesan_wa = $setting->template_notif_wa;
-    //                     $pesan_wa = str_replace('[nama_sekolah]', $setting->nama_sekolah, $pesan_wa);
-    //                     $pesan_wa = str_replace('[tanggal]', $tanggal_indo, $pesan_wa);
-    //                     $pesan_wa = str_replace('[nama_siswa]', $siswa->nama_siswa, $pesan_wa);
-    //                     $pesan_wa = str_replace('[nisn]', $siswa->nisn, $pesan_wa);
-    //                     $pesan_wa = str_replace('[kelas]', $kelas ? $kelas->nama_kelas : '-', $pesan_wa);
-    //                     $pesan_wa = str_replace('[tipe_absen]', 'Masuk', $pesan_wa);
-    //                     $pesan_wa = str_replace('[jam_absen]', date('H:i'), $pesan_wa);
-    //                     $pesan_wa = str_replace('[status_absen]', $status, $pesan_wa);
-
-    //                     $this->db->table('tabel_antrean_wa')->insert([
-    //                         'no_hp' => $siswa->no_hp_wali_siswa,
-    //                         'pesan' => $pesan_wa,
-    //                         'status' => 'pending',
-    //                         'created_at' => date('Y-m-d H:i:s')
-    //                     ]);
-    //                 }
-    //             }
-    //             return 'ok';
-    //         }
-    //     }
-    //     return 'holiday';
-    // }
 
     public function insert_absen_data($id_user, $kode)
     {
@@ -587,5 +456,100 @@ class Absensi extends BaseController
         }
 
         return $this->response->setJSON(['status' => 'empty']);
+    }
+
+    // FUNGSI BARU: Endpoint DataTables Server-Side untuk Riwayat Absen (Super Search & Optimized)
+    public function get_riwayat_absen_serverside()
+    {
+        $db = \Config\Database::connect();
+        $tanggal_hari_ini = date('Y-m-d');
+
+        $request = \Config\Services::request();
+
+        // Parameter bawaan DataTables
+        $start = $request->getPost('start');
+        $length = $request->getPost('length');
+        $search = $request->getPost('search')['value'] ?? '';
+
+        $builder = $db->table('absen');
+        // KUNCI PERBAIKAN 1: Ambil juga nama dari semua tabel entitas
+        $builder->select('absen.*, user.username, user.level_id, siswa.nama_siswa, guru.nama_guru, pegawai.nama_pegawai');
+        $builder->join('user', 'user.user_id = absen.user_id');
+
+        // KUNCI PERBAIKAN 2: Gabungkan semua tabel data diri menggunakan LEFT JOIN
+        $builder->join('siswa', 'siswa.nisn = user.username', 'left');
+        $builder->join('guru', 'guru.nip = user.username', 'left');
+        $builder->join('pegawai', 'pegawai.nip = user.username', 'left');
+
+        $builder->where('absen.tanggal', $tanggal_hari_ini);
+
+        // KUNCI PERBAIKAN 3: Buka gerbang pencarian ke semua kolom nama
+        if (!empty($search)) {
+            $builder->groupStart()
+                ->like('user.username', $search) // Cari NISN/NIP
+                ->orLike('siswa.nama_siswa', $search) // Cari Nama Siswa
+                ->orLike('guru.nama_guru', $search) // Cari Nama Guru
+                ->orLike('pegawai.nama_pegawai', $search) // Cari Nama Pegawai
+                ->orLike('absen.keterangan', $search)
+                ->groupEnd();
+        }
+
+        $totalRecords = $builder->countAllResults(false);
+
+        $builder->orderBy('COALESCE(absen.jam_pulang, absen.jam_masuk)', 'DESC', false);
+
+        if ($length != -1) {
+            $builder->limit($length, $start);
+        }
+
+        $dataabsen = $builder->get()->getResult();
+
+        $data = [];
+        $no = $start + 1;
+
+        foreach ($dataabsen as $absen) {
+            $nisn_nip = $absen->username;
+            $name = 'Unknown';
+            $level = 'Unknown';
+
+            // KUNCI PERBAIKAN 4: Render nama super cepat (langsung ambil dari variabel tanpa query database berulang)
+            if ($absen->level_id == 1) {
+                $name = 'Admin Aplikasi';
+                $level = 'Admin';
+            } elseif ($absen->level_id == 2) {
+                $name = $absen->nama_guru ?? '-';
+                $level = 'Guru';
+            } elseif ($absen->level_id == 3) {
+                $name = $absen->nama_pegawai ?? '-';
+                $level = 'Pegawai';
+            } elseif ($absen->level_id == 4) {
+                $name = $absen->nama_siswa ?? '-';
+                $level = 'Murid';
+            }
+
+            $sts_m = ($absen->status_masuk == 'Terlambat') ? '<i class="fas fa-exclamation-circle text-danger"></i>' : '<i class="fas fa-check-circle text-success"></i>';
+            $sts_k = ($absen->status_pulang == 'Terlambat') ? '<i class="fas fa-exclamation-circle text-danger"></i>' : (($absen->status_pulang == 'Tepat Waktu') ? '<i class="fas fa-check-circle text-success"></i>' : '');
+
+            $btn_pilih = '<button type="button" class="btn btn-sm btn-warning btn-pilih-riwayat" data-nisn="' . $nisn_nip . '" title="Pilih NISN/NIP"><i class="fas fa-hand-pointer"></i> Pilih</button>';
+
+            $row = [];
+            $row[] = $nisn_nip;
+            $row[] = $name;
+            $row[] = $level;
+            $row[] = $absen->jam_masuk . ' ' . $sts_m;
+            $row[] = $absen->jam_pulang ? $absen->jam_pulang . ' ' . $sts_k : '-';
+            $row[] = $btn_pilih;
+
+            $data[] = $row;
+        }
+
+        $output = [
+            "draw" => $request->getPost('draw'),
+            "recordsTotal" => $totalRecords,
+            "recordsFiltered" => $totalRecords,
+            "data" => $data
+        ];
+
+        return $this->response->setJSON($output);
     }
 }

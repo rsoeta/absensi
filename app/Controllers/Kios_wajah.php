@@ -9,47 +9,6 @@ class Kios_wajah extends BaseController
         $this->db = \Config\Database::connect();
     }
 
-    // public function index()
-    // {
-    //     // Tarik data beserta user_id dengan melakukan JOIN ke tabel user
-    //     $siswa = $this->db->table('siswa')
-    //         ->select('siswa.nama_siswa, siswa.face_descriptor, user.user_id')
-    //         ->join('user', 'user.username = siswa.nisn', 'left')
-    //         ->where('siswa.face_descriptor !=', null)
-    //         ->get()->getResult();
-
-    //     $guru = $this->db->table('guru')
-    //         ->select('guru.nama_guru, guru.face_descriptor, user.user_id')
-    //         ->join('user', 'user.username = guru.nip', 'left')
-    //         ->where('guru.face_descriptor !=', null)
-    //         ->get()->getResult();
-
-    //     $pegawai = $this->db->table('pegawai')
-    //         ->select('pegawai.nama_pegawai, pegawai.face_descriptor, user.user_id')
-    //         ->join('user', 'user.username = pegawai.nip', 'left')
-    //         ->where('pegawai.face_descriptor !=', null)
-    //         ->get()->getResult();
-
-    //     $data_master = [];
-
-    //     // Looping data. Pengecekan if($s->user_id) untuk mencegah error jika ada data yatim-piatu
-    //     foreach ($siswa as $s) {
-    //         if ($s->user_id) $data_master[] = ['label' => 'siswa_' . $s->user_id . '_' . $s->nama_siswa, 'descriptor' => $s->face_descriptor];
-    //     }
-    //     foreach ($guru as $g) {
-    //         if ($g->user_id) $data_master[] = ['label' => 'guru_' . $g->user_id . '_' . $g->nama_guru, 'descriptor' => $g->face_descriptor];
-    //     }
-    //     foreach ($pegawai as $p) {
-    //         if ($p->user_id) $data_master[] = ['label' => 'pegawai_' . $p->user_id . '_' . $p->nama_pegawai, 'descriptor' => $p->face_descriptor];
-    //     }
-
-    //     $data = [
-    //         'face_data' => json_encode($data_master),
-    //         'sett_apps' => $this->db->table('app_setting')->where('id', 1)->get()->getRow()
-    //     ];
-
-    //     return view('kios_wajah/index', $data);
-    // }
     public function index()
     {
         // 1. Tarik Data Vektor Wajah (Tetap dipertahankan)
@@ -75,7 +34,7 @@ class Kios_wajah extends BaseController
         $dtabsentime = $this->db->table('waktu_absen')->where('nama_hari', $hari_ini)->get()->getRow();
 
         // Riwayat absen hari ini
-        $dataabsen = $this->db->table('absen')->where('tanggal', $tgl_hari_ini)->orderBy('jam_masuk', 'DESC')->get()->getResult();
+        // $dataabsen = $this->db->table('absen')->where('tanggal', $tgl_hari_ini)->orderBy('jam_masuk', 'DESC')->get()->getResult();
 
         // Query Siswa Belum Absen (Subquery)
         $subquery = $this->db->table('absen')->select('user_id')->where('tanggal', $tgl_hari_ini)->getCompiledSelect();
@@ -94,7 +53,7 @@ class Kios_wajah extends BaseController
             'jam_keluar_p_g' => $dtabsentime ? $dtabsentime->jam_pulang_guru : '-',
             'jam_masuk_m'    => $dtabsentime ? $dtabsentime->jam_masuk_siswa : '-',
             'jam_keluar_m'   => $dtabsentime ? $dtabsentime->jam_pulang_siswa : '-',
-            'dataabsen'      => $dataabsen,
+            // 'dataabsen'      => $dataabsen,
             'belum_absen'    => $belum_absen
         ];
 

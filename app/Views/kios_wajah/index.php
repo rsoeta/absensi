@@ -221,42 +221,20 @@
                         <div class="panel-body">
                             <!-- Sisipkan persis note-primary dari halaman_absensi.php Anda di sini -->
                             <div class="table-responsive">
-                                <table class="table table-bordered table-sm table-hover text-white align-middle" style="font-size:12px;">
+                                <!-- ID disamakan: table_riwayat_absen -->
+                                <table id="table_riwayat_absen" class="table table-bordered table-sm table-hover text-white align-middle" style="width:100%; font-size:12px;">
                                     <thead>
                                         <tr>
-                                            <th>NISN/NIP</th>
+                                            <th width="15%">NISN/NIP</th>
                                             <th>Nama</th>
-                                            <th>Waktu</th>
-                                            <th>Ket</th>
-                                            <th>Masuk</th>
-                                            <th>Pulang</th>
+                                            <th width="10%">Level</th>
+                                            <th width="15%">Masuk</th>
+                                            <th width="15%">Pulang</th>
+                                            <th width="10%">Aksi</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <?php
-                                        $db = \Config\Database::connect();
-                                        foreach ($dataabsen as $absen) {
-                                            $getdatauser = $db->table('user')->where('user_id', $absen->user_id)->get()->getRow();
-                                            if (!$getdatauser) continue;
-
-                                            $nisn_nip = $getdatauser->username;
-                                            $name = '-';
-                                            if ($getdatauser->level_id == 2) {
-                                                $name = $db->table('guru')->where('nip', $nisn_nip)->get()->getRow()->nama_guru ?? '-';
-                                            }
-                                            if ($getdatauser->level_id == 3) {
-                                                $name = $db->table('pegawai')->where('nip', $nisn_nip)->get()->getRow()->nama_pegawai ?? '-';
-                                            }
-                                            if ($getdatauser->level_id == 4) {
-                                                $name = $db->table('siswa')->where('nisn', $nisn_nip)->get()->getRow()->nama_siswa ?? '-';
-                                            }
-
-                                            $sts_m = ($absen->status_masuk == 'Terlambat') ? '<i class="fas fa-exclamation-circle text-danger"></i>' : '<i class="fas fa-check-circle text-success"></i>';
-                                            $sts_k = ($absen->status_pulang == 'Terlambat') ? '<i class="fas fa-exclamation-circle text-danger"></i>' : (($absen->status_pulang == 'Tepat Waktu') ? '<i class="fas fa-check-circle text-success"></i>' : '');
-
-                                            echo "<tr><td>{$nisn_nip}</td><td>{$name}</td><td>{$absen->tanggal}</td><td>{$absen->keterangan}</td><td>{$absen->jam_masuk} {$sts_m}</td><td>{$absen->jam_pulang} {$sts_k}</td></tr>";
-                                        }
-                                        ?>
+                                        <!-- Data akan di-load secara dinamis oleh AJAX DataTables -->
                                     </tbody>
                                 </table>
                             </div>
@@ -269,9 +247,115 @@
 
     <script src="<?= base_url('assets/js/vendor.min.js') ?>"></script>
     <script src="<?= base_url('assets/js/app.min.js') ?>"></script>
+
+    <!-- PLUGIN DATATABLES JS -->
+    <script src="<?= base_url('assets/plugins/datatables.net/js/jquery.dataTables.min.js') ?>"></script>
+    <script src="<?= base_url('assets/plugins/datatables.net-bs4/js/dataTables.bootstrap4.min.js') ?>"></script>
+    <script src="<?= base_url('assets/plugins/datatables.net-responsive/js/dataTables.responsive.min.js') ?>"></script>
+    <script src="<?= base_url('assets/plugins/datatables.net-responsive-bs4/js/responsive.bootstrap4.min.js') ?>"></script>
+
     <script src="<?= base_url('assets/face-api/dist/face-api.min.js') ?>"></script>
 
     <script>
+        var baseURL = '<?= base_url() ?>';
+        var tableRiwayat;
+
+        $(document).ready(function() {
+            // Inisialisasi DataTables Server-Side (Menembak ke Absensi Controller)
+            tableRiwayat = $('#table_riwayat_absen').DataTable({
+                "processing": true,
+                "serverSide": true,
+                "ajax": {
+                    // Panggil fungsi get_riwayat_absen_serverside yang sudah kita buat sebelumnya
+                    "url": baseURL + "/absensi/get_riwayat_absen_serverside",
+                    "type": "POST"
+                },
+                "pageLength": 10,
+                "lengthMenu": [
+                    [5, 10, 25, 50],
+                    [5, 10, 25, 50]
+                ],
+                "ordering": false,
+                "responsive": true,
+                "language": {
+                    "search": "Cari NISN/Nama:",
+                    "lengthMenu": "Tampil _MENU_ data",
+                    "info": "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
+                    "infoEmpty": "Data kosong",
+                    "paginate": {
+                        "first": "Awal",
+                        "last": "Akhir",
+                        "next": "Lanjut",
+                        "previous": "Mundur"
+                    }
+                }
+            });
+
+            // Filter Real-Time untuk Tabel Belum Absen (Client-Side)
+            $('#cari_siswa_belum_absen, #filter_kelas_belum_absen').on('keyup change', function() {
+                var keyword = $('#cari_siswa_belum_absen').val().toLowerCase();
+                var kelasFilter = $('#filter_kelas_belum_absen').val().toLowerCase();
+
+                $('#tabel_belum_absen tbody tr.baris-siswa').each(function() {
+                    var nisn = $(this).find('.nisn-siswa').text().toLowerCase();
+                    var nama = $(this).find('.nama-siswa').text().toLowerCase();
+                    var kelas = $(this).find('.kelas-siswa').text().toLowerCase();
+
+                    var matchKeyword = (nisn.indexOf(keyword) > -1 || nama.indexOf(keyword) > -1);
+                    var matchKelas = (kelasFilter === "" || kelas === kelasFilter);
+
+                    if (matchKeyword && matchKelas) {
+                        $(this).show();
+                    } else {
+                        $(this).hide();
+                    }
+                });
+            });
+        });
+
+        function tembakAbsen(labelID) {
+            isProcessing = true;
+            $.post('<?= base_url("kios_wajah/proses_absen_otomatis") ?>', {
+                label: labelID
+            }, function(res) {
+                if (res.status === 'success') {
+                    $('#notif-board').removeClass('bg-dark bg-warning border-secondary').addClass('bg-success text-white');
+                    $('#notif-text').html(`<i class="fa fa-check-circle"></i> Absen ${res.jenis} Berhasil!<br>${res.nama}`);
+
+                    const audio = new Audio('<?= base_url("assets/audio/audio_Umhxc2ZDeHlpc1JpYWNIUVdzNG1sZz09.wav") ?>');
+                    audio.play().catch(e => console.log('Auto-play dicegah browser'));
+
+                    // Hapus baris dari tabel belum absen
+                    $('tr[data-nama="' + res.nama + '"]').fadeOut(400, function() {
+                        $(this).remove();
+                        // Tampilkan pesan kosong jika semua sudah absen
+                        if ($('.baris-siswa').length === 0) {
+                            $('#tabel_belum_absen tbody').html('<tr><td colspan="4" class="text-center text-success fw-bold">Semua siswa sudah absen hari ini!</td></tr>');
+                        }
+                    });
+
+                    // PERUBAHAN KRUSIAL: Reload DataTables alih-alih me-reload seluruh halaman!
+                    setTimeout(() => {
+                        tableRiwayat.ajax.reload(null, false);
+                        $('#notif-board').removeClass('bg-success text-white').addClass('bg-dark border-secondary text-secondary');
+                        $('#notif-text').html('<i class="fa fa-camera"></i> Menunggu Wajah...');
+                        isProcessing = false;
+                    }, 3000);
+
+                } else {
+                    $('#notif-board').removeClass('bg-dark bg-success border-secondary').addClass('bg-warning text-dark');
+                    $('#notif-text').html(`<i class="fa fa-exclamation-circle"></i> ${res.pesan}`);
+
+                    setTimeout(() => {
+                        $('#notif-board').removeClass('bg-success bg-warning text-white text-dark').addClass('bg-dark text-secondary');
+                        $('#notif-text').html('<i class="fa fa-camera"></i> Menunggu Wajah...');
+                        isProcessing = false;
+                    }, 4000);
+                }
+            }, 'json');
+        }
+
+
         function tampilkanwaktu() {
             var w = new Date();
             var sh = w.getHours().toString().padStart(2, '0');
@@ -385,39 +469,39 @@
             }, 100);
         });
 
-        function tembakAbsen(labelID) {
-            isProcessing = true;
-            $.post('<?= base_url("kios_wajah/proses_absen_otomatis") ?>', {
-                label: labelID
-            }, function(res) {
-                if (res.status === 'success') {
-                    $('#notif-board').removeClass('bg-dark bg-warning border-secondary').addClass('bg-success text-white');
-                    $('#notif-text').html(`<i class="fa fa-check-circle"></i> Absen ${res.jenis} Berhasil!<br>${res.nama}`);
+        // function tembakAbsen(labelID) {
+        //     isProcessing = true;
+        //     $.post('<?= base_url("kios_wajah/proses_absen_otomatis") ?>', {
+        //         label: labelID
+        //     }, function(res) {
+        //         if (res.status === 'success') {
+        //             $('#notif-board').removeClass('bg-dark bg-warning border-secondary').addClass('bg-success text-white');
+        //             $('#notif-text').html(`<i class="fa fa-check-circle"></i> Absen ${res.jenis} Berhasil!<br>${res.nama}`);
 
-                    const audio = new Audio('<?= base_url("assets/audio/audio_Umhxc2ZDeHlpc1JpYWNIUVdzNG1sZz09.wav") ?>');
-                    audio.play().catch(e => console.log('Auto-play dicegah browser'));
+        //             const audio = new Audio('<?= base_url("assets/audio/audio_Umhxc2ZDeHlpc1JpYWNIUVdzNG1sZz09.wav") ?>');
+        //             audio.play().catch(e => console.log('Auto-play dicegah browser'));
 
-                    // HAPUS BARIS DARI TABEL BELUM ABSEN SECARA INSTAN
-                    $('tr[data-nama="' + res.nama + '"]').fadeOut(400, function() {
-                        $(this).remove();
-                    });
+        //             // HAPUS BARIS DARI TABEL BELUM ABSEN SECARA INSTAN
+        //             $('tr[data-nama="' + res.nama + '"]').fadeOut(400, function() {
+        //                 $(this).remove();
+        //             });
 
-                    // Reload halaman secara mulus setelah 3 detik untuk update tabel Riwayat Absen
-                    setTimeout(() => {
-                        location.reload();
-                    }, 3000);
-                } else {
-                    $('#notif-board').removeClass('bg-dark bg-success border-secondary').addClass('bg-warning text-dark');
-                    $('#notif-text').html(`<i class="fa fa-exclamation-circle"></i> ${res.pesan}`);
+        //             // Reload halaman secara mulus setelah 3 detik untuk update tabel Riwayat Absen
+        //             setTimeout(() => {
+        //                 location.reload();
+        //             }, 3000);
+        //         } else {
+        //             $('#notif-board').removeClass('bg-dark bg-success border-secondary').addClass('bg-warning text-dark');
+        //             $('#notif-text').html(`<i class="fa fa-exclamation-circle"></i> ${res.pesan}`);
 
-                    setTimeout(() => {
-                        $('#notif-board').removeClass('bg-success bg-warning text-white text-dark').addClass('bg-dark text-secondary');
-                        $('#notif-text').html('<i class="fa fa-camera"></i> Menunggu Wajah...');
-                        isProcessing = false;
-                    }, 4000);
-                }
-            }, 'json');
-        }
+        //             setTimeout(() => {
+        //                 $('#notif-board').removeClass('bg-success bg-warning text-white text-dark').addClass('bg-dark text-secondary');
+        //                 $('#notif-text').html('<i class="fa fa-camera"></i> Menunggu Wajah...');
+        //                 isProcessing = false;
+        //             }, 4000);
+        //         }
+        //     }, 'json');
+        // }
     </script>
 </body>
 

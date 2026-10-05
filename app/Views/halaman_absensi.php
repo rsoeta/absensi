@@ -299,9 +299,8 @@
 
             </div> <!-- AKHIR SISI KIRI -->
 
-
             <!-- ============================================== -->
-            <!-- SISI KANAN (RIWAYAT DATA ABSEN HARI INI)     -->
+            <!-- SISI KANAN (RIWAYAT DATA ABSEN HARI INI)       -->
             <!-- ============================================== -->
             <div class="col-xl-5">
                 <div class="panel panel-inverse h-100">
@@ -309,81 +308,25 @@
                         <h1 class="panel-title"><span><b>DATA ABSEN</b></span><span style="color: orange;"> HARI INI</span></h1>
                     </div>
                     <div class="panel-body">
-                        <div class="note note-primary">
-                            <div class="note-icon"><i class="fa fa-info"></i></div>
-                            <div class="note-content">
-                                <h4><b>Selamat Datang!</b></h4>
-                                <h5>Hari <?= $nama_hari ?>, </h5>
-                                <table style="font-size: 13px;">
-                                    <tr>
-                                        <td><b>Guru/Pegawai</b></td>
-                                        <td>:</td>
-                                        <td>Jam Masuk : <b><?= $jam_masuk_p_g ?></b> | Jam Pulang : <b><?= $jam_keluar_p_g ?></b></td>
-                                    </tr>
-                                    <tr>
-                                        <td><b>Murid</b></td>
-                                        <td>:</td>
-                                        <td>Jam Masuk : <b><?= $jam_masuk_m ?></b> | Jam Pulang : <b><?= $jam_keluar_m ?></b></td>
-                                    </tr>
-                                </table>
-                            </div>
-                        </div>
 
                         <div class="table-responsive">
-                            <table class="table table-bordered table-sm table-hover text-white align-middle">
+                            <table id="table_riwayat_absen" class="table table-bordered table-hover text-white align-middle" style="width:100%">
                                 <thead>
                                     <tr>
-                                        <th>NISN/NIP</th> <!-- Kolom Baru -->
+                                        <th width="15%">NISN/NIP</th>
                                         <th>Nama</th>
-                                        <th>Level</th>
-                                        <th>Waktu</th>
-                                        <th>Ket</th>
-                                        <th>Masuk</th>
-                                        <th>Pulang</th>
+                                        <th width="10%">Level</th>
+                                        <th width="15%">Masuk</th>
+                                        <th width="15%">Pulang</th>
+                                        <th width="10%">Aksi</th>
                                     </tr>
                                 </thead>
-                                <tbody id="list_data_absen">
-                                    <?php
-                                    $db = \Config\Database::connect();
-                                    $str = '';
-                                    foreach ($dataabsen as $absen) {
-                                        $getdatauser = $db->table('user')->where('user_id', $absen->user_id)->get()->getRow();
-                                        if (!$getdatauser) continue;
-
-                                        $nisn_nip = $getdatauser->username; // Ambil NISN/NIP
-                                        $name = 'Unknown';
-                                        $level = 'Unknown';
-                                        if ($getdatauser->level_id == 1) {
-                                            $name = 'Admin Aplikasi';
-                                            $level = 'Admin';
-                                        }
-                                        if ($getdatauser->level_id == 2) {
-                                            $guru = $db->table('guru')->where('nip', $getdatauser->username)->get()->getRow();
-                                            $name = $guru ? $guru->nama_guru : '-';
-                                            $level = 'Guru';
-                                        }
-                                        if ($getdatauser->level_id == 3) {
-                                            $pegawai = $db->table('pegawai')->where('nip', $getdatauser->username)->get()->getRow();
-                                            $name = $pegawai ? $pegawai->nama_pegawai : '-';
-                                            $level = 'Pegawai';
-                                        }
-                                        if ($getdatauser->level_id == 4) {
-                                            $siswa = $db->table('siswa')->where('nisn', $getdatauser->username)->get()->getRow();
-                                            $name = $siswa ? $siswa->nama_siswa : '-';
-                                            $level = 'Murid';
-                                        }
-
-                                        $sts_m = ($absen->status_masuk == 'Terlambat') ? '<i class="fas fa-exclamation-circle text-danger"></i>' : '<i class="fas fa-check-circle text-success"></i>';
-                                        $sts_k = ($absen->status_pulang == 'Terlambat') ? '<i class="fas fa-exclamation-circle text-danger"></i>' : (($absen->status_pulang == 'Tepat Waktu') ? '<i class="fas fa-check-circle text-success"></i>' : '');
-
-                                        // Tambahkan {nisn_nip} di kolom paling depan
-                                        $str .= "<tr><td>{$nisn_nip}</td><td>{$name}</td><td>{$level}</td><td>{$absen->tanggal}</td><td>{$absen->keterangan}</td><td>{$absen->jam_masuk} {$sts_m}</td><td>{$absen->jam_pulang} {$sts_k}</td></tr>";
-                                    }
-                                    echo $str;
-                                    ?>
+                                <tbody>
+                                    <!-- Data akan di-load secara dinamis oleh AJAX DataTables -->
                                 </tbody>
                             </table>
                         </div>
+
                     </div>
                 </div>
             </div> <!-- AKHIR SISI KANAN -->
@@ -392,10 +335,17 @@
         </div>
     </div>
 
+
     <!-- Core Scripts -->
     <script src="<?= base_url('assets/js/vendor.min.js') ?>"></script>
     <script src="<?= base_url('assets/js/app.min.js') ?>"></script>
     <script src="<?= base_url('assets/js/theme/transparent.min.js') ?>"></script>
+
+    <!-- PLUGIN DATATABLES JS -->
+    <script src="<?= base_url('assets/plugins/datatables.net/js/jquery.dataTables.min.js') ?>"></script>
+    <script src="<?= base_url('assets/plugins/datatables.net-bs4/js/dataTables.bootstrap4.min.js') ?>"></script>
+    <script src="<?= base_url('assets/plugins/datatables.net-responsive/js/dataTables.responsive.min.js') ?>"></script>
+    <script src="<?= base_url('assets/plugins/datatables.net-responsive-bs4/js/responsive.bootstrap4.min.js') ?>"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/timeago.js/2.0.2/timeago.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -403,6 +353,7 @@
     <script>
         var baseURL = '<?= base_url() ?>';
         var html5QrcodeScanner;
+        var tableRiwayat; // Deklarasikan sebagai variabel global
 
         // Fungsi Jam Server
         function tampilkanwaktu() {
@@ -450,7 +401,8 @@
                             <p style="font-size: 11px; color: gray; text-align: center; margin-top: 5px;">Diproses: <time class="need_to_be_rendered load_time strong">sekarang</time></p>
                         `);
 
-                        $('#list_data_absen').html(dt.list_absensi);
+                        // $('#list_data_absen').html(dt.list_absensi);
+                        tableRiwayat.ajax.reload(null, false);
                         document.querySelector('.load_time').setAttribute('datetime', iso8601(new Date()));
                         timeago().render(document.querySelectorAll('.need_to_be_rendered'), 'id');
 
@@ -500,7 +452,8 @@
                             timerProgressBar: true
                         });
 
-                        if (dt.list_absensi) $('#list_data_absen').html(dt.list_absensi);
+                        if (dt.list_absensi) tableRiwayat.ajax.reload(null, false);
+                        // $('#list_data_absen').html(dt.list_absensi);
                     }
 
                     // 4. Reset Input, Hilangkan Spinner & Lanjut Kamera
@@ -560,6 +513,44 @@
         }
 
         $(document).ready(function() {
+            // 1. Inisialisasi DataTables Server-Side
+            tableRiwayat = $('#table_riwayat_absen').DataTable({
+                "processing": true,
+                "serverSide": true,
+                "ajax": {
+                    "url": baseURL + "/absensi/get_riwayat_absen_serverside",
+                    "type": "POST"
+                },
+                "pageLength": 10,
+                "lengthMenu": [
+                    [5, 10, 25, 50],
+                    [5, 10, 25, 50]
+                ],
+                // Matikan fitur pengurutan (sorting) bawaan UI agar query SQL murni yang bekerja
+                "ordering": false,
+                "responsive": true,
+                // Kustomisasi teks bahasa Indonesia
+                "language": {
+                    "search": "Cari NISN atau Nama:",
+                    "lengthMenu": "Tampil _MENU_ data",
+                    "info": "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
+                    "infoEmpty": "Data kosong",
+                    "paginate": {
+                        "first": "Awal",
+                        "last": "Akhir",
+                        "next": "Lanjut",
+                        "previous": "Mundur"
+                    }
+                }
+            });
+
+            // 2. Event Listener untuk "Tombol Pilih" di dalam DataTables
+            // Menggunakan .on('click') pada tbody karena tombol dibuat secara dinamis oleh AJAX
+            $('#table_riwayat_absen tbody').on('click', '.btn-pilih-riwayat', function() {
+                var nisn = $(this).data('nisn');
+                $('#hasil_scanan').val(nisn).focus();
+            });
+
             // Inisialisasi Scanner HTML5-QRCode
             html5QrcodeScanner = new Html5QrcodeScanner(
                 "reader", {

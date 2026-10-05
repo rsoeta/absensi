@@ -348,15 +348,15 @@ function cek_absen($user_id, $tgl, $result_holidaydate)
     $tglparsed = date('Y-m-d', strtotime($tgl));
     $is_minggu = date('l', strtotime($tgl));
 
-    // 1. Cek Hari Minggu
+    // 1. Cek Hari Minggu (Ubah 'red' menjadi '#FF0000')
     if ($is_minggu == 'Sunday') {
-        return "<td style='background-color: red'></td>";
+        return "<td style='background-color: #FF0000'></td>";
     }
 
-    // 2. Cek Hari Libur dari Database Lokal
+    // 2. Cek Hari Libur dari Database Lokal (Ubah 'yellow' menjadi '#FFFF00')
     $cek_hari_libur_db = hari_libur($tglparsed);
     if ($cek_hari_libur_db) {
-        return "<td class='plsholder' data-detail='" . $cek_hari_libur_db->keterangan . "' style='background-color: yellow'></td>";
+        return "<td class='plsholder' data-detail='" . $cek_hari_libur_db->keterangan . "' style='background-color: #FFFF00'></td>";
     }
 
     // 3. Cek Hari Libur Nasional dari API (Reset variabel penanda per tanggal)
@@ -373,8 +373,9 @@ function cek_absen($user_id, $tgl, $result_holidaydate)
         }
     }
 
+    // (Ubah 'yellow' menjadi '#FFFF00')
     if ($is_api_holiday) {
-        return "<td class='plsholder' data-detail='" . $holidayname . "' style='background-color: yellow'></td>";
+        return "<td class='plsholder' data-detail='" . $holidayname . "' style='background-color: #FFFF00'></td>";
     }
 
     // 4. Cek Status Kehadiran Siswa
@@ -385,11 +386,16 @@ function cek_absen($user_id, $tgl, $result_holidaydate)
     if ($cek_status == 'Kosong')     return "<td>-</td>";
     if ($cek_status == 'Sakit')      return "<td>S</td>";
     if ($cek_status == 'Izin')       return "<td>I</td>";
-    if ($cek_status == 'Terlambat')  return "<td style='background-color: grey'>✓</td>";
-    if ($cek_status == 'Bolos')      return "<td style='background-color: #5353ec'>B</td>";
+
+    // (Ubah 'grey' menjadi '#808080' dan tambahkan warna teks putih agar ✓ terbaca jelas)
+    if ($cek_status == 'Terlambat')  return "<td style='background-color: #808080; color: #FFFFFF;'>✓</td>";
+
+    // (Warna bolos sudah menggunakan Hex '#5353ec', cukup tambahkan warna teks putih)
+    if ($cek_status == 'Bolos')      return "<td style='background-color: #5353ec; color: #FFFFFF;'>B</td>";
 
     return "<td>-</td>"; // Fallback aman jika status tidak dikenali
 }
+
 function hari_libur($tgl)
 {
     $db = \Config\Database::connect();
