@@ -303,7 +303,7 @@ class Dashboard_user extends BaseController
                         ];
 
                         $this->db->table('absen')->where('absen_id', $cekdataabsenmasuk->absen_id)->update($datatoupdate);
-                        return 'ok';
+                        return 'ok_pulang';
                     } else {
                         return 'not allowed pulang';
                     }
@@ -334,7 +334,7 @@ class Dashboard_user extends BaseController
                 ];
 
                 $this->db->table('absen')->insert($dataabsentoinsert);
-                return 'ok';
+                return 'ok_masuk';
             }
         } else {
             return 'holiday';
@@ -362,7 +362,7 @@ class Dashboard_user extends BaseController
 
         $ceklgi = $this->insert_absen_data($getdatauser->user_id);
 
-        if ($ceklgi == 'ok') {
+        if ($ceklgi == 'ok_masuk' || $ceklgi == 'ok') {
             $nama = '';
             $type = '';
             if ($ceksiswa) {
@@ -376,23 +376,70 @@ class Dashboard_user extends BaseController
                 $type = 'pegawai';
             }
 
+            $telat = $this->cek_telat($getdatauser->user_id);
+            $soundKey = ($telat == 'ya') ? 'audio_terlambat' : 'audio_masuk_sukses';
+            $audioFile = $this->get_sound_config($soundKey);
+
             return $this->response->setJSON([
                 'response' => 'ok',
-                'message'  => 'found',
+                'action'   => 'masuk',
+                'message'  => ($telat == 'ya') ? 'Absen Masuk Berhasil (Terlambat)' : 'Absen Masuk Berhasil (Tepat Waktu)',
                 'type'     => $type,
                 'kode'     => $post,
                 'nama'     => $nama,
-                'telatkah' => $this->cek_telat($getdatauser->user_id)
+                'telatkah' => $telat,
+                'audio'    => base_url('assets/audio/' . $audioFile)
+            ]);
+        } elseif ($ceklgi == 'ok_pulang') {
+            $nama = '';
+            $type = '';
+            if ($ceksiswa) {
+                $nama = $ceksiswa->nama_siswa;
+                $type = 'siswa';
+            } elseif ($cekguru) {
+                $nama = $cekguru->nama_guru;
+                $type = 'guru';
+            } elseif ($cekpegawai) {
+                $nama = $cekpegawai->nama_pegawai;
+                $type = 'pegawai';
+            }
+
+            $audioFile = $this->get_sound_config('audio_pulang_sukses');
+
+            return $this->response->setJSON([
+                'response' => 'ok',
+                'action'   => 'pulang',
+                'message'  => 'Absen Pulang Berhasil',
+                'type'     => $type,
+                'kode'     => $post,
+                'nama'     => $nama,
+                'telatkah' => 'tidak',
+                'audio'    => base_url('assets/audio/' . $audioFile)
             ]);
         } elseif ($ceklgi == 'no') {
-            return $this->response->setJSON(['response' => 'not allowed', 'message' => 'Absen sudah dilakukan hari ini.']);
+            $audioFile = $this->get_sound_config('audio_sudah_absen');
+            return $this->response->setJSON([
+                'response' => 'not allowed',
+                'message'  => 'Absen sudah dilakukan hari ini.',
+                'audio'    => base_url('assets/audio/' . $audioFile)
+            ]);
         } elseif ($ceklgi == 'holiday') {
             return $this->response->setJSON(['response' => 'holiday', 'message' => 'Hari Libur / Waktu absen tidak ditemukan.']);
         } elseif ($ceklgi == 'not allowed pulang') {
-            return $this->response->setJSON(['response' => 'not allowed pulang', 'message' => 'Belum waktunya melakukan absen pulang.']);
+            $audioFile = $this->get_sound_config('audio_sudah_absen');
+            return $this->response->setJSON([
+                'response' => 'not allowed pulang',
+                'message'  => 'Belum waktunya melakukan absen pulang.',
+                'audio'    => base_url('assets/audio/' . $audioFile)
+            ]);
         }
 
-        return $this->response->setJSON(['response' => 'error', 'message' => 'Gagal memproses absensi.']);
+        $audioFile = $this->get_sound_config('audio_sudah_absen');
+        return $this->response->setJSON([
+            'response' => 'error',
+            'message'  => 'Gagal memproses absensi.',
+            'audio'    => base_url('assets/audio/' . $audioFile)
+        ]);
     }
 
     public function cek_telat($id_user)
@@ -1043,5 +1090,22 @@ class Dashboard_user extends BaseController
             }
             return redirect()->to(site_url('dashboard_user/absen_mandiri'));
         }
+    }
+
+    public function get_sound_config($config_name)
+    {
+        $config = $this->db->table('konfigurasi_tambahan')->where('config_name', $config_name)->get()->getRow();
+        if ($config && !empty($config->value) && file_exists(FCPATH . 'assets/audio/' . $config->value)) {
+            return $config->value;
+        }
+
+        $defaults = [
+            'audio_masuk_sukses'  => 'audio_UUdXKzNPRzE2THZweGRTOWMvMnVFdz09.wav',
+            'audio_pulang_sukses' => 'audio_UUdXKzNPRzE2THZweGRTOWMvMnVFdz09.wav',
+            'audio_sudah_absen'   => 'popup.ogg',
+            'audio_terlambat'     => 'audio_Umhxc2ZDeHlpc1JpYWNIUVdzNG1sZz09.wav',
+        ];
+
+        return $defaults[$config_name] ?? 'popup.mp3';
     }
 }

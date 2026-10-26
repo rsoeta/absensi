@@ -538,12 +538,14 @@
                 }
 
                 let audiony = new Audio();
-                if (telatkah == 'ya') {
+                if (dt.audio) {
+                    audiony = new Audio(dt.audio);
+                } else if (telatkah == 'ya') {
                     audiony = new Audio(baseURL + 'assets/audio/audio_Umhxc2ZDeHlpc1JpYWNIUVdzNG1sZz09.wav');
                 } else {
                     audiony = new Audio(baseURL + 'assets/audio/audio_UUdXKzNPRzE2THZweGRTOWMvMnVFdz09.wav');
                 }
-                audiony.play();
+                audiony.play().catch(function(e) { console.warn(e); });
 
                 setTimeout(() => {
                     location.reload();

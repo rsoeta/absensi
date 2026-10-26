@@ -140,16 +140,24 @@
                         </div>
                     </div>
                 </div>
+                <?php
+                    $foto_user_nav = (!empty($user_login->foto) && file_exists(FCPATH . 'assets/img/user/' . $user_login->foto)) 
+                        ? $user_login->foto 
+                        : 'admin.png';
+                    $nama_user_nav = !empty($user_login->nama_lengkap) ? $user_login->nama_lengkap : ucfirst($user_login->username ?? 'Admin');
+                ?>
                 <div class="navbar-item navbar-user dropdown">
                     <a href="#" class="navbar-link dropdown-toggle d-flex align-items-center" data-bs-toggle="dropdown">
-                        <img src="<?= base_url('assets/img/user/admin.png') ?>" alt="" />
+                        <img src="<?= base_url('assets/img/user/' . $foto_user_nav) ?>" alt="Avatar" style="object-fit: cover;" />
                         <span>
-                            <span class="d-none d-md-inline"><?= ucfirst($user_login->username ?? 'Admin') ?></span>
+                            <span class="d-none d-md-inline"><?= esc($nama_user_nav) ?></span>
                             <b class="caret"></b>
                         </span>
                     </a>
                     <div class="dropdown-menu dropdown-menu-end me-1">
-                        <a href="<?= base_url('auth/logout') ?>" class="dropdown-item">Log Out</a>
+                        <a href="<?= base_url('user') ?>" class="dropdown-item"><i class="fas fa-user-cog me-2 text-primary"></i> Pengaturan Akun</a>
+                        <div class="dropdown-divider"></div>
+                        <a href="<?= base_url('auth/logout') ?>" class="dropdown-item"><i class="fas fa-sign-out-alt me-2 text-danger"></i> Log Out</a>
                     </div>
                 </div>
             </div>
@@ -162,12 +170,12 @@
                         <a href="javascript:;" class="menu-profile-link" data-toggle="app-sidebar-profile" data-target="#appSidebarProfileMenu">
                             <div class="menu-profile-cover with-shadow"></div>
                             <div class="menu-profile-image">
-                                <img src="<?= base_url('assets/img/user/admin.png') ?>" alt="" />
+                                <img src="<?= base_url('assets/img/user/' . (!empty($user_login->foto) && file_exists(FCPATH . 'assets/img/user/' . $user_login->foto) ? $user_login->foto : 'admin.png')) ?>" alt="Avatar" style="object-fit: cover;" />
                             </div>
                             <div class="menu-profile-info">
                                 <div class="d-flex align-items-center">
                                     <div class="flex-grow-1">
-                                        <?= ucfirst($user_login->username ?? 'Admin') ?>
+                                        <?= esc(!empty($user_login->nama_lengkap) ? $user_login->nama_lengkap : ucfirst($user_login->username ?? 'Admin')) ?>
                                     </div>
                                 </div>
                             </div>
@@ -405,7 +413,7 @@
                         <div class="menu-submenu">
                             <div class="menu-item <?= url_is('user*') ? 'active' : '' ?>">
                                 <a href="<?= base_url('user') ?>" class="menu-link">
-                                    <div class="menu-text">User Admin</div>
+                                    <div class="menu-text">Profil & User Admin</div>
                                 </a>
                             </div>
                             <div class="menu-item <?= url_is('app_setting*') ? 'active' : '' ?>">

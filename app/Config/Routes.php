@@ -69,6 +69,7 @@ $routes->get('hari_libur/delete/(:any)', 'Hari_libur::delete/$1');
 
 $routes->get('konfigurasi_tambahan', 'Konfigurasi_tambahan::index');
 $routes->post('konfigurasi_tambahan/update_action', 'Konfigurasi_tambahan::update_action');
+$routes->post('konfigurasi_tambahan/reset_action', 'Konfigurasi_tambahan::reset_action');
 
 $routes->get('pengumuman/update/(:any)', 'Pengumuman::update/$1');
 $routes->post('pengumuman/update_action', 'Pengumuman::update_action');
@@ -143,6 +144,7 @@ $routes->post('kios_wajah/proses_absen_otomatis', 'Kios_wajah::proses_absen_otom
 
 // Rute Pengguna (User/Admin)
 $routes->get('user', 'User::index');
+$routes->match(['get', 'post'], 'user/update_profile', 'User::update_profile');
 
 // Rute Master Data (Kelas)
 $routes->get('kelas', 'Kelas::index');
@@ -245,6 +247,7 @@ $routes->get('absen/delete/(:segment)/(:segment)', 'Absen::delete/$1/$2');
 
 // Rute Pengguna (User/Admin)
 $routes->get('user', 'User::index');
+$routes->match(['get', 'post'], 'user/update_profile', 'User::update_profile');
 $routes->get('user/create', 'User::create');
 $routes->post('user/create_action', 'User::create_action');
 $routes->get('user/update/(:segment)', 'User::update/$1');

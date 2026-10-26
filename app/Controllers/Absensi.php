@@ -392,35 +392,61 @@ class Absensi extends BaseController
 
             $proses = $this->insert_absen_data($user->user_id, $kode);
 
-            if ($proses == 'ok') {
+            if ($proses == 'ok_masuk' || $proses == 'ok') {
+                $telat = $this->cek_telat($user->user_id);
+                $soundKey = ($telat == 'ya') ? 'audio_terlambat' : 'audio_masuk_sukses';
+                $audioFile = $this->get_sound_config($soundKey);
+
                 return $this->response->setJSON([
-                    'response' => 'ok',
-                    'message' => 'Berhasil', // Bisa disesuaikan
-                    'type' => $type,
-                    'kode' => $kode,
-                    'nama' => $nama,
-                    'photo' => $photo,
+                    'response'     => 'ok',
+                    'action'       => 'masuk',
+                    'message'      => ($telat == 'ya') ? 'Absen Masuk Berhasil (Terlambat)' : 'Absen Masuk Berhasil (Tepat Waktu)',
+                    'type'         => $type,
+                    'kode'         => $kode,
+                    'nama'         => $nama,
+                    'photo'        => $photo,
                     'list_absensi' => $this->show_latest_absen(),
-                    'telatkah' => $this->cek_telat($user->user_id)
+                    'telatkah'     => $telat,
+                    'audio'        => base_url('assets/audio/' . $audioFile)
+                ]);
+            } elseif ($proses == 'ok_pulang') {
+                $audioFile = $this->get_sound_config('audio_pulang_sukses');
+
+                return $this->response->setJSON([
+                    'response'     => 'ok',
+                    'action'       => 'pulang',
+                    'message'      => 'Absen Pulang Berhasil',
+                    'type'         => $type,
+                    'kode'         => $kode,
+                    'nama'         => $nama,
+                    'photo'        => $photo,
+                    'list_absensi' => $this->show_latest_absen(),
+                    'telatkah'     => 'tidak',
+                    'audio'        => base_url('assets/audio/' . $audioFile)
                 ]);
             } elseif ($proses == 'holiday') {
                 return $this->response->setJSON(['response' => 'holiday', 'message' => 'Hari Libur']);
             } else {
                 // KUNCI: Menangkap kalimat penolakan kustom ("Sabar Budi...", "Maaf Budi...")
+                $audioFile = $this->get_sound_config('audio_sudah_absen');
+
                 return $this->response->setJSON([
-                    'response' => 'error',
-                    'message' => $proses, // Variabel pesan dinamis dilempar ke sini
-                    'nama' => $nama,      // Kirim nama untuk dijadikan Judul Alert di frontend
-                    'list_absensi' => $this->show_latest_absen()
+                    'response'     => 'error',
+                    'message'      => $proses,
+                    'nama'         => $nama,
+                    'list_absensi' => $this->show_latest_absen(),
+                    'audio'        => base_url('assets/audio/' . $audioFile)
                 ]);
             }
         }
 
         // Jika QR benar-benar tidak terdaftar di database
+        $audioFile = $this->get_sound_config('audio_sudah_absen');
         return $this->response->setJSON([
-            'response' => 'not found',
-            'message' => 'Kode QR Tidak Dikenali',
-            'list_absensi' => $this->show_latest_absen()
+            'response'     => 'not found',
+            'message'      => 'Kode QR Tidak Dikenali',
+            'list_absensi' => $this->show_latest_absen(),
+            'audio'        => base_url('assets/audio/' . $audioFile)
         ]);
     }
 
@@ -675,5 +701,22 @@ class Absensi extends BaseController
         ];
 
         return $this->response->setJSON($output);
+    }
+
+    public function get_sound_config($config_name)
+    {
+        $config = $this->db->table('konfigurasi_tambahan')->where('config_name', $config_name)->get()->getRow();
+        if ($config && !empty($config->value) && file_exists(FCPATH . 'assets/audio/' . $config->value)) {
+            return $config->value;
+        }
+
+        $defaults = [
+            'audio_masuk_sukses'  => 'audio_UUdXKzNPRzE2THZweGRTOWMvMnVFdz09.wav',
+            'audio_pulang_sukses' => 'audio_UUdXKzNPRzE2THZweGRTOWMvMnVFdz09.wav',
+            'audio_sudah_absen'   => 'popup.ogg',
+            'audio_terlambat'     => 'audio_Umhxc2ZDeHlpc1JpYWNIUVdzNG1sZz09.wav',
+        ];
+
+        return $defaults[$config_name] ?? 'popup.mp3';
     }
 }

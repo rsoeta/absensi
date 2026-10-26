@@ -537,9 +537,14 @@
                             timerProgressBar: true
                         });
 
-                        // 3. Mainkan Suara
-                        let audioSrc = (dt.telatkah === 'ya') ? 'audio_Umhxc2ZDeHlpc1JpYWNIUVdzNG1sZz09.wav' : 'audio_UUdXKzNPRzE2THZweGRTOWMvMnVFdz09.wav';
-                        new Audio(baseURL + '/assets/audio/' + audioSrc).play();
+                        // 3. Mainkan Suara (Dinamis dari Konfigurasi Tambahan)
+                        let audioSrc = dt.audio;
+                        if (!audioSrc) {
+                            let defFile = (dt.telatkah === 'ya') ? 'audio_Umhxc2ZDeHlpc1JpYWNIUVdzNG1sZz09.wav' : 'audio_UUdXKzNPRzE2THZweGRTOWMvMnVFdz09.wav';
+                            audioSrc = baseURL + '/assets/audio/' + defFile;
+                        }
+                        let audioObj = new Audio(audioSrc);
+                        audioObj.play().catch(function(e) { console.warn('Audio play error:', e); });
 
                         // 4. HAPUS BARIS DARI TABEL BELUM ABSEN SECARA REAL-TIME
                         $('tr[data-nisn="' + dt.kode + '"]').fadeOut(500, function() {
@@ -561,13 +566,19 @@
                             timerProgressBar: true
                         });
                     } else {
+                        // Mainkan Suara Peringatan / Sudah Absen dari Konfigurasi Tambahan
+                        if (dt.audio) {
+                            let audioObj = new Audio(dt.audio);
+                            audioObj.play().catch(function(e) { console.warn('Audio play error:', e); });
+                        }
+
                         // KUNCI: Gunakan nama (jika ada di JSON response) alih-alih tulisan 'Gagal' statis
                         let judulPenolakan = (dt.nama && dt.nama.trim() !== '') ? dt.nama : 'Peringatan';
 
                         Swal.fire({
-                            icon: 'error',
+                            icon: 'warning',
                             title: judulPenolakan,
-                            text: dt.message, // Menampilkan pesan dinamis dari Controller yang sudah menyertakan nama
+                            text: dt.message,
                             timer: 3000,
                             showConfirmButton: false,
                             timerProgressBar: true

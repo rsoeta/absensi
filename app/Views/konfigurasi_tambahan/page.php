@@ -3,29 +3,107 @@
 <div id="content" class="app-content">
     <div class="col-xl-12">
         <div class="panel panel-inverse">
-            <div class="panel-heading">
-                <h4 class="panel-title">KONFIGURASI TAMBAHAN</h4>
+            <div class="panel-heading bg-dark text-white d-flex justify-content-between align-items-center">
+                <h4 class="panel-title mb-0"><i class="fas fa-volume-up mr-2"></i> PENGATURAN NOTIFIKASI SUARA (KONFIGURASI TAMBAHAN)</h4>
             </div>
             <div class="panel-body">
-                <table class="table table-bordered table-hover table-td-valign-middle">
-                    <?php foreach ($konfigurasi_tambahan_data as $konfigurasi_tambahan): ?>
-                        <tr>
-                            <td width="300"><i class="fa fa-music"></i> <?= $konfigurasi_tambahan->config_title_long ?>
-                                <p style="color: red; font-size:10px; margin-bottom:0;">*wajib upload .wav</p>
-                            </td>
-                            <td>
-                                <?php if ($konfigurasi_tambahan->config_type == 'FILE_UPLOAD'): ?>
-                                    <div class="input-group mb-2">
-                                        <input type="file" accept=".wav" class="form-control type_sound" onchange="return validasiEkstensi()" />
-                                        <button class="btn btn-success btn-save btn-sm" id="<?= $konfigurasi_tambahan->id_config ?>" data-type="<?= $konfigurasi_tambahan->config_type ?>"><i class="fas fa-save fa-fw"></i></button>
-                                    </div>
-                                    <p class="mb-0">Digunakan: <b><?= empty($konfigurasi_tambahan->name_sound) ? 'Tidak ada' : $konfigurasi_tambahan->name_sound ?>
-                                            <span><button play="<?= $konfigurasi_tambahan->value ?>" class="btn btn-sm btn-indigo btn-play-current-configurated" style="font-size: 8px; padding: 4px;"><i class="fas fa-play"></i></button></span></b></p>
-                                <?php endif; ?>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                </table>
+                <div class="alert alert-info alert-dismissible fade show mb-4" role="alert">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Modul ini mengatur efek suara audio yang berbunyi saat proses pemindaian kartu / absensi berlangsung pada <b>Halaman Absensi (Kiosk)</b> maupun <b>Dashboard Pengguna</b>. Anda dapat menggunakan suara default sistem atau mengunggah suara kustom berformat <code>.wav</code>, <code>.mp3</code>, atau <code>.ogg</code>.
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 50px;" class="text-center">No</th>
+                                <th style="width: 320px;">Jenis Notifikasi & Deskripsi</th>
+                                <th style="width: 250px;">Status Suara Aktif</th>
+                                <th>Unggah & Kelola Suara</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php 
+                            $no = 1;
+                            foreach ($konfigurasi_tambahan_data as $konfigurasi_tambahan): 
+                                $cfg_name = $konfigurasi_tambahan->config_name;
+                                $def_info = $defaults[$cfg_name] ?? ['file' => 'popup.mp3', 'desc' => 'Notifikasi audio absensi.'];
+                                $is_custom = (!empty($konfigurasi_tambahan->value) && file_exists(FCPATH . 'assets/audio/' . $konfigurasi_tambahan->value));
+                                $active_file = $is_custom ? $konfigurasi_tambahan->value : $def_info['file'];
+                                $active_audio_url = base_url('assets/audio/' . $active_file);
+                            ?>
+                                <tr>
+                                    <td class="text-center fw-bold"><?= $no++ ?></td>
+                                    <td>
+                                        <div class="fw-bold text-primary mb-1">
+                                            <i class="fas fa-bell me-1"></i> <?= esc($konfigurasi_tambahan->config_title_long) ?>
+                                        </div>
+                                        <div class="text-muted" style="font-size: 12px; line-height: 1.4;">
+                                            <?= esc($def_info['desc']) ?>
+                                        </div>
+                                        <span class="badge bg-light text-secondary border mt-1 font-monospace" style="font-size: 10px;">
+                                            Key: <?= esc($cfg_name) ?>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="mb-2">
+                                            <?php if ($is_custom): ?>
+                                                <span class="badge bg-success text-white px-2 py-1">
+                                                    <i class="fas fa-check-circle me-1"></i> Audio Kustom
+                                                </span>
+                                                <div class="small text-truncate mt-1 text-dark fw-bold" style="max-width: 230px;" title="<?= esc($konfigurasi_tambahan->name_sound) ?>">
+                                                    <i class="fas fa-file-audio text-success me-1"></i> <?= esc($konfigurasi_tambahan->name_sound) ?>
+                                                </div>
+                                            <?php else: ?>
+                                                <span class="badge bg-secondary text-white px-2 py-1">
+                                                    <i class="fas fa-cog me-1"></i> Bawaan Sistem (Default)
+                                                </span>
+                                                <div class="small text-truncate mt-1 text-muted font-monospace" style="font-size: 11px;">
+                                                    <i class="fas fa-music me-1"></i> <?= esc($def_info['file']) ?>
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-primary btn-play-audio" 
+                                                data-audio="<?= $active_audio_url ?>" 
+                                                title="Putar Audio untuk mendengar suara aktif">
+                                            <i class="fas fa-play me-1"></i> Dengarkan Suara
+                                        </button>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex flex-column gap-2">
+                                            <div class="input-group">
+                                                <input type="file" 
+                                                       accept=".wav,.mp3,.ogg,audio/*" 
+                                                       class="form-control form-control-sm input-audio-file" 
+                                                       data-id="<?= $konfigurasi_tambahan->id_config ?>" />
+                                                <button type="button" 
+                                                        class="btn btn-sm btn-success btn-upload-sound" 
+                                                        data-id="<?= $konfigurasi_tambahan->id_config ?>">
+                                                    <i class="fas fa-cloud-upload-alt me-1"></i> Simpan
+                                                </button>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <small class="text-muted" style="font-size: 11px;">
+                                                    <i class="fas fa-info-circle"></i> Format didukung: <code>.wav</code>, <code>.mp3</code>, <code>.ogg</code> (Maks. 5 MB)
+                                                </small>
+                                                <?php if ($is_custom): ?>
+                                                    <button type="button" 
+                                                            class="btn btn-sm btn-outline-danger btn-reset-sound py-0 px-2" 
+                                                            style="font-size: 11px;"
+                                                            data-id="<?= $konfigurasi_tambahan->id_config ?>" 
+                                                            title="Kembalikan ke suara bawaan default sistem">
+                                                        <i class="fas fa-undo me-1"></i> Kembalikan ke Default
+                                                    </button>
+                                                <?php endif; ?>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -33,77 +111,163 @@
 
 <script>
     $(document).ready(function() {
-        var audio = new Audio();
+        var currentAudio = null;
+        var currentBtn = null;
 
-        $(document).on('click', '.btn-play-current-configurated', function() {
-            audio = new Audio('<?= base_url('assets/audio/') ?>' + $(this).attr('play'));
-            audio.play();
-            $(this).html('<i class="fas fa-stop"></i>').attr('class', 'btn btn-sm btn-danger btn-stop-current-configurated');
+        // Putar & Hentikan Audio Preview
+        $(document).on('click', '.btn-play-audio', function() {
+            var btn = $(this);
+            var audioUrl = btn.data('audio');
 
-            var thisel = $(this);
-            audio.addEventListener("ended", function() {
-                audio.currentTime = 0;
-                thisel.html('<i class="fas fa-play"></i>').attr('class', 'btn btn-sm btn-indigo btn-play-current-configurated');
+            if (currentAudio && !currentAudio.paused) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+                if (currentBtn) {
+                    currentBtn.html('<i class="fas fa-play me-1"></i> Dengarkan Suara').removeClass('btn-danger').addClass('btn-outline-primary');
+                }
+                if (currentBtn && currentBtn[0] === btn[0]) {
+                    currentAudio = null;
+                    currentBtn = null;
+                    return;
+                }
+            }
+
+            currentAudio = new Audio(audioUrl);
+            currentBtn = btn;
+
+            btn.html('<i class="fas fa-stop me-1"></i> Berhenti').removeClass('btn-outline-primary').addClass('btn-danger');
+
+            currentAudio.play().catch(function(err) {
+                console.warn('Gagal memutar audio:', err);
+                btn.html('<i class="fas fa-play me-1"></i> Dengarkan Suara').removeClass('btn-danger').addClass('btn-outline-primary');
+                Swal.fire('Info', 'Tidak dapat memutar file audio. Pastikan file valid.', 'info');
+            });
+
+            currentAudio.addEventListener('ended', function() {
+                btn.html('<i class="fas fa-play me-1"></i> Dengarkan Suara').removeClass('btn-danger').addClass('btn-outline-primary');
+                currentAudio = null;
+                currentBtn = null;
             });
         });
 
-        $(document).on('click', '.btn-stop-current-configurated', function() {
-            audio.pause();
-            audio.currentTime = 0;
-            $(this).html('<i class="fas fa-play"></i>').attr('class', 'btn btn-sm btn-indigo btn-play-current-configurated');
-        });
+        // Upload Audio Baru
+        $(document).on('click', '.btn-upload-sound', function() {
+            var id_config = $(this).data('id');
+            var row = $(this).closest('tr');
+            var fileInput = row.find('.input-audio-file')[0];
+            var file = fileInput.files[0];
 
-        $(document).on('click', '.btn-save', function() {
-            var id_config = $(this).attr('id');
-            var type = $(this).attr('data-type');
-            var file = $(this).parents('tr').find('input[type="file"]').prop('files')[0];
+            if (!file) {
+                Swal.fire('Pilih File', 'Silakan pilih file audio (.wav, .mp3, atau .ogg) terlebih dahulu.', 'warning');
+                return;
+            }
 
-            if (!file) return alert('Pilih file .wav terlebih dahulu!');
+            // Validasi ekstensi
+            var allowedExt = ['wav', 'mp3', 'ogg', 'm4a'];
+            var fileExt = file.name.split('.').pop().toLowerCase();
+            if ($.inArray(fileExt, allowedExt) === -1) {
+                Swal.fire('Format Tidak Didukung', 'Format file harus .wav, .mp3, atau .ogg', 'error');
+                return;
+            }
 
-            var form_data = new FormData();
-            form_data.append('file', file);
-            form_data.append('id_config', id_config);
+            // Validasi ukuran maks 5MB
+            if (file.size > 5 * 1024 * 1024) {
+                Swal.fire('File Terlalu Besar', 'Ukuran file audio maksimal adalah 5 MB.', 'warning');
+                return;
+            }
+
+            var formData = new FormData();
+            formData.append('id_config', id_config);
+            formData.append('file', file);
 
             Swal.fire({
-                title: "Uploading...",
+                title: 'Menyimpan Audio...',
+                text: 'Harap tunggu sedang mengunggah file.',
                 allowOutsideClick: false,
-                onOpen: () => {
-                    Swal.showLoading()
+                didOpen: () => {
+                    Swal.showLoading();
                 }
             });
 
             $.ajax({
                 url: "<?= base_url('konfigurasi_tambahan/update_action') ?>",
                 type: 'POST',
+                data: formData,
                 cache: false,
                 contentType: false,
                 processData: false,
-                data: form_data,
+                dataType: 'json',
                 success: function(resp) {
-                    Swal.fire({
-                        title: "Success!",
-                        text: "File berhasil diupload",
-                        icon: 'success',
-                        timer: 1000
-                    }).then(function() {
-                        location.reload();
-                    });
+                    if (resp.status === 'ok') {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Berhasil!',
+                            text: resp.message || 'Audio berhasil disimpan.',
+                            timer: 1500,
+                            showConfirmButton: false
+                        }).then(function() {
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire('Gagal', resp.message || 'Gagal menyimpan file audio.', 'error');
+                    }
                 },
-                error: function() {
-                    Swal.fire('Error', 'Gagal menghubungi server', 'error');
+                error: function(xhr, status, error) {
+                    Swal.fire('Error', 'Terjadi kesalahan pada server: ' + error, 'error');
+                }
+            });
+        });
+
+        // Reset Audio ke Default
+        $(document).on('click', '.btn-reset-sound', function() {
+            var id_config = $(this).data('id');
+
+            Swal.fire({
+                title: 'Kembalikan ke Default?',
+                text: 'File audio kustom akan dihapus dan notifikasi akan menggunakan suara bawaan sistem.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Ya, Kembalikan!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Memproses...',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
+                    $.ajax({
+                        url: "<?= base_url('konfigurasi_tambahan/reset_action') ?>",
+                        type: 'POST',
+                        data: { id_config: id_config },
+                        dataType: 'json',
+                        success: function(resp) {
+                            if (resp.status === 'ok') {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Selesai!',
+                                    text: resp.message,
+                                    timer: 1500,
+                                    showConfirmButton: false
+                                }).then(function() {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire('Gagal', resp.message || 'Gagal mereset audio.', 'error');
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            Swal.fire('Error', 'Terjadi kesalahan pada server: ' + error, 'error');
+                        }
+                    });
                 }
             });
         });
     });
-
-    function validasiEkstensi() {
-        var input = event.target;
-        if (!input.files[0].type.match('audio/wav')) {
-            alert('File harus berformat .wav');
-            input.value = '';
-            return false;
-        }
-        return true;
-    }
 </script>
 <?= $this->endSection() ?>
