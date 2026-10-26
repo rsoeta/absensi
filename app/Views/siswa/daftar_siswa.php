@@ -32,7 +32,7 @@
 					<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
 						<div class="btn-group">
 							<a href="<?= base_url('siswa/create') ?>" class="btn btn-danger btn-sm"><i class="fas fa-plus-square"></i> Tambah Data</a>
-							<a href="<?= base_url('siswa/export_excel?id=all') ?>" class="btn btn-success btn-sm"><i class="far fa-file-excel"></i> Export Excel</a>
+							<a href="<?= base_url('siswa/export_excel?id=' . $kelas_id) ?>" class="btn btn-success btn-sm"><i class="far fa-file-excel"></i> Export Excel</a>
 							<a href="<?= base_url('siswa') ?>" class="btn btn-info btn-sm"><i class="fa fa-undo"></i> Kembali</a>
 						</div>
 

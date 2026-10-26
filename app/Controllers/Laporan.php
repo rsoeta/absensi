@@ -220,10 +220,20 @@ class Laporan extends BaseController
 
         // 1. LOGIKA JUDUL
         $teks_judul = "Semua Siswa";
+        $target_user_id = null;
         if ($user_id != 'semua_data') {
-            $dt_siswa = $db->table('siswa')->where('nisn', $user_id)->get()->getRow();
-            if ($dt_siswa) $teks_judul = $dt_siswa->nama_siswa;
-        } elseif (!empty($kelas_id)) {
+            $usr = $db->table('user')
+                      ->where('user_id', $user_id)
+                      ->orWhere('username', $user_id)
+                      ->get()->getRow();
+            if ($usr) {
+                $target_user_id = $usr->user_id;
+                $dt_siswa = $db->table('siswa')->where('nisn', $usr->username)->get()->getRow();
+                if ($dt_siswa) $teks_judul = $dt_siswa->nama_siswa;
+            } else {
+                $target_user_id = $user_id;
+            }
+        } elseif (!empty($kelas_id) && $kelas_id !== 'all') {
             $dt_kelas = $db->table('kelas')->where('kelas_id', $kelas_id)->get()->getRow();
             if ($dt_kelas) $teks_judul = "Siswa Kelas " . $dt_kelas->nama_kelas;
         }
@@ -285,15 +295,13 @@ class Laporan extends BaseController
 
         // 4. AMBIL DATA USER ID SISWA
         if ($user_id == 'semua_data') {
-            if (!empty($kelas_id)) {
-                $query_siswa = $db->query("SELECT u.user_id FROM user u JOIN siswa s ON s.nisn = u.username WHERE u.level_id='4' AND s.kelas_id='$kelas_id' ORDER BY s.nama_siswa ASC")->getResult();
+            if (!empty($kelas_id) && $kelas_id !== 'all') {
+                $query_siswa = $db->query("SELECT u.user_id FROM user u JOIN siswa s ON s.nisn = u.username WHERE u.level_id='4' AND s.kelas_id=? ORDER BY s.nama_siswa ASC", [$kelas_id])->getResult();
             } else {
                 $query_siswa = $db->query("SELECT u.user_id FROM user u JOIN siswa s ON s.nisn = u.username WHERE u.level_id='4' ORDER BY s.nama_siswa ASC")->getResult();
             }
         } else {
-            // Konversi NISN ke user_id
-            $u_id = $db->table('user')->where('username', $user_id)->get()->getRow()->user_id ?? $user_id;
-            $query_siswa = [(object)['user_id' => $u_id]];
+            $query_siswa = [(object)['user_id' => $target_user_id ?? $user_id]];
         }
 
         $data = [
@@ -306,11 +314,15 @@ class Laporan extends BaseController
 
         // 5. HEADER EXCEL
         $filename = "Rekap_Absensi_Siswa_" . date('Ymd_His') . ".xls";
-        header("Content-Type: application/vnd-ms-excel");
+        if (ob_get_level()) {
+            ob_end_clean();
+        }
+        header("Content-Type: application/vnd-ms-excel; charset=utf-8");
         header("Content-Disposition: attachment; filename=\"$filename\"");
         header("Pragma: no-cache");
         header("Expires: 0");
 
-        return view('laporan/excel_laporan_siswa', $data);
+        echo view('laporan/excel_laporan_siswa', $data, ['debug' => false]);
+        exit();
     }
 }

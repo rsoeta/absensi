@@ -238,6 +238,77 @@ class Guru extends BaseController
         return redirect()->to('/guru');
     }
 
+    public function excel()
+    {
+        $this->checkAuth();
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Setup Header Tabel
+        $headers = ['No', 'NIP', 'Nama Guru', 'Jenis Kelamin', 'Status Guru', 'Alamat', 'No HP', 'Tempat Lahir', 'Tanggal Lahir'];
+
+        $col = 'A';
+        foreach ($headers as $h) {
+            $sheet->setCellValue($col . '1', $h);
+            $col++;
+        }
+
+        $guru_data = $this->db->table('guru')
+            ->select('guru.*, status_guru.nama_status_guru')
+            ->join('status_guru', 'status_guru.status_guru_id = guru.status_guru_id', 'left')
+            ->orderBy('guru.nama_guru', 'ASC')
+            ->get()->getResult();
+
+        $no = 1;
+        $numrow = 2;
+
+        foreach ($guru_data as $data) {
+            $sheet->setCellValue('A' . $numrow, $no++);
+            $sheet->setCellValueExplicit('B' . $numrow, (string)($data->nip ?? ''), \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+            $sheet->setCellValue('C' . $numrow, $data->nama_guru ?? '');
+            $sheet->setCellValue('D' . $numrow, $data->jk_kelamin ?? '');
+            $sheet->setCellValue('E' . $numrow, $data->nama_status_guru ?? '');
+            $sheet->setCellValue('F' . $numrow, $data->alamat ?? '');
+            $sheet->setCellValueExplicit('G' . $numrow, (string)($data->no_hp ?? ''), \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+            $sheet->setCellValue('H' . $numrow, $data->tempat_lahir ?? '');
+            $sheet->setCellValue('I' . $numrow, $data->tanggal_lahir ?? '');
+            $numrow++;
+        }
+
+        // Header Styling: Bold, Background Abu Terang
+        $sheet->getStyle('A1:I1')->getFont()->setBold(true);
+        $sheet->getStyle('A1:I1')->getFill()
+              ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+              ->getStartColor()->setARGB('FFE0E0E0');
+
+        // Border styling untuk seluruh tabel jika ada data
+        if ($numrow > 2) {
+            $sheet->getStyle('A1:I' . ($numrow - 1))->getBorders()->getAllBorders()
+                  ->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+        }
+
+        // Auto size kolom A sampai I
+        foreach (range('A', 'I') as $colLetter) {
+            $sheet->getColumnDimension($colLetter)->setAutoSize(true);
+        }
+
+        $sheet->getDefaultRowDimension()->setRowHeight(-1);
+        $sheet->setTitle("Data Guru");
+
+        $filename = 'Data Guru ' . date('Y-m-d') . '.xlsx';
+
+        if (ob_get_level()) {
+            ob_end_clean();
+        }
+
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="' . $filename . '"');
+        header('Cache-Control: max-age=0');
+
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $writer->save('php://output');
+        exit();
+    }
     public function preview_excel()
     {
         $this->checkAuth();

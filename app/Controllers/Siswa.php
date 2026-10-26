@@ -549,13 +549,32 @@ class Siswa extends BaseController
     {
         $this->checkAuth();
         $kelas_id = $this->request->getGet('id');
-        $kelas_row = $this->db->table('kelas')->where('kelas_id', $kelas_id)->get()->getRow();
+        $kelas_row = null;
+
+        $builder = $this->db->table('siswa')
+            ->select('siswa.*, kelas.nama_kelas')
+            ->join('kelas', 'kelas.kelas_id = siswa.kelas_id', 'left');
+
+        if (!empty($kelas_id) && $kelas_id !== 'all') {
+            $kelas_row = $this->db->table('kelas')->where('kelas_id', $kelas_id)->get()->getRow();
+            $builder->where('siswa.kelas_id', $kelas_id);
+        }
+
+        $siswa = $builder->orderBy('siswa.kelas_id', 'ASC')
+                         ->orderBy('siswa.nama_siswa', 'ASC')
+                         ->get()->getResult();
 
         $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
 
         // Setup Header Tabel
-        $headers = ['No', 'NISN', 'Nama Siswa', 'jk_kelamin', 'Kelas', 'alamat', 'tempat_lahir', 'tanggal_lahir', 'nama_wali_siswa', 'no_hp_wali_siswa', 'agama', 'nik', 'penerima_pip', 'asal_sekolah', 'no_wa_siswa', 'hobi', 'email', 'nama_ayah', 'pekerjaan_ayah', 'nama_ibu', 'pekerjaan_ibu', 'penerima_kps'];
+        $headers = [
+            'No', 'NISN', 'Nama Siswa', 'Jenis Kelamin', 'Kelas', 'Alamat', 
+            'Tempat Lahir', 'Tanggal Lahir', 'Nama Wali Siswa', 'No HP Wali Siswa', 
+            'Agama', 'NIK', 'Penerima PIP', 'Asal Sekolah', 'No WA Siswa', 
+            'Hobi', 'Email', 'Nama Ayah', 'Pekerjaan Ayah', 'Nama Ibu', 
+            'Pekerjaan Ibu', 'Penerima KPS'
+        ];
 
         $col = 'A';
         foreach ($headers as $h) {
@@ -563,40 +582,65 @@ class Siswa extends BaseController
             $col++;
         }
 
-        $siswa = $this->db->table('siswa')->where('kelas_id', $kelas_id)->get()->getResult();
         $no = 1;
         $numrow = 2;
 
         foreach ($siswa as $data) {
             $sheet->setCellValue('A' . $numrow, $no++);
-            $sheet->setCellValue('B' . $numrow, $data->nisn);
-            $sheet->setCellValue('C' . $numrow, $data->nama_siswa);
-            $sheet->setCellValue('D' . $numrow, $data->jk_kelamin);
-            $sheet->setCellValue('E' . $numrow, $kelas_row ? $kelas_row->nama_kelas : '');
-            $sheet->setCellValue('F' . $numrow, $data->alamat);
-            $sheet->setCellValue('G' . $numrow, $data->tempat_lahir);
-            $sheet->setCellValue('H' . $numrow, $data->tanggal_lahir);
-            $sheet->setCellValue('I' . $numrow, $data->nama_wali_siswa);
-            $sheet->setCellValue('J' . $numrow, $data->no_hp_wali_siswa);
-            $sheet->setCellValue('K' . $numrow, $data->agama);
-            $sheet->setCellValue('L' . $numrow, $data->nik);
-            $sheet->setCellValue('M' . $numrow, $data->penerima_pip);
-            $sheet->setCellValue('N' . $numrow, $data->asal_sekolah);
-            $sheet->setCellValue('O' . $numrow, $data->no_wa_siswa);
-            $sheet->setCellValue('P' . $numrow, $data->hobi);
-            $sheet->setCellValue('Q' . $numrow, $data->email);
-            $sheet->setCellValue('R' . $numrow, $data->nama_ayah);
-            $sheet->setCellValue('S' . $numrow, $data->pekerjaan_ayah);
-            $sheet->setCellValue('T' . $numrow, $data->nama_ibu);
-            $sheet->setCellValue('U' . $numrow, $data->pekerjaan_ibu);
-            $sheet->setCellValue('V' . $numrow, $data->penerima_kps);
+            $sheet->setCellValueExplicit('B' . $numrow, (string)($data->nisn ?? ''), \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+            $sheet->setCellValue('C' . $numrow, $data->nama_siswa ?? '');
+            $sheet->setCellValue('D' . $numrow, $data->jk_kelamin ?? '');
+            $sheet->setCellValue('E' . $numrow, $data->nama_kelas ?? ($kelas_row ? $kelas_row->nama_kelas : ''));
+            $sheet->setCellValue('F' . $numrow, $data->alamat ?? '');
+            $sheet->setCellValue('G' . $numrow, $data->tempat_lahir ?? '');
+            $sheet->setCellValue('H' . $numrow, $data->tanggal_lahir ?? '');
+            $sheet->setCellValue('I' . $numrow, $data->nama_wali_siswa ?? '');
+            $sheet->setCellValueExplicit('J' . $numrow, (string)($data->no_hp_wali_siswa ?? ''), \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+            $sheet->setCellValue('K' . $numrow, $data->agama ?? '');
+            $sheet->setCellValueExplicit('L' . $numrow, (string)($data->nik ?? ''), \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+            $sheet->setCellValue('M' . $numrow, $data->penerima_pip ?? '');
+            $sheet->setCellValue('N' . $numrow, $data->asal_sekolah ?? '');
+            $sheet->setCellValueExplicit('O' . $numrow, (string)($data->no_wa_siswa ?? ''), \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+            $sheet->setCellValue('P' . $numrow, $data->hobi ?? '');
+            $sheet->setCellValue('Q' . $numrow, $data->email ?? '');
+            $sheet->setCellValue('R' . $numrow, $data->nama_ayah ?? '');
+            $sheet->setCellValue('S' . $numrow, $data->pekerjaan_ayah ?? '');
+            $sheet->setCellValue('T' . $numrow, $data->nama_ibu ?? '');
+            $sheet->setCellValue('U' . $numrow, $data->pekerjaan_ibu ?? '');
+            $sheet->setCellValue('V' . $numrow, $data->penerima_kps ?? '');
             $numrow++;
+        }
+
+        // Header Styling: Bold, Background Abu Terang
+        $sheet->getStyle('A1:V1')->getFont()->setBold(true);
+        $sheet->getStyle('A1:V1')->getFill()
+              ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+              ->getStartColor()->setARGB('FFE0E0E0');
+
+        // Border styling untuk seluruh tabel jika ada data
+        if ($numrow > 2) {
+            $sheet->getStyle('A1:V' . ($numrow - 1))->getBorders()->getAllBorders()
+                  ->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+        }
+
+        // Auto size untuk semua kolom A sampai V
+        foreach (range('A', 'V') as $colLetter) {
+            $sheet->getColumnDimension($colLetter)->setAutoSize(true);
         }
 
         $sheet->getDefaultRowDimension()->setRowHeight(-1);
         $sheet->setTitle("Data Siswa");
 
-        $filename = 'Data Siswa Kelas ' . ($kelas_row ? $kelas_row->nama_kelas : '') . ' ' . date('Y-m-d') . '.xlsx';
+        if ($kelas_row) {
+            $clean_kelas = preg_replace('/[^A-Za-z0-9_\-]/', '_', $kelas_row->nama_kelas);
+            $filename = 'Data Siswa Kelas ' . $clean_kelas . ' ' . date('Y-m-d') . '.xlsx';
+        } else {
+            $filename = 'Data Semua Siswa ' . date('Y-m-d') . '.xlsx';
+        }
+
+        if (ob_get_level()) {
+            ob_end_clean();
+        }
 
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         header('Content-Disposition: attachment;filename="' . $filename . '"');

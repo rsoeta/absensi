@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8" />
-    <title>Absensi Sekolah</title>
+    <title><?= esc($sett_apps->nama_aplikasi ?? 'Absensi Sekolah') ?></title>
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport" />
 
     <!-- CUSTOM THEME OVERRIDES -->
@@ -211,6 +211,19 @@
         <?php else: ?>
         /* TEMA DEFAULT (DARK MODE BAWAAN) */
         <?php endif; ?>
+
+        .toggle-password-btn {
+            cursor: pointer;
+            z-index: 10;
+            color: #6c757d;
+            padding: 8px 12px;
+            transition: color 0.2s ease-in-out;
+            user-select: none;
+        }
+
+        .toggle-password-btn:hover {
+            color: #123e87 !important;
+        }
     </style>
 
     <link href="<?= base_url('assets/css/vendor.min.css') ?>" rel="stylesheet" />
@@ -221,9 +234,20 @@
 
 <body class='pace-top'>
     <div class="flash-data" data-flashdata="<?= session()->getFlashdata('message'); ?>"></div>
+    <div class="flash-data2" data-flashdata2="<?= session()->getFlashdata('error') ?? session()->getFlashdata('gagal'); ?>"></div>
+    <?php if (session()->getFlashdata('message')) : ?>
+        <div class="alert alert-success" style="position: absolute; top: 10px; width: 100%; z-index: 9999; text-align: center;">
+            <?= session()->getFlashdata('message') ?>
+        </div>
+    <?php endif; ?>
     <?php if (session()->getFlashdata('gagal')) : ?>
         <div class="alert alert-danger" style="position: absolute; top: 10px; width: 100%; z-index: 9999; text-align: center;">
             <?= session()->getFlashdata('gagal') ?>
+        </div>
+    <?php endif; ?>
+    <?php if (session()->getFlashdata('error') && session()->getFlashdata('error') !== session()->getFlashdata('gagal')) : ?>
+        <div class="alert alert-danger" style="position: absolute; top: 10px; width: 100%; z-index: 9999; text-align: center;">
+            <?= session()->getFlashdata('error') ?>
         </div>
     <?php endif; ?>
 
@@ -241,7 +265,7 @@
                 <div class="login-header">
                     <div class="brand">
                         <div class="d-flex align-items-right">
-                            <span class="logo"></span>Absensi Sekolah
+                            <span class="logo"></span><?= esc($sett_apps->nama_aplikasi ?? 'Absensi Sekolah') ?>
                         </div>
                     </div>
                     <div class="icon"><i class="fa fa-lock"></i></div>
@@ -249,20 +273,31 @@
 
                 <div class="login-content">
                     <form action="<?= base_url('auth/process') ?>" method="post">
+                        <?= csrf_field() ?>
                         <div class="form-floating mb-20px">
-                            <input type="text" required class="form-control fs-13px h-45px border-0" placeholder="Username" id="username" autocomplete="off" name="username" />
-                            <label for="username" class="d-flex align-items-center text-gray-300 fs-13px">Username</label>
+                            <input type="text" required class="form-control fs-13px h-45px border-0" placeholder="Username atau Email" id="username" autocomplete="username" name="username" autofocus />
+                            <label for="username" class="d-flex align-items-center text-gray-400 fs-13px">Username atau Email</label>
                         </div>
-                        <div class="form-floating mb-20px">
-                            <input type="password" required name="password" id="password" class="form-control fs-13px h-45px border-0" placeholder="Password" />
-                            <label for="password" class="d-flex align-items-center text-gray-300 fs-13px">Password</label>
+                        <div class="position-relative mb-20px">
+                            <div class="form-floating">
+                                <input type="password" required name="password" id="password" class="form-control fs-13px h-45px border-0 pe-5" placeholder="Password" />
+                                <label for="password" class="d-flex align-items-center text-gray-400 fs-13px">Password</label>
+                            </div>
+                            <span class="position-absolute end-0 top-50 translate-middle-y toggle-password-btn" id="eye-login-password" onclick="toggleLoginPassword(this)" title="Tampilkan Password">
+                                <i class="fa fa-eye fs-16px"></i>
+                            </span>
                         </div>
-                        <div class="form-check mb-20px">
-                            <input class="form-check-input border-0" type="checkbox" value="1" id="rememberMe" onclick="myFunction()" />
-                            <label class="form-check-label fs-13px text-gray-500" for="rememberMe">Show Password</label>
+                        <div class="d-flex justify-content-between align-items-center mb-20px">
+                            <div class="form-check mb-0">
+                                <input class="form-check-input border-0" type="checkbox" value="1" id="rememberMe" onclick="myFunction()" />
+                                <label class="form-check-label fs-13px text-gray-400" for="rememberMe">Show Password</label>
+                            </div>
+                            <div>
+                                <a href="<?= base_url('auth/forgot_password') ?>" class="fs-13px text-decoration-none fw-bold" style="color: #ffd500;">Lupa Password?</a>
+                            </div>
                         </div>
                         <div class="mb-20px">
-                            <button type="submit" name="login" class="btn btn-success d-block w-100 h-45px btn-lg"> LOGIN</button>
+                            <button type="submit" name="login" class="btn btn-success d-block w-100 h-45px btn-lg fw-bold"> LOGIN</button>
                         </div>
                     </form>
                 </div>
@@ -285,12 +320,32 @@
     <script src="<?= base_url('assets/js/dataflash.js') ?>"></script>
 
     <script>
+        function toggleLoginPassword(el) {
+            var p = document.getElementById("password");
+            var icon = el.querySelector("i");
+            var chk = document.getElementById("rememberMe");
+            if (p.type === "password") {
+                p.type = "text";
+                icon.className = "fa fa-eye-slash fs-16px";
+                el.setAttribute("title", "Sembunyikan Password");
+                if (chk) chk.checked = true;
+            } else {
+                p.type = "password";
+                icon.className = "fa fa-eye fs-16px";
+                el.setAttribute("title", "Tampilkan Password");
+                if (chk) chk.checked = false;
+            }
+        }
+
         function myFunction() {
             var x = document.getElementById("password");
+            var icon = document.querySelector("#eye-login-password i");
             if (x.type === "password") {
                 x.type = "text";
+                if (icon) icon.className = "fa fa-eye-slash fs-16px";
             } else {
                 x.type = "password";
+                if (icon) icon.className = "fa fa-eye fs-16px";
             }
         }
     </script>

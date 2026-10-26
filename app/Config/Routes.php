@@ -17,8 +17,18 @@ $routes->get('auth', 'Auth::index');
 $routes->post('auth/process', 'Auth::process');
 $routes->get('auth/logout', 'Auth::logout');
 $routes->get('auth/lock', 'Auth::lock');
+$routes->get('auth/forgot_password', 'Auth::forgot_password');
+$routes->post('auth/forgot_password_process', 'Auth::forgot_password_process');
+$routes->get('auth/reset_password', 'Auth::reset_password');
+$routes->post('auth/change_password', 'Auth::change_password');
 $routes->post('auth/edit_profil/(:num)', 'Auth::edit_profil/$1');
 $routes->post('auth/edit_password/(:num)', 'Auth::edit_password/$1');
+
+// Rute Alias Lupa Password
+$routes->get('forgot_password', 'Auth::forgot_password');
+$routes->post('forgot_password', 'Auth::forgot_password_process');
+$routes->get('reset_password', 'Auth::reset_password');
+$routes->post('change_password', 'Auth::change_password');
 
 // Rute Dashboard
 $routes->get('dashboard', 'Dashboard::index');
@@ -221,7 +231,7 @@ $routes->post('laporan/view_laporan_pegawai', 'Laporan::view_laporan_pegawai');
 $routes->post('laporan/view_laporan_siswa', 'Laporan::view_laporan_siswa');
 $routes->post('laporan/get_data_siswa', 'Laporan::get_data_siswa');
 // Rute untuk Export Excel
-$routes->get('laporan/export_excel_siswa', 'Laporan::export_excel_siswa');
+$routes->match(['get', 'post'], 'laporan/export_excel_siswa', 'Laporan::export_excel_siswa');
 
 // --- ROUTING UNTUK CETAK ---
 $routes->get('cetak/laporan', 'Cetak::laporan');

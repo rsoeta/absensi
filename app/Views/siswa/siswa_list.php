@@ -95,7 +95,8 @@
 			<h4 class="panel-title">Daftar Kelas</h4>
 		</div>
 		<div class="panel-body">
-			<div class="mb-3">
+			<div class="mb-3 d-flex gap-2">
+				<a href="<?= base_url('siswa/export_excel?id=all') ?>" class="btn btn-success btn-sm"><i class="far fa-file-excel"></i> Export Semua Siswa</a>
 				<button type="button" class="btn btn-warning btn-sm import_data"><i class="fas fa-file-import"></i> Import Siswa Massal</button>
 			</div>
 			<div class="table-responsive">
