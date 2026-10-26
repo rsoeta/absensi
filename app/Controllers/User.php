@@ -9,6 +9,17 @@ class User extends BaseController
     public function __construct()
     {
         $this->db = \Config\Database::connect();
+
+        // Auto-check dan migrasi kolom identitas admin di hosting jika belum ada
+        if (!$this->db->fieldExists('nama_lengkap', 'user')) {
+            $this->db->query("ALTER TABLE `user` ADD COLUMN `nama_lengkap` VARCHAR(150) NULL AFTER `username`");
+        }
+        if (!$this->db->fieldExists('email', 'user')) {
+            $this->db->query("ALTER TABLE `user` ADD COLUMN `email` VARCHAR(100) NULL AFTER `nama_lengkap`");
+        }
+        if (!$this->db->fieldExists('foto', 'user')) {
+            $this->db->query("ALTER TABLE `user` ADD COLUMN `foto` VARCHAR(255) NULL DEFAULT 'admin.png' AFTER `is_aktif`");
+        }
     }
 
     public function index()
