@@ -34,17 +34,33 @@ class Absensi extends BaseController
 
                 // QUERY BARU: Ambil data siswa yang BELUM absen hari ini
                 $sql_belum_absen = "
-                    SELECT s.nisn, s.nama_siswa, k.nama_kelas 
-                    FROM siswa s
-                    JOIN user u ON s.nisn = u.username
-                    LEFT JOIN kelas k ON s.kelas_id = k.kelas_id
-                    WHERE u.level_id = 4 
+                    SELECT 
+                        u.username AS nisn,
+                        COALESCE(s.nama_siswa, g.nama_guru, p.nama_pegawai, 'Unknown') AS nama_siswa,
+                        CASE 
+                            WHEN u.level_id = 2 THEN 'Guru'
+                            WHEN u.level_id = 3 THEN 'Pegawai'
+                            ELSE COALESCE(k.nama_kelas, '-')
+                        END AS nama_kelas,
+                        u.level_id
+                    FROM user u
+                    LEFT JOIN siswa s ON s.nisn = u.username AND u.level_id = 4
+                    LEFT JOIN kelas k ON k.kelas_id = s.kelas_id
+                    LEFT JOIN guru g ON g.nip = u.username AND u.level_id = 2
+                    LEFT JOIN pegawai p ON p.nip = u.username AND u.level_id = 3
+                    WHERE u.level_id IN (2, 3, 4)
                     AND u.user_id NOT IN (
                         SELECT user_id FROM absen WHERE tanggal = ?
                     )
-                    ORDER BY k.nama_kelas ASC, s.nama_siswa ASC
+                    AND u.user_id NOT IN (
+                        SELECT user_id FROM izin_sakit WHERE tanggal = ? AND status != 'Reject'
+                    )
+                    ORDER BY 
+                        CASE WHEN u.level_id = 4 THEN 1 WHEN u.level_id = 2 THEN 2 ELSE 3 END ASC,
+                        nama_kelas ASC,
+                        nama_siswa ASC
                 ";
-                $siswa_belum_absen = $this->db->query($sql_belum_absen, [$tanggal_hari_ini])->getResult();
+                $siswa_belum_absen = $this->db->query($sql_belum_absen, [$tanggal_hari_ini, $tanggal_hari_ini])->getResult();
 
                 $data = [
                     'sett_apps'         => $this->db->table('app_setting')->where('id', 1)->get()->getRow(),
@@ -59,6 +75,8 @@ class Absensi extends BaseController
                     // -----------------------
 
                     'belum_absen'       => $siswa_belum_absen,
+                    'semua_kelas'       => $this->db->table('kelas')->orderBy('nama_kelas', 'ASC')->get()->getResult(),
+                    'jadwal'            => $jadwal,
 
                     // Variabel disesuaikan dengan kebutuhan View (_m untuk Murid)
                     'nama_hari'         => $nama_hari,
@@ -458,7 +476,7 @@ class Absensi extends BaseController
         return $this->response->setJSON(['status' => 'empty']);
     }
 
-    // FUNGSI BARU: Endpoint DataTables Server-Side untuk Riwayat Absen (Super Search & Optimized)
+    // FUNGSI BARU: Endpoint DataTables Server-Side untuk Riwayat Absen (Pencarian Semua Kolom & Integrasi Izin/Sakit)
     public function get_riwayat_absen_serverside()
     {
         $db = \Config\Database::connect();
@@ -466,37 +484,106 @@ class Absensi extends BaseController
 
         $request = \Config\Services::request();
 
-        // Parameter bawaan DataTables
-        $start = $request->getPost('start');
-        $length = $request->getPost('length');
-        $search = $request->getPost('search')['value'] ?? '';
+        // 1. Sinkronisasi data Izin/Sakit hari ini ke tabel absen jika belum tercatat
+        $izinSakitHariIni = $db->table('izin_sakit')
+            ->where('tanggal', $tanggal_hari_ini)
+            ->where('status !=', 'Reject')
+            ->get()->getResult();
+
+        foreach ($izinSakitHariIni as $iz) {
+            $exists = $db->table('absen')
+                ->where('user_id', $iz->user_id)
+                ->where('tanggal', $tanggal_hari_ini)
+                ->countAllResults();
+
+            if ($exists == 0) {
+                $db->table('absen')->insert([
+                    'user_id'      => $iz->user_id,
+                    'tanggal'      => $iz->tanggal,
+                    'keterangan'   => $iz->keterangan,
+                    'point'        => 1,
+                    'point_pulang' => 1,
+                ]);
+            }
+        }
+
+        // Parameter bawaan DataTables (Panjang data -1 jika tanpa paging / mode scrolling)
+        $start = (int) ($request->getPost('start') ?? 0);
+        $rawLength = $request->getPost('length');
+        $length = ($rawLength === null || $rawLength === '') ? -1 : (int) $rawLength;
+        $search = trim($request->getPost('search')['value'] ?? '');
+        $custom_search = trim($request->getPost('custom_search') ?? '');
+        if (!empty($custom_search)) {
+            $search = $custom_search;
+        }
+        $filter_kelas = $request->getPost('filter_kelas');
+        $filter_status = $request->getPost('filter_status');
 
         $builder = $db->table('absen');
-        // KUNCI PERBAIKAN 1: Ambil juga nama dari semua tabel entitas
-        $builder->select('absen.*, user.username, user.level_id, siswa.nama_siswa, guru.nama_guru, pegawai.nama_pegawai');
+        // Ambil data absen, user, nama siswa/guru/pegawai, kelas, serta keterangan & deskripsi dari tabel izin_sakit
+        $builder->select('absen.*, user.username, user.level_id, siswa.nama_siswa, guru.nama_guru, pegawai.nama_pegawai, kelas.nama_kelas, izin_sakit.keterangan AS iz_keterangan, izin_sakit.deskripsi AS iz_deskripsi');
         $builder->join('user', 'user.user_id = absen.user_id');
-
-        // KUNCI PERBAIKAN 2: Gabungkan semua tabel data diri menggunakan LEFT JOIN
         $builder->join('siswa', 'siswa.nisn = user.username', 'left');
+        $builder->join('kelas', 'kelas.kelas_id = siswa.kelas_id', 'left');
         $builder->join('guru', 'guru.nip = user.username', 'left');
         $builder->join('pegawai', 'pegawai.nip = user.username', 'left');
+        $builder->join('izin_sakit', 'izin_sakit.user_id = absen.user_id AND izin_sakit.tanggal = absen.tanggal', 'left');
 
         $builder->where('absen.tanggal', $tanggal_hari_ini);
 
-        // KUNCI PERBAIKAN 3: Buka gerbang pencarian ke semua kolom nama
+        // 1. Filtering Kelas / Peran (Guru, Pegawai, atau Kelas Siswa)
+        if (!empty($filter_kelas)) {
+            if ($filter_kelas == 'Guru') {
+                $builder->where('user.level_id', 2);
+            } elseif ($filter_kelas == 'Pegawai') {
+                $builder->where('user.level_id', 3);
+            } else {
+                $builder->where('kelas.nama_kelas', $filter_kelas);
+            }
+        }
+
+        // 2. Filtering Status (Hadir, Izin, Sakit)
+        if (!empty($filter_status)) {
+            if ($filter_status == 'Izin') {
+                $builder->groupStart()
+                    ->like('absen.keterangan', 'Izin')
+                    ->orLike('izin_sakit.keterangan', 'Izin')
+                    ->groupEnd();
+            } elseif ($filter_status == 'Sakit') {
+                $builder->groupStart()
+                    ->like('absen.keterangan', 'Sakit')
+                    ->orLike('izin_sakit.keterangan', 'Sakit')
+                    ->groupEnd();
+            } elseif ($filter_status == 'Hadir') {
+                $builder->groupStart()
+                    ->where('absen.keterangan', 'Masuk')
+                    ->orWhere('absen.jam_masuk IS NOT NULL', null, false)
+                    ->groupEnd();
+            }
+        }
+
+        // 2. Pencarian Fleksibel ke Seluruh Kolom
         if (!empty($search)) {
             $builder->groupStart()
-                ->like('user.username', $search) // Cari NISN/NIP
-                ->orLike('siswa.nama_siswa', $search) // Cari Nama Siswa
-                ->orLike('guru.nama_guru', $search) // Cari Nama Guru
-                ->orLike('pegawai.nama_pegawai', $search) // Cari Nama Pegawai
-                ->orLike('absen.keterangan', $search)
+                ->like('user.username', $search)         // NISN / NIP
+                ->orLike('siswa.nama_siswa', $search)     // Nama Siswa
+                ->orLike('guru.nama_guru', $search)      // Nama Guru
+                ->orLike('pegawai.nama_pegawai', $search) // Nama Pegawai
+                ->orLike('kelas.nama_kelas', $search)     // Nama Kelas
+                ->orLike('absen.jam_masuk', $search)      // Jam Masuk
+                ->orLike('absen.jam_pulang', $search)     // Jam Pulang
+                ->orLike('absen.status_masuk', $search)   // Status Masuk
+                ->orLike('absen.status_pulang', $search)  // Status Pulang
+                ->orLike('absen.keterangan', $search)     // Keterangan Absen
+                ->orLike('izin_sakit.keterangan', $search)// Keterangan Izin / Sakit
+                ->orLike('izin_sakit.deskripsi', $search) // Deskripsi Izin / Sakit
                 ->groupEnd();
         }
 
-        $totalRecords = $builder->countAllResults(false);
+        $totalFiltered = $builder->countAllResults(false);
 
-        $builder->orderBy('COALESCE(absen.jam_pulang, absen.jam_masuk)', 'DESC', false);
+        // Pengurutan waktu absensi terbaru
+        $builder->orderBy('COALESCE(absen.jam_pulang, absen.jam_masuk, "00:00:00")', 'DESC', false);
 
         if ($length != -1) {
             $builder->limit($length, $start);
@@ -504,49 +591,86 @@ class Absensi extends BaseController
 
         $dataabsen = $builder->get()->getResult();
 
+        // Hitung total seluruh riwayat hari ini tanpa filter
+        $totalRecords = $db->table('absen')->where('tanggal', $tanggal_hari_ini)->countAllResults();
+
         $data = [];
         $no = $start + 1;
 
         foreach ($dataabsen as $absen) {
             $nisn_nip = $absen->username;
             $name = 'Unknown';
-            $level = 'Unknown';
+            $kelas_or_level = '-';
 
-            // KUNCI PERBAIKAN 4: Render nama super cepat (langsung ambil dari variabel tanpa query database berulang)
+            // Identifikasi Profil & Kelas/Peran
             if ($absen->level_id == 1) {
                 $name = 'Admin Aplikasi';
-                $level = 'Admin';
+                $kelas_or_level = 'Admin';
             } elseif ($absen->level_id == 2) {
                 $name = $absen->nama_guru ?? '-';
-                $level = 'Guru';
+                $kelas_or_level = 'Guru';
             } elseif ($absen->level_id == 3) {
                 $name = $absen->nama_pegawai ?? '-';
-                $level = 'Pegawai';
+                $kelas_or_level = 'Pegawai';
             } elseif ($absen->level_id == 4) {
                 $name = $absen->nama_siswa ?? '-';
-                $level = 'Murid';
+                $kelas_or_level = $absen->nama_kelas ?? '-';
             }
 
-            $sts_m = ($absen->status_masuk == 'Terlambat') ? '<i class="fas fa-exclamation-circle text-danger"></i>' : '<i class="fas fa-check-circle text-success"></i>';
-            $sts_k = ($absen->status_pulang == 'Terlambat') ? '<i class="fas fa-exclamation-circle text-danger"></i>' : (($absen->status_pulang == 'Tepat Waktu') ? '<i class="fas fa-check-circle text-success"></i>' : '');
+            // Deteksi Keterangan Khusus (Izin / Sakit) dari tabel izin_sakit atau absen
+            $is_izin_sakit = false;
+            $ket_khusus = '';
+            $deskripsi_khusus = $absen->iz_deskripsi ?? '';
 
-            $btn_pilih = '<button type="button" class="btn btn-sm btn-warning btn-pilih-riwayat" data-nisn="' . $nisn_nip . '" title="Pilih NISN/NIP"><i class="fas fa-hand-pointer"></i> Pilih</button>';
+            if (!empty($absen->iz_keterangan)) {
+                $is_izin_sakit = true;
+                $ket_khusus = $absen->iz_keterangan;
+            } elseif (!empty($absen->keterangan) && in_array(strtolower($absen->keterangan), ['izin', 'sakit'])) {
+                $is_izin_sakit = true;
+                $ket_khusus = ucfirst(strtolower($absen->keterangan));
+            }
+
+            // Format Kolom Masuk & Pulang
+            if ($is_izin_sakit) {
+                // Untuk siswa yang memiliki keterangan khusus (izin / sakit), jam di kolom masuk diganti keterangan izin_sakit
+                $badge_class = (strtolower($ket_khusus) == 'sakit') ? 'badge bg-warning text-dark' : 'badge bg-info text-white';
+                $icon = (strtolower($ket_khusus) == 'sakit') ? 'fas fa-notes-medical' : 'fas fa-envelope-open-text';
+
+                $label_ket = $ket_khusus;
+                if (!empty($deskripsi_khusus)) {
+                    $label_ket .= ' (' . htmlspecialchars($deskripsi_khusus) . ')';
+                }
+
+                $kolom_masuk = '<span class="' . $badge_class . ' py-1 px-2" style="font-size: 11px; font-weight: 500; display: inline-block; white-space: normal;" title="' . htmlspecialchars($label_ket) . '"><i class="' . $icon . ' me-1"></i> ' . $label_ket . '</span>';
+                $kolom_pulang = '-';
+            } else {
+                $sts_m = ($absen->status_masuk == 'Terlambat') ? '<i class="fas fa-exclamation-circle text-danger" title="Terlambat"></i>' : '<i class="fas fa-check-circle text-success" title="Tepat Waktu"></i>';
+                $jam_m = $absen->jam_masuk ? substr($absen->jam_masuk, 0, 8) : '-';
+                $kolom_masuk = ($jam_m !== '-') ? $jam_m . ' ' . $sts_m : '-';
+
+                $sts_k = ($absen->status_pulang == 'Terlambat') ? '<i class="fas fa-exclamation-circle text-danger" title="Terlambat"></i>' : (($absen->status_pulang == 'Tepat Waktu') ? '<i class="fas fa-check-circle text-success" title="Tepat Waktu"></i>' : '');
+                $jam_p = $absen->jam_pulang ? substr($absen->jam_pulang, 0, 8) : '-';
+                $kolom_pulang = ($jam_p !== '-') ? $jam_p . ' ' . $sts_k : '-';
+            }
+
+            $btn_pilih = '<button type="button" class="btn btn-sm btn-primary btn-pilih-riwayat" style="font-size: 12px; padding: 3px 10px; font-weight: 500;" data-nisn="' . $nisn_nip . '" title="Pilih NISN/NIP"><i class="fas fa-hand-pointer"></i> Pilih</button>';
 
             $row = [];
+            $row[] = $no++;
             $row[] = $nisn_nip;
             $row[] = $name;
-            $row[] = $level;
-            $row[] = $absen->jam_masuk . ' ' . $sts_m;
-            $row[] = $absen->jam_pulang ? $absen->jam_pulang . ' ' . $sts_k : '-';
+            $row[] = $kelas_or_level;
+            $row[] = $kolom_masuk;
+            $row[] = $kolom_pulang;
             $row[] = $btn_pilih;
 
             $data[] = $row;
         }
 
         $output = [
-            "draw" => $request->getPost('draw'),
+            "draw" => intval($request->getPost('draw')),
             "recordsTotal" => $totalRecords,
-            "recordsFiltered" => $totalRecords,
+            "recordsFiltered" => $totalFiltered,
             "data" => $data
         ];
 

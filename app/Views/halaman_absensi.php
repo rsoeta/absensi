@@ -115,6 +115,35 @@
         .text-white {
             color: #fff !important;
         }
+
+        /* Styling Pagination & Kontrol DataTables Riwayat Absen agar Selaras dan Jelas */
+        #table_riwayat_absen_wrapper .dataTables_paginate .pagination .page-item .page-link {
+            color: #333 !important;
+            background-color: #fff !important;
+            border: 1px solid #dee2e6 !important;
+            padding: 0.35rem 0.7rem !important;
+            font-size: 0.85rem !important;
+            margin: 0 2px;
+            border-radius: 4px;
+        }
+
+        #table_riwayat_absen_wrapper .dataTables_paginate .pagination .page-item.active .page-link {
+            color: #fff !important;
+            background-color: #28a745 !important;
+            border-color: #28a745 !important;
+        }
+
+        #table_riwayat_absen_wrapper .dataTables_paginate .pagination .page-item.disabled .page-link {
+            color: #999 !important;
+            background-color: #f8f9fa !important;
+            border-color: #dee2e6 !important;
+        }
+
+        #table_riwayat_absen_wrapper .dataTables_info {
+            color: #333 !important;
+            font-size: 0.85rem !important;
+            font-weight: 500;
+        }
     </style>
 </head>
 
@@ -182,6 +211,43 @@
                                 <div class="info-overview-absen">
                                     <!-- Area render foto & nama live -->
                                 </div>
+
+                                <hr class="my-2">
+                                <!-- Informasi Jadwal E-Absensi Berdasarkan Hari Berjalan -->
+                                <div class="p-2 rounded bg-light border text-start">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span class="badge bg-dark text-white"><i class="fas fa-calendar-alt"></i> Hari: <?= $nama_hari ?></span>
+                                        <a href="<?= base_url('waktu_absen') ?>" class="badge bg-warning text-dark text-decoration-none" title="Kelola Waktu Absen">
+                                            <i class="fas fa-clock"></i> E-Absensi
+                                        </a>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-bordered text-center align-middle mb-0 bg-white" style="font-size: 11px;">
+                                            <thead class="table-secondary">
+                                                <tr>
+                                                    <th>Role</th>
+                                                    <th>Masuk</th>
+                                                    <th>Telat</th>
+                                                    <th>Pulang</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td class="fw-bold text-start">Siswa</td>
+                                                    <td><?= !empty($jadwal->jam_masuk_siswa) ? substr($jadwal->jam_masuk_siswa, 0, 5) : '-' ?></td>
+                                                    <td><?= isset($jadwal->absen_terlambat_siswa) ? '+' . $jadwal->absen_terlambat_siswa . 'm' : '-' ?></td>
+                                                    <td><?= !empty($jadwal->jam_pulang_siswa) ? substr($jadwal->jam_pulang_siswa, 0, 5) : '-' ?></td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="fw-bold text-start">Guru/Pegawai</td>
+                                                    <td><?= !empty($jadwal->jam_masuk_guru) ? substr($jadwal->jam_masuk_guru, 0, 5) : '-' ?></td>
+                                                    <td><?= isset($jadwal->absen_terlambat_guru) ? '+' . $jadwal->absen_terlambat_guru . 'm' : '-' ?></td>
+                                                    <td><?= !empty($jadwal->jam_pulang_guru) ? substr($jadwal->jam_pulang_guru, 0, 5) : '-' ?></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -216,21 +282,27 @@
                     <div class="col-md-12">
                         <div class="card border-danger">
                             <div class="card-header bg-danger text-white">
-                                <h5 class="mb-0"><i class="fas fa-user-times text-white"></i> Data Siswa Belum Absen Hari Ini</h5>
+                                <h5 class="mb-0"><i class="fas fa-user-times text-white"></i> Data Belum Absen Hari Ini (Siswa & GTK)</h5>
                             </div>
                             <div class="card-body">
                                 <?php
-                                // Ekstrak daftar kelas unik dari data siswa yang belum absen
-                                $kelas_unik = [];
-                                if (!empty($belum_absen)) {
-                                    foreach ($belum_absen as $s) {
-                                        $nama_k = $s->nama_kelas ?? '-';
-                                        if (!in_array($nama_k, $kelas_unik)) {
-                                            $kelas_unik[] = $nama_k;
+                                // Ekstrak daftar kelas dari database atau data siswa yang belum absen
+                                $daftar_kelas = [];
+                                if (isset($semua_kelas) && !empty($semua_kelas)) {
+                                    foreach ($semua_kelas as $k) {
+                                        if (!empty($k->nama_kelas) && !in_array($k->nama_kelas, $daftar_kelas)) {
+                                            $daftar_kelas[] = $k->nama_kelas;
                                         }
                                     }
-                                    sort($kelas_unik);
+                                } elseif (!empty($belum_absen)) {
+                                    foreach ($belum_absen as $s) {
+                                        $nama_k = $s->nama_kelas ?? '-';
+                                        if (!in_array($nama_k, $daftar_kelas)) {
+                                            $daftar_kelas[] = $nama_k;
+                                        }
+                                    }
                                 }
+                                sort($daftar_kelas);
                                 ?>
 
                                 <!-- Area Kolom Pencarian & Filter Kelas -->
@@ -238,17 +310,25 @@
                                     <div class="col-md-7 mb-2">
                                         <div class="input-group">
                                             <span class="input-group-text bg-light"><i class="fas fa-search"></i></span>
-                                            <input type="text" id="cari_siswa_belum_absen" class="form-control" placeholder="Cari Nama atau NISN...">
+                                            <input type="text" id="cari_siswa_belum_absen" class="form-control" placeholder="Cari semua kolom (NISN, Nama, Kelas)...">
                                         </div>
                                     </div>
                                     <div class="col-md-5 mb-2">
                                         <div class="input-group">
                                             <span class="input-group-text bg-light"><i class="fas fa-filter"></i></span>
                                             <select id="filter_kelas_belum_absen" class="form-control">
-                                                <option value="">-- Semua Kelas --</option>
-                                                <?php foreach ($kelas_unik as $kls) : ?>
-                                                    <option value="<?= $kls ?>"><?= $kls ?></option>
-                                                <?php endforeach; ?>
+                                                <option value="">-- Semua Kelas / GTK --</option>
+                                                <optgroup label="Peran / GTK">
+                                                    <option value="Guru">Guru</option>
+                                                    <option value="Pegawai">Pegawai</option>
+                                                </optgroup>
+                                                <optgroup label="Kelas Siswa">
+                                                    <?php foreach ($daftar_kelas as $kls) : ?>
+                                                        <?php if ($kls != 'Guru' && $kls != 'Pegawai') : ?>
+                                                            <option value="<?= $kls ?>"><?= $kls ?></option>
+                                                        <?php endif; ?>
+                                                    <?php endforeach; ?>
+                                                </optgroup>
                                             </select>
                                         </div>
                                     </div>
@@ -259,9 +339,9 @@
                                         <thead class="table-light" style="position: sticky; top: 0; z-index: 1;">
                                             <tr>
                                                 <th width="5%">No</th>
-                                                <th width="20%">NISN</th>
-                                                <th>Nama Siswa</th>
-                                                <th width="20%">Kelas</th>
+                                                <th width="18%">NISN/NIP</th>
+                                                <th>Nama</th>
+                                                <th width="18%">Kelas / Peran</th>
                                                 <th width="15%">Aksi</th>
                                             </tr>
                                         </thead>
@@ -276,7 +356,7 @@
                                                         <td class="text-start nama-siswa"><?= $siswa->nama_siswa ?></td>
                                                         <td class="kelas-siswa"><?= $siswa->nama_kelas ?? '-' ?></td>
                                                         <td>
-                                                            <button type="button" class="btn btn-sm btn-primary btn-pilih-nisn" data-nisn="<?= $siswa->nisn ?>">
+                                                            <button type="button" class="btn btn-sm btn-primary btn-pilih-nisn" style="font-size: 12px; padding: 3px 10px; font-weight: 500;" data-nisn="<?= $siswa->nisn ?>" title="Pilih Siswa">
                                                                 <i class="fas fa-hand-pointer"></i> Pilih
                                                             </button>
                                                         </td>
@@ -303,21 +383,62 @@
             <!-- SISI KANAN (RIWAYAT DATA ABSEN HARI INI)       -->
             <!-- ============================================== -->
             <div class="col-xl-5">
-                <div class="panel panel-inverse h-100">
-                    <div class="panel-heading">
-                        <h1 class="panel-title"><span><b>DATA ABSEN</b></span><span style="color: orange;"> HARI INI</span></h1>
+                <div class="card border-success h-100 shadow-sm">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0"><i class="fas fa-user-check text-white"></i> Data Riwayat Absen Hari Ini</h5>
                     </div>
-                    <div class="panel-body">
+                    <div class="card-body d-flex flex-column">
 
-                        <div class="table-responsive">
-                            <table id="table_riwayat_absen" class="table table-bordered table-hover text-white align-middle" style="width:100%">
-                                <thead>
+                        <!-- Area Kolom Pencarian, Filter Kelas/GTK, & Filter Izin/Sakit -->
+                        <div class="row mb-3">
+                            <div class="col-12 mb-2">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="fas fa-search"></i></span>
+                                    <input type="text" id="cari_siswa_riwayat_absen" class="form-control" placeholder="Cari semua kolom (NISN, Nama, Kelas, Jam, Izin, Sakit)...">
+                                </div>
+                            </div>
+                            <div class="col-md-7 mb-2">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="fas fa-filter"></i></span>
+                                    <select id="filter_kelas_riwayat_absen" class="form-control">
+                                        <option value="">-- Semua Kelas / GTK --</option>
+                                        <optgroup label="Peran / GTK">
+                                            <option value="Guru">Guru</option>
+                                            <option value="Pegawai">Pegawai</option>
+                                        </optgroup>
+                                        <optgroup label="Kelas Siswa">
+                                            <?php foreach ($daftar_kelas as $kls) : ?>
+                                                <?php if ($kls != 'Guru' && $kls != 'Pegawai') : ?>
+                                                    <option value="<?= $kls ?>"><?= $kls ?></option>
+                                                <?php endif; ?>
+                                            <?php endforeach; ?>
+                                        </optgroup>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-5 mb-2">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="fas fa-notes-medical"></i></span>
+                                    <select id="filter_status_riwayat_absen" class="form-control">
+                                        <option value="">-- Semua Status --</option>
+                                        <option value="Hadir">Hadir</option>
+                                        <option value="Izin">Izin</option>
+                                        <option value="Sakit">Sakit</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="overflow-x: auto; overflow-y: scroll; flex: 1; max-height: calc(100vh - 250px); min-height: 520px;">
+                            <table class="table table-bordered table-hover table-striped text-center align-middle" id="table_riwayat_absen" style="width:100%">
+                                <thead class="table-light" style="position: sticky; top: 0; z-index: 1;">
                                     <tr>
-                                        <th width="15%">NISN/NIP</th>
+                                        <th width="5%">No</th>
+                                        <th width="18%">NISN/NIP</th>
                                         <th>Nama</th>
-                                        <th width="10%">Level</th>
-                                        <th width="15%">Masuk</th>
-                                        <th width="15%">Pulang</th>
+                                        <th width="15%">Kelas</th>
+                                        <th width="14%">Masuk</th>
+                                        <th width="14%">Pulang</th>
                                         <th width="10%">Aksi</th>
                                     </tr>
                                 </thead>
@@ -513,35 +634,49 @@
         }
 
         $(document).ready(function() {
-            // 1. Inisialisasi DataTables Server-Side
+            // 1. Inisialisasi DataTables Server-Side untuk Riwayat Absen (Mode Scrolling, Paginasi Dinonaktifkan)
             tableRiwayat = $('#table_riwayat_absen').DataTable({
                 "processing": true,
                 "serverSide": true,
+                "paging": false,
                 "ajax": {
                     "url": baseURL + "/absensi/get_riwayat_absen_serverside",
-                    "type": "POST"
+                    "type": "POST",
+                    "data": function(d) {
+                        d.custom_search = $('#cari_siswa_riwayat_absen').val();
+                        d.filter_kelas = $('#filter_kelas_riwayat_absen').val();
+                        d.filter_status = $('#filter_status_riwayat_absen').val();
+                    }
                 },
-                "pageLength": 10,
-                "lengthMenu": [
-                    [5, 10, 25, 50],
-                    [5, 10, 25, 50]
-                ],
                 // Matikan fitur pengurutan (sorting) bawaan UI agar query SQL murni yang bekerja
                 "ordering": false,
                 "responsive": true,
+                "dom": "rt<'d-flex justify-content-between align-items-center mt-2'i>",
+                "columnDefs": [
+                    { "targets": [0, 1, 3, 4, 5, 6], "className": "text-center align-middle" },
+                    { "targets": [2], "className": "text-start align-middle" }
+                ],
                 // Kustomisasi teks bahasa Indonesia
                 "language": {
                     "search": "Cari NISN atau Nama:",
-                    "lengthMenu": "Tampil _MENU_ data",
-                    "info": "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
+                    "info": "Total Riwayat: _TOTAL_ data",
                     "infoEmpty": "Data kosong",
-                    "paginate": {
-                        "first": "Awal",
-                        "last": "Akhir",
-                        "next": "Lanjut",
-                        "previous": "Mundur"
-                    }
+                    "infoFiltered": "(disaring dari _MAX_ data)",
+                    "zeroRecords": "Tidak ada data riwayat absen yang cocok"
                 }
+            });
+
+            // Filter Pencarian & Kelas Riwayat Absen Real-Time
+            var searchRiwayatTimeout;
+            $('#cari_siswa_riwayat_absen').on('keyup input', function() {
+                clearTimeout(searchRiwayatTimeout);
+                searchRiwayatTimeout = setTimeout(function() {
+                    tableRiwayat.draw();
+                }, 300);
+            });
+
+            $('#filter_kelas_riwayat_absen, #filter_status_riwayat_absen').on('change', function() {
+                tableRiwayat.draw();
             });
 
             // 2. Event Listener untuk "Tombol Pilih" di dalam DataTables
@@ -590,19 +725,18 @@
                 $('#hasil_scanan').val(nisn).focus();
             });
 
-            // Filter Pencarian & Kelas secara Real-Time (Client-Side)
-            $('#cari_siswa_belum_absen, #filter_kelas_belum_absen').on('keyup change', function() {
-                var keyword = $('#cari_siswa_belum_absen').val().toLowerCase();
-                var kelasFilter = $('#filter_kelas_belum_absen').val().toLowerCase();
+            // Filter Pencarian & Kelas secara Real-Time (Client-Side) - Fleksibel ke Seluruh Kolom
+            $('#cari_siswa_belum_absen, #filter_kelas_belum_absen').on('keyup input change', function() {
+                var keyword = $('#cari_siswa_belum_absen').val().toLowerCase().trim();
+                var kelasFilter = $('#filter_kelas_belum_absen').val().toLowerCase().trim();
 
                 $('#tabel_belum_absen tbody tr.baris-siswa').each(function() {
-                    var nisn = $(this).find('.nisn-siswa').text().toLowerCase();
-                    var nama = $(this).find('.nama-siswa').text().toLowerCase();
-                    var kelas = $(this).find('.kelas-siswa').text().toLowerCase();
+                    var rowText = $(this).text().toLowerCase();
+                    var kelasText = $(this).find('.kelas-siswa').text().toLowerCase().trim();
 
-                    // Cek apakah data cocok dengan teks pencarian DAN filter kelas
-                    var matchKeyword = (nisn.indexOf(keyword) > -1 || nama.indexOf(keyword) > -1);
-                    var matchKelas = (kelasFilter === "" || kelas === kelasFilter);
+                    // Cek apakah data cocok dengan teks pencarian di SELURUH KOLOM baris DAN filter kelas
+                    var matchKeyword = (keyword === "" || rowText.indexOf(keyword) > -1);
+                    var matchKelas = (kelasFilter === "" || kelasText === kelasFilter);
 
                     if (matchKeyword && matchKelas) {
                         $(this).show();
