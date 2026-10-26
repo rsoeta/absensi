@@ -546,15 +546,17 @@
                         let audioObj = new Audio(audioSrc);
                         audioObj.play().catch(function(e) { console.warn('Audio play error:', e); });
 
-                        // 4. HAPUS BARIS DARI TABEL BELUM ABSEN SECARA REAL-TIME
-                        $('tr[data-nisn="' + dt.kode + '"]').fadeOut(500, function() {
-                            $(this).remove();
+                        // 4. HAPUS BARIS DARI TABEL BELUM ABSEN SECARA REAL-TIME (Hanya saat absen masuk)
+                        if (dt.action === 'masuk') {
+                            $('tr[data-nisn="' + dt.kode + '"]').fadeOut(500, function() {
+                                $(this).remove();
 
-                            // Cek jika tabel sudah kosong (semua siswa sudah absen)
-                            if ($('.baris-siswa').length === 0) {
-                                $('#tabel_belum_absen tbody').html('<tr><td colspan="5" class="text-center text-success fw-bold">Alhamdulillah, semua siswa sudah absen hari ini!</td></tr>');
-                            }
-                        });
+                                // Cek jika tabel sudah kosong (semua siswa sudah absen)
+                                if ($('.baris-siswa').length === 0) {
+                                    $('#tabel_belum_absen tbody').html('<tr><td colspan="5" class="text-center text-success fw-bold">Alhamdulillah, semua siswa sudah absen hari ini!</td></tr>');
+                                }
+                            });
+                        }
 
                     } else if (dt.response === 'holiday') {
                         Swal.fire({

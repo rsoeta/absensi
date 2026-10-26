@@ -362,7 +362,7 @@ class Dashboard_user extends BaseController
 
         $ceklgi = $this->insert_absen_data($getdatauser->user_id);
 
-        if ($ceklgi == 'ok_masuk' || $ceklgi == 'ok') {
+        if ($ceklgi === 'ok_masuk') {
             $nama = '';
             $type = '';
             if ($ceksiswa) {

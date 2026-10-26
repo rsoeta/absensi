@@ -272,8 +272,10 @@ class Absensi extends BaseController
             // Jika sudah absen masuk hari ini (Proses Pulang)
             if ($cekdataabsenmasuk) {
                 if ($cekdataabsenmasuk->jam_pulang != null) {
-                    // RETURN KUSTOM DENGAN NAMA (Sebelumnya: return 'no';)
-                    return "Maaf {$nama_user}, Anda sudah menyelesaikan absen masuk dan pulang hari ini.";
+                    return [
+                        'status'  => 'error',
+                        'message' => "Maaf {$nama_user}, Anda sudah menyelesaikan absen masuk dan pulang hari ini."
+                    ];
                 } else {
                     $allowedtopulang = 0;
                     if (in_array($user->level_id, [2, 3]) && $now >= $dtabsentime->jam_pulang_guru) {
@@ -286,17 +288,16 @@ class Absensi extends BaseController
                         $jam_pulang = date('H:i:s');
 
                         $this->db->table('absen')->where('absen_id', $cekdataabsenmasuk->absen_id)->update([
-                            'jam_pulang' => $jam_pulang,
+                            'jam_pulang'    => $jam_pulang,
                             'status_pulang' => 'Tepat Waktu',
-                            'point_pulang' => 5,
+                            'point_pulang'  => 5,
                         ]);
 
                         if ($user->level_id == 4) {
-                            // (Variabel $siswa sudah dideklarasikan di blok pengambilan nama di atas)
                             $setting = $this->db->table('app_setting')->where('id', 1)->get()->getRow();
                             $kelas = $this->db->table('kelas')->where('kelas_id', $siswa->kelas_id)->get()->getRow();
 
-                            if ($setting->wa_blast == 'Aktif' && isset($siswa) && !empty($setting->template_notif_wa)) {
+                            if ($setting && $setting->wa_blast == 'Aktif' && isset($siswa) && !empty($setting->template_notif_wa)) {
                                 $pesan_wa = $setting->template_notif_wa;
                                 $pesan_wa = str_replace('[nama_sekolah]', $setting->nama_sekolah, $pesan_wa);
                                 $pesan_wa = str_replace('[tanggal]', $tanggal_indo, $pesan_wa);
@@ -308,17 +309,25 @@ class Absensi extends BaseController
                                 $pesan_wa = str_replace('[status_absen]', 'Tepat Waktu', $pesan_wa);
 
                                 $this->db->table('tabel_antrean_wa')->insert([
-                                    'no_hp' => $siswa->no_hp_wali_siswa,
-                                    'pesan' => $pesan_wa,
-                                    'status' => 'pending',
+                                    'no_hp'      => $siswa->no_hp_wali_siswa,
+                                    'pesan'      => $pesan_wa,
+                                    'status'     => 'pending',
                                     'created_at' => date('Y-m-d H:i:s')
                                 ]);
                             }
                         }
-                        return 'ok';
+
+                        return [
+                            'status'        => 'ok',
+                            'action'        => 'pulang',
+                            'status_pulang' => 'Tepat Waktu',
+                            'message'       => 'Absen Pulang Berhasil (Tepat Waktu)'
+                        ];
                     } else {
-                        // RETURN KUSTOM DENGAN NAMA (Sebelumnya: return 'not allowed pulang';)
-                        return "Sabar {$nama_user}, belum waktunya jam pulang!";
+                        return [
+                            'status'  => 'error',
+                            'message' => "Sabar {$nama_user}, belum waktunya jam pulang!"
+                        ];
                     }
                 }
             } else {
@@ -326,11 +335,11 @@ class Absensi extends BaseController
                 $jam_masuk = date('H:i:s');
 
                 $this->db->table('absen')->insert([
-                    'user_id' => $id_user,
-                    'tanggal' => $tgl,
-                    'keterangan' => 'Masuk',
-                    'jam_masuk' => $jam_masuk,
-                    'point' => $point,
+                    'user_id'      => $id_user,
+                    'tanggal'      => $tgl,
+                    'keterangan'   => 'Masuk',
+                    'jam_masuk'    => $jam_masuk,
+                    'point'        => $point,
                     'status_masuk' => $status
                 ]);
 
@@ -338,7 +347,7 @@ class Absensi extends BaseController
                     $setting = $this->db->table('app_setting')->where('id', 1)->get()->getRow();
                     $kelas = $this->db->table('kelas')->where('kelas_id', $siswa->kelas_id)->get()->getRow();
 
-                    if ($setting->wa_blast == 'Aktif' && isset($siswa) && !empty($setting->template_notif_wa)) {
+                    if ($setting && $setting->wa_blast == 'Aktif' && isset($siswa) && !empty($setting->template_notif_wa)) {
                         $pesan_wa = $setting->template_notif_wa;
                         $pesan_wa = str_replace('[nama_sekolah]', $setting->nama_sekolah, $pesan_wa);
                         $pesan_wa = str_replace('[tanggal]', $tanggal_indo, $pesan_wa);
@@ -350,17 +359,27 @@ class Absensi extends BaseController
                         $pesan_wa = str_replace('[status_absen]', $status, $pesan_wa);
 
                         $this->db->table('tabel_antrean_wa')->insert([
-                            'no_hp' => $siswa->no_hp_wali_siswa,
-                            'pesan' => $pesan_wa,
-                            'status' => 'pending',
+                            'no_hp'      => $siswa->no_hp_wali_siswa,
+                            'pesan'      => $pesan_wa,
+                            'status'     => 'pending',
                             'created_at' => date('Y-m-d H:i:s')
                         ]);
                     }
                 }
-                return 'ok';
+
+                return [
+                    'status'       => 'ok',
+                    'action'       => 'masuk',
+                    'status_masuk' => $status,
+                    'telatkah'     => ($status === 'Terlambat') ? 'ya' : 'tidak',
+                    'message'      => ($status === 'Terlambat') ? 'Absen Masuk Berhasil (Terlambat)' : 'Absen Masuk Berhasil (Tepat Waktu)'
+                ];
             }
         }
-        return 'holiday';
+        return [
+            'status'  => 'holiday',
+            'message' => 'Hari Libur / Tidak ada jadwal absen hari ini'
+        ];
     }
 
     public function get_info_absen()
@@ -392,47 +411,51 @@ class Absensi extends BaseController
 
             $proses = $this->insert_absen_data($user->user_id, $kode);
 
-            if ($proses == 'ok_masuk' || $proses == 'ok') {
-                $telat = $this->cek_telat($user->user_id);
-                $soundKey = ($telat == 'ya') ? 'audio_terlambat' : 'audio_masuk_sukses';
-                $audioFile = $this->get_sound_config($soundKey);
+            if (is_array($proses) && $proses['status'] === 'ok') {
+                if ($proses['action'] === 'pulang') {
+                    $audioFile = $this->get_sound_config('audio_pulang_sukses');
 
-                return $this->response->setJSON([
-                    'response'     => 'ok',
-                    'action'       => 'masuk',
-                    'message'      => ($telat == 'ya') ? 'Absen Masuk Berhasil (Terlambat)' : 'Absen Masuk Berhasil (Tepat Waktu)',
-                    'type'         => $type,
-                    'kode'         => $kode,
-                    'nama'         => $nama,
-                    'photo'        => $photo,
-                    'list_absensi' => $this->show_latest_absen(),
-                    'telatkah'     => $telat,
-                    'audio'        => base_url('assets/audio/' . $audioFile)
-                ]);
-            } elseif ($proses == 'ok_pulang') {
-                $audioFile = $this->get_sound_config('audio_pulang_sukses');
+                    return $this->response->setJSON([
+                        'response'     => 'ok',
+                        'action'       => 'pulang',
+                        'message'      => $proses['message'],
+                        'type'         => $type,
+                        'kode'         => $kode,
+                        'nama'         => $nama,
+                        'photo'        => $photo,
+                        'list_absensi' => $this->show_latest_absen(),
+                        'telatkah'     => 'tidak',
+                        'audio'        => base_url('assets/audio/' . $audioFile)
+                    ]);
+                } else {
+                    // Action: MASUK
+                    $telat = $proses['telatkah'] ?? (($proses['status_masuk'] === 'Terlambat') ? 'ya' : 'tidak');
+                    $soundKey = ($telat === 'ya') ? 'audio_terlambat' : 'audio_masuk_sukses';
+                    $audioFile = $this->get_sound_config($soundKey);
 
-                return $this->response->setJSON([
-                    'response'     => 'ok',
-                    'action'       => 'pulang',
-                    'message'      => 'Absen Pulang Berhasil',
-                    'type'         => $type,
-                    'kode'         => $kode,
-                    'nama'         => $nama,
-                    'photo'        => $photo,
-                    'list_absensi' => $this->show_latest_absen(),
-                    'telatkah'     => 'tidak',
-                    'audio'        => base_url('assets/audio/' . $audioFile)
-                ]);
-            } elseif ($proses == 'holiday') {
-                return $this->response->setJSON(['response' => 'holiday', 'message' => 'Hari Libur']);
+                    return $this->response->setJSON([
+                        'response'     => 'ok',
+                        'action'       => 'masuk',
+                        'message'      => $proses['message'],
+                        'type'         => $type,
+                        'kode'         => $kode,
+                        'nama'         => $nama,
+                        'photo'        => $photo,
+                        'list_absensi' => $this->show_latest_absen(),
+                        'telatkah'     => $telat,
+                        'audio'        => base_url('assets/audio/' . $audioFile)
+                    ]);
+                }
+            } elseif (is_array($proses) && $proses['status'] === 'holiday') {
+                return $this->response->setJSON(['response' => 'holiday', 'message' => $proses['message']]);
             } else {
                 // KUNCI: Menangkap kalimat penolakan kustom ("Sabar Budi...", "Maaf Budi...")
+                $pesan = is_array($proses) ? $proses['message'] : $proses;
                 $audioFile = $this->get_sound_config('audio_sudah_absen');
 
                 return $this->response->setJSON([
                     'response'     => 'error',
-                    'message'      => $proses,
+                    'message'      => $pesan,
                     'nama'         => $nama,
                     'list_absensi' => $this->show_latest_absen(),
                     'audio'        => base_url('assets/audio/' . $audioFile)
